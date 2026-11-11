@@ -31,6 +31,7 @@ Date: 11 Nov 2026. Engine: UE 5.8.4. Toolchain: MSVC 14.44.35207, Windows SDK 10
 | Interaction | Prompt at 2.5 m, hold progress, single use | Pass ("Hold [E] Run diagnostics") |
 | Objectives | O1 → O2 → mission complete once | Pass |
 | HUD | Health, ammo, objective, prompt, notice, low-health colour | Pass (visual check) |
+| Soak | 10 minutes in PIE without errors or crashes | Pass (652 s world time, 0 errors/ensures, clean shutdown) |
 
 ## Bugs found and fixed during QA
 
@@ -43,6 +44,9 @@ Date: 11 Nov 2026. Engine: UE 5.8.4. Toolchain: MSVC 14.44.35207, Windows SDK 10
 ## Not yet verified (needs the next session or the user)
 
 - Controller play-through (Enhanced Input mappings exist for gamepad; needs a physical pad test).
-- 10-minute crash-free session (QA-gate for M1).
 - Packaged Development build launch.
 - Real weapon meshes, first-person arms and animation (asset milestone; current viewmodel is a TEMP block).
+
+## Editor-only frame snapshot (not a performance result)
+
+`stat unit` in the editor viewport at 1275×690, graybox range: frame 18.3 ms, game 8.6 ms, GPU 6.4 ms, VRAM 3.5 / 5.0 GB. Editor numbers include editor overhead; real budgets are measured in packaged builds at the five Bible benchmark scenes (M6/M8).
