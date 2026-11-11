@@ -42,15 +42,18 @@ ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	FirstPersonMesh->CastShadow = false;
 	FirstPersonMesh->SetCollisionProfileName(TEXT("NoCollision"));
 
+	ViewmodelRoot = CreateDefaultSubobject<USceneComponent>(TEXT("ViewmodelRoot"));
+	ViewmodelRoot->SetupAttachment(FirstPersonCamera);
+
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-	WeaponMesh->SetupAttachment(FirstPersonMesh, TEXT("HandGrip_R"));
+	WeaponMesh->SetupAttachment(ViewmodelRoot);
 	WeaponMesh->SetOnlyOwnerSee(true);
 	WeaponMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
 	WeaponMesh->CastShadow = false;
 	WeaponMesh->SetCollisionProfileName(TEXT("NoCollision"));
 
 	WeaponStaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponStaticMesh"));
-	WeaponStaticMesh->SetupAttachment(FirstPersonMesh, TEXT("HandGrip_R"));
+	WeaponStaticMesh->SetupAttachment(ViewmodelRoot);
 	WeaponStaticMesh->SetOnlyOwnerSee(true);
 	WeaponStaticMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
 	WeaponStaticMesh->CastShadow = false;
@@ -94,7 +97,29 @@ void ANVPlayerCharacter::BeginPlay()
 	FirstPersonCamera->SetFieldOfView(BaseFOV);
 
 	Weapons->Initialize(FirstPersonCamera, WeaponMesh, WeaponStaticMesh);
+	Weapons->OnWeaponFired.AddDynamic(this, &ANVPlayerCharacter::HandleWeaponFired);
 	UpdateMoveSpeed();
+}
+
+void ANVPlayerCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	if (BodyMeshAsset)
+	{
+		GetMesh()->SetSkeletalMesh(BodyMeshAsset);
+	}
+	if (BodyAnimClass)
+	{
+		GetMesh()->SetAnimInstanceClass(BodyAnimClass);
+	}
+}
+
+void ANVPlayerCharacter::HandleWeaponFired()
+{
+	if (const UNVWeaponData* W = Weapons->GetCurrentWeapon())
+	{
+		ViewmodelKick = W->ViewmodelKickBack * FMath::Lerp(1.f, 0.5f, Weapons->GetAdsAlpha());
+	}
 }
 
 void ANVPlayerCharacter::PawnClientRestart()
@@ -105,9 +130,13 @@ void ANVPlayerCharacter::PawnClientRestart()
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
-			if (DefaultMappingContext)
+			int32 Priority = MappingContexts.Num();
+			for (UInputMappingContext* Context : MappingContexts)
 			{
-				Subsystem->AddMappingContext(DefaultMappingContext, 0);
+				if (Context)
+				{
+					Subsystem->AddMappingContext(Context, Priority--);
+				}
 			}
 		}
 	}
@@ -141,6 +170,10 @@ void ANVPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	{
 		EIC->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANVPlayerCharacter::Look);
 	}
+	if (MouseLookAction)
+	{
+		EIC->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &ANVPlayerCharacter::MouseLook);
+	}
 	BindIf(JumpAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::JumpPressed);
 	BindIf(JumpAction, ETriggerEvent::Completed, this, &ANVPlayerCharacter::StopJumping);
 	BindIf(SprintAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::SprintPressed);
@@ -167,17 +200,33 @@ void ANVPlayerCharacter::Move(const FInputActionValue& Value)
 	{
 		return;
 	}
+	if (IsSliding())
+	{
+		return; // committed slide: momentum only
+	}
 	AddMovementInput(GetActorForwardVector(), LastMoveInput.Y);
 	AddMovementInput(GetActorRightVector(), LastMoveInput.X);
 }
 
 void ANVPlayerCharacter::Look(const FInputActionValue& Value)
 {
+	// Gamepad stick: rate-based, frame-rate independent.
+	ApplyLook(Value.Get<FVector2D>() * GamepadLookRate * GetWorld()->GetDeltaSeconds());
+}
+
+void ANVPlayerCharacter::MouseLook(const FInputActionValue& Value)
+{
+	ApplyLook(Value.Get<FVector2D>());
+}
+
+void ANVPlayerCharacter::ApplyLook(FVector2D Axis)
+{
 	if (bInputLocked && !bLookAllowedWhileLocked)
 	{
 		return;
 	}
-	FVector2D Axis = Value.Get<FVector2D>() * LookSensitivity;
+	LookDeltaThisFrame += Axis;
+	Axis *= LookSensitivity;
 	if (const UNVWeaponData* W = Weapons->GetCurrentWeapon())
 	{
 		Axis *= FMath::Lerp(1.f, W->AdsSensitivityScale, Weapons->GetAdsAlpha());
@@ -394,12 +443,16 @@ void ANVPlayerCharacter::StartSlide()
 	SetSprinting(false);
 	Crouch();
 	SlideTimeLeft = SlideDuration;
+	UE_LOG(LogNeonVeil, Log, TEXT("Slide start at %.0f cm/s"), GetVelocity().Size2D());
 	UCharacterMovementComponent* Move = GetCharacterMovement();
 	Move->GroundFriction = 0.6f;
-	Move->BrakingDecelerationWalking = 350.f;
-	// Keep current speed and add a short push in the travel direction.
+	Move->BrakingDecelerationWalking = 200.f;
+	// Let the slide exceed the crouch speed cap; restored when the slide ends.
+	Move->MaxWalkSpeedCrouched = SprintSpeed + SlideImpulse;
+	// Keep current speed and add a short push in the travel direction. Velocity is set
+	// directly (not LaunchCharacter) so the character stays grounded.
 	const FVector Dir = GetVelocity().GetSafeNormal2D().IsNearlyZero() ? GetActorForwardVector() : GetVelocity().GetSafeNormal2D();
-	LaunchCharacter(Dir * SlideImpulse, false, false);
+	Move->Velocity += Dir * SlideImpulse * 0.5f;
 }
 
 void ANVPlayerCharacter::TickSlide(float DeltaSeconds)
@@ -417,6 +470,8 @@ void ANVPlayerCharacter::TickSlide(float DeltaSeconds)
 		UCharacterMovementComponent* Move = GetCharacterMovement();
 		Move->GroundFriction = DefaultGroundFriction;
 		Move->BrakingDecelerationWalking = DefaultBrakingDecel;
+		Move->MaxWalkSpeedCrouched = CrouchSpeed;
+		UE_LOG(LogNeonVeil, Log, TEXT("Slide end (%s)"), bTooSlow ? TEXT("slowed to crouch speed") : TEXT("timed out or left ground"));
 	}
 }
 
@@ -441,10 +496,12 @@ bool ANVPlayerCharacter::TryVault()
 	const FVector KneeStart = Feet + FVector(0.f, 0.f, VaultMinHeight * 0.5f + 10.f);
 	if (!GetWorld()->LineTraceSingleByChannel(WallHit, KneeStart, KneeStart + Fwd * (Radius + VaultReach), ECC_Visibility, Params))
 	{
+		UE_LOG(LogNeonVeil, Log, TEXT("Vault: no obstacle within %.0f cm"), Radius + VaultReach);
 		return false;
 	}
 	if (FMath::Abs(WallHit.ImpactNormal.Z) > 0.3f)
 	{
+		UE_LOG(LogNeonVeil, Log, TEXT("Vault: surface is a slope"));
 		return false; // a slope, not a wall
 	}
 
@@ -454,11 +511,13 @@ bool ANVPlayerCharacter::TryVault()
 	const FVector TopStart = FVector(OverTop.X, OverTop.Y, Feet.Z + VaultMaxHeight + 20.f);
 	if (!GetWorld()->LineTraceSingleByChannel(TopHit, TopStart, FVector(OverTop.X, OverTop.Y, Feet.Z), ECC_Visibility, Params))
 	{
+		UE_LOG(LogNeonVeil, Log, TEXT("Vault: no top surface found"));
 		return false;
 	}
 	const float LedgeHeight = TopHit.ImpactPoint.Z - Feet.Z;
 	if (LedgeHeight < VaultMinHeight || LedgeHeight > VaultMaxHeight || TopHit.ImpactNormal.Z < 0.7f)
 	{
+		UE_LOG(LogNeonVeil, Log, TEXT("Vault: ledge %.0f cm outside %.0f-%.0f band"), LedgeHeight, VaultMinHeight, VaultMaxHeight);
 		return false;
 	}
 
@@ -467,6 +526,7 @@ bool ANVPlayerCharacter::TryVault()
 	const FCollisionShape Shape = FCollisionShape::MakeCapsule(Radius, HalfHeight);
 	if (GetWorld()->OverlapBlockingTestByChannel(Apex, FQuat::Identity, ECC_Pawn, Shape, Params))
 	{
+		UE_LOG(LogNeonVeil, Log, TEXT("Vault: no headroom above ledge"));
 		return false;
 	}
 
@@ -482,6 +542,7 @@ bool ANVPlayerCharacter::TryVault()
 		Land = Apex; // fall back to mantling onto the top
 	}
 
+	UE_LOG(LogNeonVeil, Log, TEXT("Vault: ledge %.0f cm, %s"), LedgeHeight, Land.Equals(Apex) ? TEXT("mantle onto top") : TEXT("vault over"));
 	bVaulting = true;
 	VaultElapsed = 0.f;
 	VaultStart = GetActorLocation();
@@ -538,21 +599,91 @@ void ANVPlayerCharacter::UpdateCamera(float DeltaSeconds)
 	const float HalfHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	FirstPersonCamera->SetRelativeLocation(FVector(0.f, 0.f, CurrentEyeHeight - HalfHeight));
 
-	float TargetFOV = BaseFOV + (bSprinting ? SprintFOVBoost : 0.f);
+	// Sprint widening is smoothed; ADS follows the weapon's own blend exactly so the
+	// transition takes AdsTime (Bible §7: 0.15-0.25 s, no camera snap).
+	SmoothedSprintFOV = FMath::FInterpTo(SmoothedSprintFOV, bSprinting ? SprintFOVBoost : 0.f, DeltaSeconds, 8.f);
+	float FOV = BaseFOV + SmoothedSprintFOV;
 	if (const UNVWeaponData* W = Weapons->GetCurrentWeapon())
 	{
-		TargetFOV = FMath::Lerp(TargetFOV, W->AdsFOV, Weapons->GetAdsAlpha());
+		const float A = Weapons->GetAdsAlpha();
+		FOV = FMath::Lerp(FOV, W->AdsFOV, A * A * (3.f - 2.f * A)); // smoothstep: eases in and out
 	}
-	FirstPersonCamera->SetFieldOfView(FMath::FInterpTo(FirstPersonCamera->FieldOfView, TargetFOV, DeltaSeconds, 20.f));
+	FirstPersonCamera->SetFieldOfView(FOV);
+}
+
+void ANVPlayerCharacter::SetDebugMoveInput(FVector2D Input, bool bSprint)
+{
+	DebugMoveInput = Input;
+	bSprintHeld = bSprint;
+	LastMoveInput = Input;
 }
 
 void ANVPlayerCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if (!DebugMoveInput.IsNearlyZero() && !bVaulting && !IsSliding())
+	{
+		LastMoveInput = DebugMoveInput;
+		AddMovementInput(GetActorForwardVector(), DebugMoveInput.Y);
+		AddMovementInput(GetActorRightVector(), DebugMoveInput.X);
+	}
+
 	SetSprinting(CanSprint());
 	TickSlide(DeltaSeconds);
 	TickVault(DeltaSeconds);
 	UpdateMoveSpeed();
 	UpdateCamera(DeltaSeconds);
+	UpdateViewmodel(DeltaSeconds);
+}
+
+void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
+{
+	const UNVWeaponData* W = Weapons->GetCurrentWeapon();
+	if (!W)
+	{
+		LookDeltaThisFrame = FVector2D::ZeroVector;
+		return;
+	}
+	const float Ads = Weapons->GetAdsAlpha();
+	FVector Offset = FMath::Lerp(W->ViewmodelHipOffset, W->ViewmodelAdsOffset, Ads);
+
+	// Sway: viewmodel lags slightly behind look input; much less when aiming.
+	const FVector2D TargetSway = LookDeltaThisFrame * ViewmodelSwayAmount * (1.f - 0.85f * Ads);
+	SmoothedSway = FMath::Vector2DInterpTo(SmoothedSway, TargetSway, DeltaSeconds, 10.f);
+	LookDeltaThisFrame = FVector2D::ZeroVector;
+	Offset.Y -= FMath::Clamp(SmoothedSway.X, -2.5f, 2.5f);
+	Offset.Z += FMath::Clamp(SmoothedSway.Y, -2.5f, 2.5f);
+
+	// Gentle walk bob on the viewmodel only (camera stays steady; Bible §3).
+	const float Speed = GetVelocity().Size2D();
+	if (GetCharacterMovement()->IsMovingOnGround() && Speed > 10.f)
+	{
+		BobPhase += DeltaSeconds * Speed * 0.022f;
+		const float Bob = ViewmodelBobAmount * (1.f - 0.8f * Ads) * FMath::Min(Speed / WalkSpeed, 1.5f);
+		Offset.Z += FMath::Sin(BobPhase * 2.f) * Bob;
+		Offset.Y += FMath::Cos(BobPhase) * Bob;
+	}
+
+	// Fire kick, recovering quickly.
+	Offset.X -= ViewmodelKick;
+	ViewmodelKick = FMath::FInterpTo(ViewmodelKick, 0.f, DeltaSeconds, 14.f);
+
+	// Lower the weapon while sprinting or reloading.
+	FRotator Rot = W->ViewmodelRotation;
+	if (bSprinting)
+	{
+		Rot.Pitch -= 12.f;
+		Rot.Yaw += 10.f;
+		Offset.Z -= 3.f;
+	}
+	if (Weapons->IsReloading())
+	{
+		Rot.Roll -= 25.f;
+		Offset.Z -= 4.f;
+	}
+
+	ViewmodelRoot->SetRelativeLocation(FMath::VInterpTo(ViewmodelRoot->GetRelativeLocation(), Offset, DeltaSeconds, 25.f));
+	ViewmodelRoot->SetRelativeRotation(FMath::RInterpTo(ViewmodelRoot->GetRelativeRotation(), Rot, DeltaSeconds, 12.f));
+	ViewmodelRoot->SetRelativeScale3D(W->ViewmodelScale);
 }

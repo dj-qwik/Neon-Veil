@@ -30,6 +30,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "NeonVeil|Interaction")
 	AActor* GetFocusedActor() const { return FocusedActor.Get(); }
 
+	UFUNCTION(BlueprintPure, Category = "NeonVeil|Interaction")
+	float GetHoldProgress() const { return HoldProgress; }
+
 	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Interaction")
 	FNVOnFocusChanged OnFocusChanged;
 
@@ -55,4 +58,5 @@ private:
 	float TimeSinceTrace = 0.f;
 	bool bUsing = false;
 	float HoldElapsed = 0.f;
+	float HoldProgress = 0.f;
 };

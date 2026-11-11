@@ -31,7 +31,8 @@ void UNVInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType
 		}
 		const float Hold = INVInteractable::Execute_GetHoldDuration(Focus);
 		HoldElapsed += DeltaTime;
-		OnHoldProgress.Broadcast(Hold > 0.f ? FMath::Clamp(HoldElapsed / Hold, 0.f, 1.f) : 1.f);
+		HoldProgress = Hold > 0.f ? FMath::Clamp(HoldElapsed / Hold, 0.f, 1.f) : 1.f;
+		OnHoldProgress.Broadcast(HoldProgress);
 		if (HoldElapsed >= Hold)
 		{
 			CompleteUse();
@@ -112,6 +113,7 @@ void UNVInteractionComponent::EndUse()
 	{
 		bUsing = false;
 		HoldElapsed = 0.f;
+		HoldProgress = 0.f;
 		OnHoldProgress.Broadcast(0.f);
 	}
 }
@@ -121,6 +123,7 @@ void UNVInteractionComponent::CompleteUse()
 	AActor* Focus = FocusedActor.Get();
 	bUsing = false;
 	HoldElapsed = 0.f;
+	HoldProgress = 0.f;
 	OnHoldProgress.Broadcast(0.f);
 	if (Focus)
 	{

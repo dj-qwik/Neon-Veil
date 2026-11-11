@@ -243,7 +243,9 @@ void UNVWeaponComponent::FireShot()
 			if (UNVHealthComponent* Health = HitActor->FindComponentByClass<UNVHealthComponent>())
 			{
 				const float Dmg = Data->Damage * (bWeak ? Data->WeakPointBonus : 1.f);
-				if (Health->ApplyDamage(Dmg, GetOwner(), Data->DamageType, bWeak) > 0.f)
+				const float Applied = Health->ApplyDamage(Dmg, GetOwner(), Data->DamageType, bWeak);
+				UE_LOG(LogNeonVeil, Log, TEXT("Hit %s (%s) applied %.1f, hp %.1f shield %.1f"), *HitActor->GetName(), *GetNameSafe(Hit.GetComponent()), Applied, Health->GetHealth(), Health->GetShield());
+				if (Applied > 0.f)
 				{
 					if (USoundBase* Confirm = Data->HitConfirmSound.LoadSynchronous())
 					{
@@ -260,6 +262,11 @@ void UNVWeaponComponent::FireShot()
 				Prim->AddImpulseAtLocation(Dir * Data->ImpactImpulse, Hit.ImpactPoint);
 			}
 		}
+	}
+
+	if (!bHit || !Hit.GetActor() || !Hit.GetActor()->FindComponentByClass<UNVHealthComponent>())
+	{
+		UE_LOG(LogNeonVeil, Verbose, TEXT("Shot hit %s"), bHit ? *GetNameSafe(Hit.GetActor()) : TEXT("nothing"));
 	}
 
 	PlayFireEffects(*Data, bHit ? Hit.ImpactPoint : End, bHit ? &Hit : nullptr);

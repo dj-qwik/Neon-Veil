@@ -13,6 +13,8 @@ class UInputAction;
 class UNVHealthComponent;
 class UNVWeaponComponent;
 class UNVInteractionComponent;
+class UAnimInstance;
+class USkeletalMesh;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNVOnSprintChanged, bool, bSprinting);
 
@@ -33,6 +35,7 @@ public:
 	virtual void PawnClientRestart() override;
 	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 	UFUNCTION(BlueprintPure, Category = "NeonVeil")
 	UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
@@ -75,12 +78,23 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "NeonVeil")
 	FNVOnSprintChanged OnSprintChanged;
 
+	/** QA: simulate held movement / sprint input (cleared with zero input). */
+	void SetDebugMoveInput(FVector2D Input, bool bSprint);
+	/** QA: same path as pressing jump (vaults when facing a vaultable obstacle). */
+	void DebugJump() { JumpPressed(); }
+	/** QA: same path as pressing crouch (slides when sprinting). */
+	void DebugCrouch(bool bPressed) { if (bPressed) { CrouchPressed(); } else { CrouchReleased(); } }
+
 protected:
 	virtual void BeginPlay() override;
 
 	// --- Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
+
+	/** Parent of the weapon viewmodel; moved between hip and ADS offsets each frame. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<USceneComponent> ViewmodelRoot;
 
 	/** First-person arms, rendered only for the owner. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -102,8 +116,12 @@ protected:
 	TObjectPtr<UNVInteractionComponent> Interaction;
 
 	// --- Input (assigned in BP_NVPlayerCharacter)
+	/** Added in order, first = highest priority. */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	TObjectPtr<UInputMappingContext> DefaultMappingContext;
+	TArray<TObjectPtr<UInputMappingContext>> MappingContexts;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> MouseLookAction;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;
@@ -158,7 +176,7 @@ protected:
 	float SlideCooldown = 0.6f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Movement|Vault")
-	float VaultMinHeight = 60.f;
+	float VaultMinHeight = 50.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Movement|Vault")
 	float VaultMaxHeight = 120.f;
@@ -188,9 +206,29 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	bool bInvertY = false;
 
+	/** Gamepad stick look rate in degrees/second at full deflection. */
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	float GamepadLookRate = 180.f;
+
+	// --- Full-body mesh (shadow + other views). Arms are a separate asset task.
+	UPROPERTY(EditDefaultsOnly, Category = "Body")
+	TObjectPtr<USkeletalMesh> BodyMeshAsset;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Body")
+	TSubclassOf<UAnimInstance> BodyAnimClass;
+
+	// --- Viewmodel motion
+	UPROPERTY(EditDefaultsOnly, Category = "Viewmodel")
+	float ViewmodelSwayAmount = 0.6f;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Viewmodel")
+	float ViewmodelBobAmount = 0.5f;
+
 private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	void MouseLook(const FInputActionValue& Value);
+	void ApplyLook(FVector2D Axis);
 	void SprintPressed();
 	void SprintReleased();
 	void CrouchPressed();
@@ -214,6 +252,10 @@ private:
 	void TickVault(float DeltaSeconds);
 	void UpdateCamera(float DeltaSeconds);
 	void UpdateMoveSpeed();
+	void UpdateViewmodel(float DeltaSeconds);
+
+	UFUNCTION()
+	void HandleWeaponFired();
 
 	bool bSprinting = false;
 	bool bSprintHeld = false;
@@ -224,6 +266,7 @@ private:
 	bool bInputLocked = false;
 	bool bLookAllowedWhileLocked = true;
 	FVector2D LastMoveInput = FVector2D::ZeroVector;
+	FVector2D DebugMoveInput = FVector2D::ZeroVector;
 
 	float SlideTimeLeft = 0.f;
 	float LastSlideEndTime = -100.f;
@@ -237,4 +280,9 @@ private:
 	FVector VaultEnd;
 
 	float CurrentEyeHeight = 165.f;
+	float ViewmodelKick = 0.f;
+	float SmoothedSprintFOV = 0.f;
+	float BobPhase = 0.f;
+	FVector2D LookDeltaThisFrame = FVector2D::ZeroVector;
+	FVector2D SmoothedSway = FVector2D::ZeroVector;
 };

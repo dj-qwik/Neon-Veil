@@ -120,6 +120,23 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ADS")
 	float AdsMoveSpeedScale = 0.7f;
 
+	// --- Viewmodel placement relative to the camera (cm / degrees)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Viewmodel")
+	FVector ViewmodelHipOffset = FVector(28.f, 12.f, -14.f);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Viewmodel")
+	FVector ViewmodelAdsOffset = FVector(20.f, 0.f, -7.5f);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Viewmodel")
+	FRotator ViewmodelRotation = FRotator::ZeroRotator;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Viewmodel")
+	FVector ViewmodelScale = FVector(1.f);
+
+	/** Backward kick of the viewmodel per shot (cm). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Viewmodel")
+	float ViewmodelKickBack = 3.f;
+
 	// --- Presentation (soft so unused weapons cost no memory)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	TSoftObjectPtr<USkeletalMesh> WeaponMesh;
