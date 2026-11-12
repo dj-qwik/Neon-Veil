@@ -88,6 +88,10 @@ private:
 	float DoorElapsed = 0.f;
 	bool bDoorOpening = false;
 	bool bDoorSoundPlayed = false;
+	float RiderRelMin = 0.f;
+	float RiderRelMax = 0.f;
+	float RiderRelJitter = 0.f;
+	float RiderRelPrev = 0.f;
 
 	TArray<FVector> Home;
 	TWeakObjectPtr<APawn> Rider;

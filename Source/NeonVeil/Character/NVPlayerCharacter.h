@@ -241,9 +241,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
 	bool bInvertY = false;
 
-	/** Gamepad stick look rate in degrees/second at full deflection. */
+	/** Gamepad stick look rate in degrees/second at full deflection (yaw). */
 	UPROPERTY(EditDefaultsOnly, Category = "Camera")
-	float GamepadLookRate = 180.f;
+	float GamepadLookRate = 170.f;
+
+	/** Pitch rate relative to yaw (vertical aim is usually tuned slower). */
+	UPROPERTY(EditDefaultsOnly, Category = "Camera")
+	float GamepadPitchScale = 0.7f;
+
+	/** Response curve on stick deflection (1 = linear; higher = finer control on small deflections). */
+	UPROPERTY(EditDefaultsOnly, Category = "Camera", meta = (ClampMin = "1.0", ClampMax = "4.0"))
+	float GamepadLookExponent = 2.2f;
+
+	/** Gamepad-only extra scale while fully aimed down sights (on top of the weapon's AdsSensitivityScale). */
+	UPROPERTY(EditDefaultsOnly, Category = "Camera", meta = (ClampMin = "0.1", ClampMax = "1.0"))
+	float GamepadAdsScale = 0.65f;
 
 	// --- Full-body mesh (shadow + other views). Arms are a separate asset task.
 	UPROPERTY(EditDefaultsOnly, Category = "Body")

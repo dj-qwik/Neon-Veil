@@ -261,8 +261,22 @@ void ANVPlayerCharacter::Move(const FInputActionValue& Value)
 
 void ANVPlayerCharacter::Look(const FInputActionValue& Value)
 {
-	// Gamepad stick: rate-based, frame-rate independent.
-	ApplyLook(Value.Get<FVector2D>() * GamepadLookRate * GetWorld()->GetDeltaSeconds());
+	// Gamepad stick: rate-based, frame-rate independent, with a radial response curve so small deflections
+	// give fine aim and full deflection still turns quickly. The IMC dead zone has already been applied.
+	FVector2D Stick = Value.Get<FVector2D>();
+	const float Mag = FMath::Min(Stick.Size(), 1.f);
+	if (Mag <= KINDA_SMALL_NUMBER)
+	{
+		return;
+	}
+	Stick = Stick / Stick.Size() * FMath::Pow(Mag, GamepadLookExponent);
+	Stick.Y *= GamepadPitchScale;
+	float Rate = GamepadLookRate;
+	if (Weapons && Weapons->GetCurrentWeapon())
+	{
+		Rate *= FMath::Lerp(1.f, GamepadAdsScale, Weapons->GetAdsAlpha());
+	}
+	ApplyLook(Stick * Rate * GetWorld()->GetDeltaSeconds());
 }
 
 void ANVPlayerCharacter::MouseLook(const FInputActionValue& Value)

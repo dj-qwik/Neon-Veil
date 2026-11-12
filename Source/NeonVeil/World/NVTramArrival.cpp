@@ -6,6 +6,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NeonVeil.h"
+#include "HAL/IConsoleManager.h"
+
+static TAutoConsoleVariable<int32> CVarTramRiderAfterCabin(TEXT("nv.TramRiderAfterCabin"), 1,
+	TEXT("1: the rider's movement ticks after the tram cabin moves (no shudder). 0: unordered (A/B test)."));
 
 ANVTramArrival::ANVTramArrival()
 {
@@ -141,6 +145,12 @@ void ANVTramArrival::Tick(float DeltaSeconds)
 			return;
 		}
 		Rider = Player;
+		// The rider's movement must update after the cabin moves each frame; otherwise the two PrePhysics ticks
+		// swap order frame to frame and the rider is carried one frame late, then early (visible shudder).
+		if (CVarTramRiderAfterCabin.GetValueOnGameThread() != 0)
+		{
+			Player->GetCharacterMovement()->AddTickPrerequisiteActor(this);
+		}
 		bArriving = true;
 		bMoving = false;
 		SteadyFrames = 0;
@@ -178,16 +188,41 @@ void ANVTramArrival::Tick(float DeltaSeconds)
 		return;
 	}
 	++RideTicks;
+	if (Rider.IsValid() && Parts.Num() > 0 && Parts[0])
+	{
+		// (previous frame, after the rider moved) rider position along the travel axis relative to the cabin: should stay constant while seated/standing
+		// world-space rider position relative to the cabin (2D); jitter = max second difference (uneven steps)
+		const FVector RelV = Rider->GetActorLocation() - Parts[0]->GetActorLocation();
+		const float Rel = FVector::DotProduct(RelV, GetActorForwardVector());
+		static FVector P1, P2;
+		if (RideTicks <= 2)
+		{
+			RiderRelMin = RiderRelMax = RiderRelPrev = Rel;
+			RiderRelJitter = 0.f;
+			P2 = P1 = RelV;
+		}
+		RiderRelMin = FMath::Min(RiderRelMin, Rel);
+		RiderRelMax = FMath::Max(RiderRelMax, Rel);
+		RiderRelJitter = FMath::Max(RiderRelJitter, (RelV - 2.f * P1 + P2).Size2D());
+		P2 = P1;
+		P1 = RelV;
+		RiderRelPrev = Rel;
+	}
 	// Wall-clock steps keep the ride at Duration; a single long hitch is capped so the tram never jumps.
 	Elapsed += FMath::Min(RealStep, 0.1f);
 	const float A = FMath::Clamp(Elapsed / Duration, 0.f, 1.f);
 	// ease-out cubic: fast glide in, gentle stop at the platform
 	const float E = 1.f - FMath::Pow(1.f - A, 3.f);
 	ApplyOffset(-Distance * (1.f - E));
+
 	RideAudio->SetVolumeMultiplier(FMath::Lerp(1.f, 0.f, FMath::Clamp((A - 0.75f) / 0.25f, 0.f, 1.f)));
 	if (A >= 1.f)
 	{
 		bArriving = false;
+		if (ACharacter* C = Cast<ACharacter>(Rider.Get()))
+		{
+			C->GetCharacterMovement()->RemoveTickPrerequisiteActor(this);
+		}
 		Rider.Reset();
 		FrontBarrier->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		RideAudio->FadeOut(0.5f, 0.f);
@@ -196,6 +231,7 @@ void ANVTramArrival::Tick(float DeltaSeconds)
 			UGameplayStatics::PlaySound2D(this, DockSound);
 		}
 		BeginDoorOpen();
+		UE_LOG(LogNeonVeil, Log, TEXT("%s: rider vs cabin along track: range %.1f cm, max step unevenness %.2f cm"), *GetName(), RiderRelMax - RiderRelMin, RiderRelJitter);
 		UE_LOG(LogNeonVeil, Log, TEXT("%s: docked (wall %.2f s, %d ticks, elapsed %.2f s)"), *GetName(), FPlatformTime::Seconds() - RideStartTime, RideTicks, Elapsed);
 	}
 }
