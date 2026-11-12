@@ -42,3 +42,6 @@ Content/Wavs/
 Content/GameAnimationSample/
 __pycache__/
 Packaged/
+
+# MetaHuman Director assets (Epic MetaHuman content; regenerate with Scripts/Python/nv_mh_*.py)
+Content/NeonVeil/Characters/Director/
