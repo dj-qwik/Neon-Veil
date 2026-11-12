@@ -129,7 +129,34 @@ def score(seconds=64):
     r = out + 0.15 * np.roll(out, int(0.031 * SR))
     return norm(seamless(stereo(l, r), 4.0), -5)
 
+# ---------------------------------------------------------------- C00 tram: ride loop + dock
+def tram_ride(seconds=16):
+    n = (seconds + 2) * SR
+    t = np.arange(n) / SR
+    hum = 0.5 * np.sin(2 * np.pi * 55 * t) + 0.25 * np.sin(2 * np.pi * 110.5 * t) + 0.1 * np.sin(2 * np.pi * 331 * t)
+    hum *= 0.8 + 0.2 * np.sin(2 * np.pi * 0.37 * t)
+    air = lowpass(rng.standard_normal(n), 900) * 0.5
+    x = np.zeros(n)
+    for t0 in np.arange(0.4, seconds + 2, 0.92):      # maglev seam ticks, soft
+        m = (t >= t0) & (t < t0 + 0.08)
+        dt = t[m] - t0
+        x[m] += np.exp(-dt * 60) * bandpass(rng.standard_normal(m.sum()), 600, 3000) * 0.6 if m.sum() > 20 else 0
+    y = lowpass(hum, 600) + air + x
+    return norm(seamless(stereo(y, y * 0.96)), -6)
+
+def tram_dock():
+    n = int(2.6 * SR)
+    t = np.arange(n) / SR
+    clunk = np.exp(-t * 18) * np.sin(2 * np.pi * 70 * t) * 0.9
+    hiss_env = np.clip((t - 0.25) * 6, 0, 1) * np.exp(-np.clip(t - 0.4, 0, None) * 2.2)
+    hiss = highpass(rng.standard_normal(n), 2500) * hiss_env * 0.5
+    chime = 0.25 * np.sin(2 * np.pi * 880 * t) * np.exp(-np.clip(t - 1.2, 0, None) * 3) * (t > 1.2)
+    y = clunk + hiss + chime
+    return norm(stereo(y, y), -3)
+
 if __name__ == "__main__":
+    write("SFX_Tram_RideLoop.wav", tram_ride())
+    write("SFX_Tram_Dock.wav", tram_dock())
     write("SFX_AMB_Crown_HVAC.wav", hvac())
     write("SFX_AMB_Crown_IndustrialPulse.wav", pulse())
     write("SFX_AMB_Crown_CityRain.wav", city())
