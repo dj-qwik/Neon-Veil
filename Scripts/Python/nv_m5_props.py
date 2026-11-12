@@ -137,6 +137,13 @@ def restyle_interactable(label, path, x, y, z, yaw=0.0, height=None, length=None
     if not a or not sm:
         log("skip interactable", label)
         return
+    # gameplay interaction traces need collision on the visible mesh: give meshes that ship
+    # without simple collision a box (asset-level, saved).
+    SML = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+    if SML.get_simple_collision_count(sm) == 0:
+        SML.add_simple_collisions(sm, unreal.ScriptCollisionShapeType.BOX)
+        EAL.save_loaded_asset(sm, only_if_is_dirty=False)
+        log("added box collision to", sm.get_name())
     m = a.get_editor_property("mesh")
     m.set_static_mesh(sm)
     s = fit(sm, height, length, width)
@@ -221,7 +228,37 @@ def main():
         prop(f"E_WallLight_{'S' if side < 0 else 'N'}", sl("SM_Sci_Fi_Patterned_Wall_Light"),
              15600, side * 670, 330, yaw=90 if side < 0 else -90, height=220, anchor="center")
         prop(f"E_Monolith_{'S' if side < 0 else 'N'}", sl("SM_Sci_Fi_Monolith_Light"), 16250, side * 560, 0, yaw=180, height=300)
-    restyle_interactable("E_BiometricPanel", f"{CL}/Props/SM_Entrance_FingersScreen", 16250, 0, 120, yaw=180, height=60)
+    restyle_interactable("E_BiometricPanel", f"{CL}/Props/SM_Entrance_FingersScreen", 16250, 0, 120, yaw=90, height=70)
+
+    # ---------------- polish: trophy case, panoramic data wall, holographic sim targets
+    restyle_interactable("B_Opt_TrophyCase", f"{CL}/Props/SM_OfficeMiddleModelDecor", 3800, 700, 0, yaw=90, height=150)
+    screens = [f"/Game/Clinic/Materials/MaterialInstances/MI_Screen0{i}" for i in (1, 2, 3, 4, 5)]
+    for i in range(8):
+        a = prop(f"D_DataScreen{i}", f"{CL}/Props/SM_Entrance_BigMonitor", 10900 + i * 470, -385, 70,
+                 yaw=90, length=440)
+        if a:
+            c = a.static_mesh_component
+            scr = unreal.load_asset(screens[i % len(screens)])
+            for k in range(c.get_num_materials()):
+                m = c.get_material(k)
+                if m and "Screen" in m.get_name() and scr:
+                    c.set_material(k, scr)
+    dw = find("D_DataWall")
+    if dw:
+        dw.set_actor_scale3d(V(dw.get_actor_scale3d().x, dw.get_actor_scale3d().y, dw.get_actor_scale3d().z))
+        data_dim = emissive_mi("MI_DIR_DataWallBacklight", (0.1, 0.35, 0.6), 0.6)
+        dw.static_mesh_component.set_material(0, data_dim)
+    holo = unreal.load_asset("/Game/HologramShader/Materials/HologramShader/MI/MI_Hologram_2")
+    n_t = 0
+    if holo:
+        for a in EAS.get_all_level_actors():
+            for c in a.get_components_by_class(unreal.StaticMeshComponent):
+                for k in range(c.get_num_materials()):
+                    m = c.get_material(k)
+                    if m and m.get_name() == "TEMP_M_HoloTarget":
+                        c.set_material(k, holo)
+                        n_t += 1
+    log("holographic target slots:", n_t)
 
     log("props placed:", len(EAS.get_all_level_actors()) - n0)
     LES.save_current_level()

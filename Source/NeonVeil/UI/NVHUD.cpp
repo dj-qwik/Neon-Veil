@@ -475,14 +475,51 @@ void ANVHUD::DrawMessages()
 	if (Now < SubtitleUntil)
 	{
 		const float Scale = 1.15f * S * SubtitleScale;
-		const FString Line = FString::Printf(TEXT("%s:  %s"), *SubtitleSpeaker.ToString().ToUpper(), *SubtitleLine.ToString());
-		float W, H;
-		MeasureText(Line, SmallFont, Scale, W, H);
-		const float X = (Canvas->ClipX - W) * 0.5f;
-		const float Y = Canvas->ClipY - 225.f * S - H; // clear of the ability bar and health
-		// Readable background box (Bible §10).
-		DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.55f), X - 14.f * S, Y - 8.f * S, W + 28.f * S, H + 16.f * S);
-		DrawTextShadowed(Line, X, Y, TextColor, SmallFont, Scale);
+		const FString Full = FString::Printf(TEXT("%s:  %s"), *SubtitleSpeaker.ToString().ToUpper(), *SubtitleLine.ToString());
+		// Word-wrap to 70% of the screen so long lines never run off the edges (Bible §10 readability).
+		const float MaxW = Canvas->ClipX * 0.7f;
+		TArray<FString> Words;
+		Full.ParseIntoArray(Words, TEXT(" "), true);
+		TArray<FString> Lines;
+		FString Cur;
+		for (const FString& Word : Words)
+		{
+			const FString Try = Cur.IsEmpty() ? Word : Cur + TEXT(" ") + Word;
+			float TW, TH;
+			MeasureText(Try, SmallFont, Scale, TW, TH);
+			if (TW > MaxW && !Cur.IsEmpty())
+			{
+				Lines.Add(Cur);
+				Cur = Word;
+			}
+			else
+			{
+				Cur = Try;
+			}
+		}
+		if (!Cur.IsEmpty())
+		{
+			Lines.Add(Cur);
+		}
+		float BoxW = 0.f, LineH = 0.f;
+		for (const FString& L : Lines)
+		{
+			float LW, LH;
+			MeasureText(L, SmallFont, Scale, LW, LH);
+			BoxW = FMath::Max(BoxW, LW);
+			LineH = FMath::Max(LineH, LH);
+		}
+		const float Gap = 4.f * S;
+		const float TotalH = Lines.Num() * LineH + (Lines.Num() - 1) * Gap;
+		const float Y0 = Canvas->ClipY - 225.f * S - TotalH; // clear of the ability bar and health
+		const float BoxX = (Canvas->ClipX - BoxW) * 0.5f;
+		DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.55f), BoxX - 14.f * S, Y0 - 8.f * S, BoxW + 28.f * S, TotalH + 16.f * S);
+		for (int32 i = 0; i < Lines.Num(); ++i)
+		{
+			float LW, LH;
+			MeasureText(Lines[i], SmallFont, Scale, LW, LH);
+			DrawTextShadowed(Lines[i], (Canvas->ClipX - LW) * 0.5f, Y0 + i * (LineH + Gap), TextColor, SmallFont, Scale);
+		}
 	}
 }
 
