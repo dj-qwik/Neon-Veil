@@ -255,7 +255,7 @@ protected:
 
 	/** Gamepad-only extra scale while fully aimed down sights (on top of the weapon's AdsSensitivityScale). */
 	UPROPERTY(EditDefaultsOnly, Category = "Camera", meta = (ClampMin = "0.1", ClampMax = "1.0"))
-	float GamepadAdsScale = 0.65f;
+	float GamepadAdsScale = 0.5f;
 
 	// --- Full-body mesh (shadow + other views). Arms are a separate asset task.
 	UPROPERTY(EditDefaultsOnly, Category = "Body")
