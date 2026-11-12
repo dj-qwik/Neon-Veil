@@ -56,6 +56,10 @@
 		{
 			"Name": "NVDualSense",
 			"Enabled": true
+		},
+		{
+			"Name": "MetaHumanCharacter",
+			"Enabled": true
 		}
 	]
 }
