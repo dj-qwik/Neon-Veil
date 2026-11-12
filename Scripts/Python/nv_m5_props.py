@@ -53,7 +53,7 @@ def fit(sm, height=None, length=None, width=None):
     return 1.0
 
 def prop(label, path, x, y, z, yaw=0.0, height=None, length=None, width=None, scale=None,
-         anchor="bottom", along=None, mat=None):
+         anchor="bottom", along=None, mat=None, size=None):
     """Spawn a static mesh prop. anchor='bottom' rests it on z; 'top' hangs it from z (ceiling);
     'center' centres it on z. along='x'/'y' rotates the mesh so its long axis runs along that axis."""
     sm = mesh(path)
@@ -61,15 +61,21 @@ def prop(label, path, x, y, z, yaw=0.0, height=None, length=None, width=None, sc
         return None
     s = scale or fit(sm, height, length, width)
     mn, mx, sz = dims(sm)
+    long_is_x = sz.x >= sz.y
     if along:
-        long_is_x = sz.x >= sz.y
         want_x = along == "x"
         if long_is_x != want_x:
             yaw += 90.0
+    if size:   # exact (long, short, height) in cm: non-uniform fit for trims and beams
+        L, W, H = size
+        sv = V(L / sz.x, W / sz.y, H / sz.z) if long_is_x else V(W / sz.x, L / sz.y, H / sz.z)
+    else:
+        sv = V(s, s, s)
+    s = sv.z
     a = EAS.spawn_actor_from_class(unreal.StaticMeshActor, V(x, y, z), unreal.Rotator(yaw=yaw))
     c = a.static_mesh_component
     c.set_static_mesh(sm)
-    a.set_actor_scale3d(V(s, s, s))
+    a.set_actor_scale3d(sv)
     if anchor == "bottom":
         dz = -mn.z * s
     elif anchor == "top":
@@ -121,17 +127,16 @@ def main():
     # ---------------- A. Skybridge: ceiling light strips between the ribs, baseboard light lines
     for i in range(7):
         x = 475 + i * 450
-        prop(f"A_CeilStrip{i}", sl("SM_Sci_Fi_Corridor_Ceiling_Strip"), x, 0, 450, length=380, anchor="top", along="x")
+        prop(f"A_CeilStrip{i}", sl("SM_Sci_Fi_Corridor_Ceiling_Strip"), x, 0, 450, size=(380, 150, 40), anchor="top", along="x")
     for i in range(7):
         x = 475 + i * 450
         for side in (-1, 1):
             prop(f"A_Baseboard{i}_{'L' if side < 0 else 'R'}", sl("SM_Sci_Fi_Linear_Baseboard_Light"),
-                 x, side * 280, 0, yaw=0 if side > 0 else 180, length=360, along="x")
+                 x, side * 285, 0, yaw=0 if side > 0 else 180, height=14, along="x")
 
     # ---------------- B. Atrium
     # colonnade under the mezzanine
-    for i in range(6):
-        prop(f"B_Column{i}", f"{LT}/SM_Column_Single_01", 3800 + i * 500, -790, 0, height=1200)
+    prop("B_WallCladding", f"{LT}/SM_Column_Single_01", 4700, -1080 + 93, 0, height=1200, along="x")
     # security arch flanked by monolith lights
     for side in (-1, 1):
         prop(f"B_ArchMonolith_{'L' if side < 0 else 'R'}", sl("SM_Sci_Fi_Monolith_Light"), 6080, side * 360, 0, yaw=180, height=260)
@@ -151,12 +156,12 @@ def main():
 
     # ---------------- C. Simulation suite
     for i, x in enumerate((6900, 8300, 9700)):
-        prop(f"C_CeilBeam{i}", sl("SM_Segmented_Ceiling_Beam"), x, 0, 900, length=2960, anchor="top", along="y")
+        prop(f"C_CeilBeam{i}", sl("SM_Segmented_Ceiling_Beam"), x, 0, 900, size=(2960, 70, 70), anchor="top", along="y")
     for i, x in enumerate((7000, 8300, 9600)):
         for side in (-1, 1):
             prop(f"C_Beacon{i}_{'S' if side < 0 else 'N'}", sl("SM_Sci_Fi_Heavy_Duty_Linear_Beacon"),
                  x, side * 1470, 700, yaw=0 if side < 0 else 180, length=220, anchor="center", along="x")
-    prop("C_ControlDesk", f"{LT}/SM_WorkStation_01", 6650, -1250, 0, yaw=90, length=220)
+    prop("C_ControlDesk", f"{LT}/SM_WorkStation_01", 6650, -1250, 0, yaw=90, height=170)
     restyle_interactable("C_RelayTerminal", sl("SM_Sci_Fi_Info_Terminal"), 9820, 1380, 415, yaw=180, height=170)
 
     # ---------------- D. Operations gallery
@@ -172,7 +177,7 @@ def main():
         prop(f"D_WorkTable{i}", f"{CL}/Props/SM_RoomWorkTable_Table", x, 300, 0, yaw=180, length=200)
         prop(f"D_WorkMonitor{i}", f"{CL}/Props/SM_RoomWorkTable_ControlMonitor01", x, 300, 0, yaw=180, length=180)
     for i in range(5):
-        prop(f"D_CeilStrip{i}", sl("SM_Sci_Fi_Corridor_Ceiling_Strip"), 10750 + i * 900, 0, 500, length=700, anchor="top", along="x")
+        prop(f"D_CeilStrip{i}", sl("SM_Sci_Fi_Corridor_Ceiling_Strip"), 10750 + i * 900, 0, 500, size=(700, 140, 40), anchor="top", along="x")
     restyle_interactable("D_Opt_TerminalLog", f"{CL}/Props/SM_RoomWorkTable_SmallMonitor", 11200, 330, 90, yaw=180, length=80)
 
     # ---------------- E. Director antechamber (symmetrical)

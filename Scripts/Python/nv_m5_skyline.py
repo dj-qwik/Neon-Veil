@@ -24,6 +24,8 @@ ROOTS = ["/Game/CitySampleBuildings/Building/Library/Kit_Hero_Bldg/LevelInstance
          "/Game/CitySampleBuildings/Building/Library/Kit_Ref_Bldg/LevelInstance"]
 CENTER = unreal.Vector(5000, 0, 0)          # atrium; the hero view looks north (+Y)
 NEAR_CLEAR = 26000.0                         # TEMP blocks closer than this are removed
+EXCLUDE = ("SFB", "Dome", "Entrance", "NYAA", "NYAB", "NYAC", "NYAD", "NYAE", "NYAF", "SFA",
+           "CHA", "CHD", "NYH", "CHI", "SFJ_Ref", "Triangle", "CHG_Long", "Square", "BlockThree")
 
 def classes():
     out = []
@@ -31,6 +33,10 @@ def classes():
         for p in EAL.list_assets(root, recursive=False):
             name = p.split("/")[-1].split(".")[0]
             if not name.startswith("BPP_") or "Level01" in name:
+                continue
+            # Veyra-9 is a modern megacity: skip the classical/civic pieces (domes, capitol,
+            # pediment blocks, low row houses) that read as a present-day historic downtown.
+            if any(k in name for k in EXCLUDE):
                 continue
             gen = EAL.load_blueprint_class(p.split(".")[0])
             if gen:
@@ -97,33 +103,41 @@ def main():
         o, e = sizes[name]
         log(f"  {name}: footprint {2*e.x/100:.0f}x{2*e.y/100:.0f} m, height {2*e.z/100:.0f} m")
 
+    # VRAM budget (RTX 4050, 6 GB): memory scales with UNIQUE buildings (meshes + virtual
+    # textures), not instance count. Use a small pool of hero towers and repeat them with
+    # rotation/scale variety.
+    global POOL
+    POOL = tall[:5]
+    log("pool:", [n for n, _ in POOL])
     placed = 0
     occupied = []
     def free(x, y, r):
         return all(math.hypot(x - ox, y - oy) > (r + orr) for ox, oy, orr in occupied)
 
     # rings: north (hero glazing) dense, south and east sparser
-    plan = [(+1, 40, 7000, 45000), (-1, 22, 7000, 40000)]
+    plan = [(+1, 30, 18000, 110000), (-1, 16, 16000, 90000)]
     for side, count, rmin, rmax in plan:
         tries = 0
         n = 0
         while n < count and tries < 2000:
             tries += 1
-            name, c = random.choice(tall[: max(6, len(tall))])
+            name, c = random.choice(POOL)
             o, e = sizes[name]
-            scale = random.uniform(1.0, 1.7)
+            scale = random.uniform(1.4, 2.4)
             foot = max(e.x, e.y) * scale
-            x = CENTER.x + random.uniform(-26000, 34000)
+            x = CENTER.x + random.uniform(-60000, 70000)
             y = side * random.uniform(rmin, rmax)
             if not free(x, y, foot + 600):
                 continue
             # tops staggered around the Crown's eye level; nearer towers sit lower (looking down)
             dist = math.hypot(x - CENTER.x, y)
-            top = random.uniform(-9000, 2500) + (dist / 45000.0) * 9000.0
+            # the Crown is the city's apex: near towers top out well below the glazing so the
+            # player looks down across them; far towers rise toward the horizon line.
+            top = random.uniform(-26000, -6000) + (dist / 110000.0) * 26000.0
             h = 2 * e.z * scale
             base_z = top - h
-            if base_z > -9000:          # bases must stay deep in the fog
-                scale *= (top + 9000) / h
+            if base_z > -40000:         # bases must stay deep in the haze
+                scale *= (top + 40000) / h
                 h = 2 * e.z * scale
                 base_z = top - h
             yaw = random.choice([0, 90, 180, 270]) + random.uniform(-4, 4)
@@ -133,6 +147,10 @@ def main():
             bottom_off = (o.z - e.z) * scale
             a.set_actor_location(unreal.Vector(x, y, base_z - bottom_off), False, False)
             a.set_folder_path(FOLDER)
+            # distant set dressing: no Lumen distance fields, no dynamic shadows (6 GB budget)
+            for c in a.get_components_by_class(unreal.StaticMeshComponent):
+                c.set_editor_property("affect_distance_field_lighting", False)
+                c.set_editor_property("cast_shadow", False)
             a.set_actor_label(f"CS_{name.replace('BPP_', '')}_{placed:02d}")
             occupied.append((x, y, foot))
             placed += 1
