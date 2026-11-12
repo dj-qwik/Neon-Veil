@@ -25,3 +25,4 @@
 *.uproject text eol=crlf
 *.py text eol=crlf
 *.bat text eol=crlf
+RawAssets/** !text !filter !merge !diff
