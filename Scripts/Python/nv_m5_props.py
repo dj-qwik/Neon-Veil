@@ -27,6 +27,40 @@ SL = "/Game/Sci_Fi_Light/Static_Meshes"
 def sl(name):
     return f"{SL}/{name}/Mesh/{name}"
 
+ART = "/Game/NeonVeil/Materials/Art"
+def emissive_mi(name, rgb, strength):
+    path = f"{ART}/{name}"
+    if EAL.does_asset_exist(path):
+        return unreal.load_asset(path)
+    AT = unreal.AssetToolsHelpers.get_asset_tools()
+    MEL = unreal.MaterialEditingLibrary
+    inst = AT.create_asset(name, ART, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+    MEL.set_material_instance_parent(inst, unreal.load_asset(f"{ART}/M_NV_Emissive"))
+    MEL.set_material_instance_vector_parameter_value(inst, "EmissiveColor", unreal.LinearColor(rgb[0], rgb[1], rgb[2], 1))
+    MEL.set_material_instance_scalar_parameter_value(inst, "EmissiveStrength", strength)
+    MEL.update_material_instance(inst)
+    EAL.save_loaded_asset(inst, only_if_is_dirty=False)
+    return inst
+
+# The Sci-Fi Light pack ships its light panels with a flat yellow "Light" material. Re-light them
+# to the Directorate palette: warm-white architectural light, cyan accents.
+LIGHT_WARM = None
+LIGHT_CYAN = None
+WARM_PROPS = ("CeilStrip", "Luminaire", "CeilBeam", "Baseboard")
+def relight(actor, comp=None):
+    global LIGHT_WARM, LIGHT_CYAN
+    if LIGHT_WARM is None:
+        LIGHT_WARM = emissive_mi("MI_DIR_WhiteLight", (1.0, 0.94, 0.86), 5.0)
+        LIGHT_CYAN = unreal.load_asset(f"{ART}/MI_DIR_CyanLight")
+    label = actor.get_actor_label()
+    mi = LIGHT_WARM if any(k in label for k in WARM_PROPS) else LIGHT_CYAN
+    comps = [comp] if comp else actor.get_components_by_class(unreal.StaticMeshComponent)
+    for c in comps:
+        for i in range(c.get_num_materials()):
+            m = c.get_material(i)
+            if m and m.get_name() == "Light":
+                c.set_material(i, mi)
+
 _cache = {}
 def mesh(path):
     if path not in _cache:
@@ -87,6 +121,7 @@ def prop(label, path, x, y, z, yaw=0.0, height=None, length=None, width=None, sc
         c.set_material(0, mat)
     a.set_actor_label(label)
     a.set_folder_path(FOLDER)
+    relight(a)
     return a
 
 def find(label):
@@ -111,6 +146,7 @@ def restyle_interactable(label, path, x, y, z, yaw=0.0, height=None, length=None
     else:
         for i in range(m.get_num_materials()):
             m.set_material(i, sm.get_material(i))
+        relight(a, m)
     mn, _, _ = dims(sm)
     a.set_actor_location(V(x, y, z - mn.z * s), False, False)
     a.set_actor_rotation(unreal.Rotator(yaw=yaw), False)
