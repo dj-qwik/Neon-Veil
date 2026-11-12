@@ -71,3 +71,22 @@ Settings: fullscreen 1920×1080, TSR upscaling from 67% (r.ScreenPercentage 67),
 | Sim suite | 86.0 | 12.9 ms | 16 ms |
 | Gallery | 80.1 | 13.8 ms | 15 ms |
 | Antechamber | 82.9 | 13.5 ms | 22 ms |
+
+## Update — rain, Director MetaHuman and reflection (12 Nov 2026)
+
+- **Rain:** 8 instanced streak fields (30,000 streaks) replace the old repeating sheets. Each streak has its own speed, length and phase. Tested falling in play.
+- **Director:** a MetaHuman (Walter preset, rigged and textured through Epic's cloud, Optimized/Medium build). He wears the free MetaOutfits Casual Male outfit, tinted charcoal; we have no Bible-accurate outfit yet. Textures are capped at 2048 for face and head and 1024 for everything else.
+- **Reflection desync:** a mirrored Director stands behind the antechamber glass. When the player looks at the reflection for 0.6 s, it stops for 0.35 s and then catches up. Tested in play, including in the packaged build log.
+- **PSO cache re-recorded** with the Director (179 pipelines). New-PSO events appear only during the black load fade.
+- **Packaged benchmark** at 1080p (TSR from 67%):
+
+| Stop | avg fps | p95 frame | max frame | VRAM peak |
+|---|---|---|---|---|
+| Tram ride | 76.8 | 14.4 ms | 16 ms | 4.91 GB (load spike, under the fade) |
+| Skybridge | 77.1 | 14.6 ms | 20 ms | 4.18 GB |
+| Atrium | 83.0 | 14.1 ms | 18 ms | 4.22 GB |
+| Sim suite | 84.2 | 13.3 ms | 21 ms | 4.36 GB |
+| Gallery | 78.5 | 14.4 ms | 16 ms | 4.43 GB |
+| Antechamber (Director) | 79.2 | 14.4 ms | 22 ms | 4.46 GB |
+
+VRAM budget is 5.15 GB on the RTX 4050. The editor's "video memory exhausted" warning comes from the editor's own overhead and does not appear in the packaged build.
