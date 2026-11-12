@@ -25,3 +25,18 @@ Plugins/*/Intermediate/
 Thumbs.db
 .DS_Store
 desktop.ini
+
+# Third-party Fab / Epic content (licensed, not redistributable; re-acquire via Fab - see Docs/M4 asset list)
+Content/CitySampleBuildings/
+Content/CitySampleVehicles/
+Content/Clinic/
+Content/SciFI_Lite_Assets/
+Content/Sci_Fi_Light/
+Content/HologramShader/
+Content/NiagaraExamples/
+Content/HealthDamageSFX/
+Content/SciFiUISFX/
+Content/SciFi_UI_SFX_Pack_Vol_1_Holographic_Glitch_And_Bubble_Sounds/
+Content/Cues/
+Content/Wavs/
+Content/GameAnimationSample/
