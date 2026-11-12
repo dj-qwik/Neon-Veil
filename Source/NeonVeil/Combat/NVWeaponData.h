@@ -12,6 +12,7 @@ class USoundBase;
 class UAnimMontage;
 class UMaterialInterface;
 class UCameraShakeBase;
+class UAnimationAsset;
 
 UENUM(BlueprintType)
 enum class ENVFireMode : uint8
@@ -149,6 +150,22 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	FName GripSocket = TEXT("GripPoint");
+
+	/** Muzzle position in the weapon mesh's local space, used when the mesh has no MuzzleSocket. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
+	FVector MuzzleOffset = FVector::ZeroVector;
+
+	/** Played on the weapon's own skeletal mesh (trigger/slide/bolt) when firing. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
+	TSoftObjectPtr<UAnimationAsset> WeaponFireAnim;
+
+	/** Played on the weapon's own skeletal mesh when reloading (magazine out/in). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
+	TSoftObjectPtr<UAnimationAsset> WeaponReloadAnim;
+
+	/** Playback rate for WeaponReloadAnim so it fits ReloadTime; 0 = auto-fit. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
+	float WeaponReloadAnimRate = 0.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	TSoftObjectPtr<UNiagaraSystem> MuzzleFlash;

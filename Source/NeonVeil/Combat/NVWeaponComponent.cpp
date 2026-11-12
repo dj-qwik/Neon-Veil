@@ -18,6 +18,8 @@
 #include "Engine/SkeletalMesh.h"
 #include "Sound/SoundBase.h"
 #include "Animation/AnimMontage.h"
+#include "Animation/AnimationAsset.h"
+#include "Animation/AnimSequenceBase.h"
 #include "Materials/MaterialInterface.h"
 #include "Camera/CameraShakeBase.h"
 #include "DrawDebugHelpers.h"
@@ -359,13 +361,34 @@ void UNVWeaponComponent::PlayFireEffects(const UNVWeaponData& Data, const FVecto
 {
 	USceneComponent* MuzzleParent = WeaponMesh && WeaponMesh->GetSkeletalMeshAsset() ? static_cast<USceneComponent*>(WeaponMesh) : static_cast<USceneComponent*>(WeaponStaticMesh);
 	const bool bHasSocket = MuzzleParent && MuzzleParent->DoesSocketExist(Data.MuzzleSocket);
-	const FVector MuzzleLoc = bHasSocket ? MuzzleParent->GetSocketLocation(Data.MuzzleSocket) : (Camera ? Camera->GetComponentLocation() + Camera->GetForwardVector() * 60.f : FVector::ZeroVector);
+	const bool bHasOffset = MuzzleParent && !Data.MuzzleOffset.IsNearlyZero();
+	FVector MuzzleLoc = Camera ? Camera->GetComponentLocation() + Camera->GetForwardVector() * 60.f : FVector::ZeroVector;
+	if (bHasSocket)
+	{
+		MuzzleLoc = MuzzleParent->GetSocketLocation(Data.MuzzleSocket);
+	}
+	else if (bHasOffset)
+	{
+		MuzzleLoc = MuzzleParent->GetComponentTransform().TransformPosition(Data.MuzzleOffset);
+	}
 
 	if (UNiagaraSystem* Flash = Data.MuzzleFlash.LoadSynchronous())
 	{
 		if (bHasSocket)
 		{
 			UNiagaraFunctionLibrary::SpawnSystemAttached(Flash, MuzzleParent, Data.MuzzleSocket, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true);
+		}
+		else if (bHasOffset)
+		{
+			UNiagaraFunctionLibrary::SpawnSystemAttached(Flash, MuzzleParent, NAME_None, Data.MuzzleOffset, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, true);
+		}
+	}
+	if (WeaponMesh && WeaponMesh->GetSkeletalMeshAsset())
+	{
+		if (UAnimationAsset* FireAnim = Data.WeaponFireAnim.LoadSynchronous())
+		{
+			WeaponMesh->PlayAnimation(FireAnim, false);
+			WeaponMesh->SetPlayRate(1.f);
 		}
 	}
 	if (UNiagaraSystem* Tracer = Data.Tracer.LoadSynchronous())
@@ -419,6 +442,21 @@ void UNVWeaponComponent::Reload()
 	if (USoundBase* Snd = Data->ReloadSound.LoadSynchronous())
 	{
 		UGameplayStatics::PlaySound2D(this, Snd);
+	}
+	if (WeaponMesh && WeaponMesh->GetSkeletalMeshAsset())
+	{
+		if (UAnimationAsset* ReloadAnim = Data->WeaponReloadAnim.LoadSynchronous())
+		{
+			WeaponMesh->PlayAnimation(ReloadAnim, false);
+			float Rate = Data->WeaponReloadAnimRate;
+			if (Rate <= 0.f)
+			{
+				const UAnimSequenceBase* Seq = Cast<UAnimSequenceBase>(ReloadAnim);
+				const float Len = Seq ? Seq->GetPlayLength() : 0.f;
+				Rate = (Len > 0.f && Data->ReloadTime > 0.f) ? Len / Data->ReloadTime : 1.f;
+			}
+			WeaponMesh->SetPlayRate(Rate);
+		}
 	}
 	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
 	{
