@@ -1,4 +1,5 @@
 #include "Save/NVSaveSubsystem.h"
+#include "Abilities/NVAbilityComponent.h"
 #include "Save/NVSaveGame.h"
 #include "World/NVCheckpoint.h"
 #include "Objectives/NVObjectiveSubsystem.h"
@@ -77,6 +78,7 @@ bool UNVSaveSubsystem::SaveCheckpoint(FName CheckpointID)
 	Save->CheckpointID = CheckpointID;
 	Save->Health = Player->GetHealth()->GetHealth();
 	Save->WeaponSlots = Player->GetWeapons()->GetSlots();
+	Save->DisabledAbilities = Player->GetAbilities()->GetDisabledTags();
 	Save->CurrentWeaponSlot = Player->GetWeapons()->GetCurrentSlotIndex();
 	Save->SavedAt = FDateTime::Now();
 

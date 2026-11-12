@@ -26,6 +26,18 @@ float UNVHealthComponent::ApplyDamage(float Amount, AActor* DamageInstigator, FG
 		return 0.f;
 	}
 
+	if (IncomingDamageScale < 1.f)
+	{
+		const float Blocked = Amount * (1.f - FMath::Max(0.f, IncomingDamageScale));
+		BlockedDamage += Blocked;
+		Amount -= Blocked;
+		OnDamageBlocked.Broadcast(this, Blocked);
+		if (Amount <= 0.f)
+		{
+			return 0.f;
+		}
+	}
+
 	float Final = Amount * (1.f - ArmorFraction);
 	if (bWeakPointHit)
 	{

@@ -13,6 +13,8 @@ class UInputAction;
 class UNVHealthComponent;
 class UNVWeaponComponent;
 class UNVInteractionComponent;
+class UNVAbilityComponent;
+class UNVMeleeComponent;
 class UAnimInstance;
 class USkeletalMesh;
 
@@ -50,6 +52,12 @@ public:
 	UNVInteractionComponent* GetInteraction() const { return Interaction; }
 
 	UFUNCTION(BlueprintPure, Category = "NeonVeil")
+	UNVAbilityComponent* GetAbilities() const { return Abilities; }
+
+	UFUNCTION(BlueprintPure, Category = "NeonVeil")
+	UNVMeleeComponent* GetMelee() const { return Melee; }
+
+	UFUNCTION(BlueprintPure, Category = "NeonVeil")
 	bool IsSprinting() const { return bSprinting; }
 
 	UFUNCTION(BlueprintPure, Category = "NeonVeil")
@@ -80,6 +88,10 @@ public:
 
 	/** QA: simulate held movement / sprint input (cleared with zero input). */
 	void SetDebugMoveInput(FVector2D Input, bool bSprint);
+	/** QA: same paths as the melee and ability buttons. */
+	void DebugMelee() { MeleePressed(); }
+	void DebugAbility(int32 Slot);
+
 	/** QA: same path as pressing jump (vaults when facing a vaultable obstacle). */
 	void DebugJump() { JumpPressed(); }
 	/** QA: same path as pressing crouch (slides when sprinting). */
@@ -106,6 +118,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> WeaponStaticMesh;
 
+	/** Shock baton viewmodel, shown only during a swing. Placeholder cylinder until M5 art. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> BatonMesh;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UNVHealthComponent> Health;
 
@@ -114,6 +130,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UNVInteractionComponent> Interaction;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UNVAbilityComponent> Abilities;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UNVMeleeComponent> Melee;
 
 	// --- Input (assigned in BP_NVPlayerCharacter)
 	/** Added in order, first = highest priority. */
@@ -155,6 +177,19 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> PrevWeaponAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> MeleeAction;
+
+	/** Ability slots 0..2 (optical disruption, kinetic shield, drone uplink). */
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> Ability1Action;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> Ability2Action;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> Ability3Action;
 
 	// --- Movement tuning (Bible §7)
 	UPROPERTY(EditDefaultsOnly, Category = "Movement")
@@ -243,6 +278,10 @@ private:
 	void InteractReleased();
 	void NextWeapon();
 	void PrevWeapon();
+	void MeleePressed();
+	void Ability1Pressed();
+	void Ability2Pressed();
+	void Ability3Pressed();
 
 	void SetSprinting(bool bNewSprinting);
 	bool CanSprint() const;

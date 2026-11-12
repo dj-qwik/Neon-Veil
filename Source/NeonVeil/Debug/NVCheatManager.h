@@ -90,6 +90,22 @@ public:
 	UFUNCTION(Exec)
 	void NVSimSkip();
 
+	/** Melee strike (same path as the button). Count > 1 chains strikes back to back. */
+	UFUNCTION(Exec)
+	void NVMelee(int32 Count = 1);
+
+	/** Activate ability slot 0..2 (same path as the button). */
+	UFUNCTION(Exec)
+	void NVAbility(int32 Slot);
+
+	/** Clear ability cooldowns. */
+	UFUNCTION(Exec)
+	void NVAbilityReset();
+
+	/** Story-disable (1) or restore (0) an ability slot, to test the M01 path (QA-04). */
+	UFUNCTION(Exec)
+	void NVAbilityDisable(int32 Slot, int32 bDisabled = 1);
+
 private:
 	ANVPlayerCharacter* GetNVPlayer() const;
 	AActor* FindActor(const FString& Name) const;
@@ -103,6 +119,9 @@ private:
 	int32 LastAimWeakPoint = 0;
 	FTimerHandle FireTimer;
 	FTimerHandle UseTimer;
+	FTimerHandle MeleeTimer;
+	int32 MeleeRemaining = 0;
+	void MeleeTick();
 	FTimerHandle SampleTimer;
 	int32 SamplesRemaining = 0;
 	float SampleStart = 0.f;

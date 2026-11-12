@@ -9,6 +9,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FNVOnHealthChanged, UNVHealthCompo
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNVOnDeath, UNVHealthComponent*, HealthComp, AActor*, Killer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNVOnShieldChanged, UNVHealthComponent*, HealthComp, float, NewShield);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNVOnShieldBroken, UNVHealthComponent*, HealthComp);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNVOnDamageBlocked, UNVHealthComponent*, HealthComp, float, BlockedAmount);
 
 /**
  * Health, armor and death for players, enemies and destructible targets.
@@ -60,8 +61,19 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Health")
 	FNVOnShieldBroken OnShieldBroken;
 
+	/** Fired when IncomingDamageScale removed damage (kinetic shield feedback). */
+	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Health")
+	FNVOnDamageBlocked OnDamageBlocked;
+
 	UFUNCTION(BlueprintPure, Category = "NeonVeil|Health")
 	float GetShield() const { return Shield; }
+
+	/** Multiplier on all incoming damage, set by abilities (kinetic shield = 0). */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = "NeonVeil|Health")
+	float IncomingDamageScale = 1.f;
+
+	float GetBlockedDamage() const { return BlockedDamage; }
+	void ResetBlockedDamage() { BlockedDamage = 0.f; }
 
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Health")
 	void RestoreShield();
@@ -103,4 +115,5 @@ private:
 	float Shield = 0.f;
 
 	bool bDead = false;
+	float BlockedDamage = 0.f;
 };

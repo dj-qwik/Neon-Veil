@@ -5,6 +5,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "Sound/SoundBase.h"
+#include "NeonVeil.h"
 
 ANVTrainingTarget::ANVTrainingTarget()
 {
@@ -36,6 +37,7 @@ void ANVTrainingTarget::BeginPlay()
 {
 	Super::BeginPlay();
 	StartLocation = GetActorLocation();
+	StartRotation = GetActorRotation();
 	Health->OnHealthChanged.AddDynamic(this, &ANVTrainingTarget::HandleHealthChanged);
 	Health->OnShieldBroken.AddDynamic(this, &ANVTrainingTarget::HandleShieldBroken);
 	Health->OnDeath.AddDynamic(this, &ANVTrainingTarget::HandleDeath);
@@ -58,7 +60,8 @@ void ANVTrainingTarget::Activate()
 	bCleared = false;
 	SetTargetVisible(true);
 	ShieldMesh->SetVisibility(Health->MaxShield > 0.f);
-	SetActorTickEnabled(!PatrolOffset.IsNearlyZero());
+	StaggerTimeLeft = 0.f;
+	SetActorTickEnabled(NeedsTick());
 	BP_OnActivated();
 }
 
@@ -66,6 +69,7 @@ void ANVTrainingTarget::ResetTarget()
 {
 	Health->ResetHealth();
 	SetActorLocation(StartLocation);
+	SetActorRotation(StartRotation);
 	PatrolAlpha = 0.f;
 	PatrolDir = 1.f;
 	Activate();
@@ -84,6 +88,24 @@ void ANVTrainingTarget::SetTargetVisible(bool bVisible)
 	SetActorEnableCollision(bVisible);
 }
 
+bool ANVTrainingTarget::NeedsTick() const
+{
+	return !PatrolOffset.IsNearlyZero() || BobAmplitude > 0.f || StaggerTimeLeft > 0.f;
+}
+
+void ANVTrainingTarget::ApplyStagger(float Duration, AActor* StaggerInstigator)
+{
+	if (!bActive || bCleared)
+	{
+		return;
+	}
+	StaggerTimeLeft = Duration;
+	// Readable reaction until real hit-reaction animation exists: knock the target back 14 degrees.
+	SetActorRotation(StartRotation + FRotator(-14.f, 0.f, 0.f));
+	SetActorTickEnabled(true);
+	UE_LOG(LogNeonVeil, Log, TEXT("%s staggered for %.1f s"), *GetName(), Duration);
+}
+
 void ANVTrainingTarget::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -91,21 +113,37 @@ void ANVTrainingTarget::Tick(float DeltaSeconds)
 	{
 		return;
 	}
+	Age += DeltaSeconds;
+	if (StaggerTimeLeft > 0.f)
+	{
+		StaggerTimeLeft -= DeltaSeconds;
+		if (StaggerTimeLeft <= 0.f)
+		{
+			StaggerTimeLeft = 0.f;
+			SetActorRotation(StartRotation);
+			SetActorTickEnabled(NeedsTick());
+		}
+		return; // a staggered target holds still
+	}
+	FVector Offset = FVector::ZeroVector;
 	const float Length = PatrolOffset.Size();
-	if (Length <= KINDA_SMALL_NUMBER)
+	if (Length > KINDA_SMALL_NUMBER)
 	{
-		return;
+		PatrolAlpha += PatrolDir * (PatrolSpeed / Length) * DeltaSeconds;
+		if (PatrolAlpha >= 1.f || PatrolAlpha <= 0.f)
+		{
+			PatrolAlpha = FMath::Clamp(PatrolAlpha, 0.f, 1.f);
+			PatrolDir *= -1.f;
+		}
+		// Smooth turnarounds so motion reads as a mechanical track, not a ping-pong.
+		const float Eased = FMath::InterpEaseInOut(0.f, 1.f, PatrolAlpha, 1.6f);
+		Offset = GetActorTransform().TransformVectorNoScale(PatrolOffset) * Eased;
 	}
-	PatrolAlpha += PatrolDir * (PatrolSpeed / Length) * DeltaSeconds;
-	if (PatrolAlpha >= 1.f || PatrolAlpha <= 0.f)
+	if (BobAmplitude > 0.f)
 	{
-		PatrolAlpha = FMath::Clamp(PatrolAlpha, 0.f, 1.f);
-		PatrolDir *= -1.f;
+		Offset.Z += FMath::Sin(Age * BobSpeed) * BobAmplitude;
 	}
-	// Smooth turnarounds so motion reads as a mechanical track, not a ping-pong.
-	const float Eased = FMath::InterpEaseInOut(0.f, 1.f, PatrolAlpha, 1.6f);
-	const FVector WorldOffset = GetActorTransform().TransformVectorNoScale(PatrolOffset);
-	SetActorLocation(StartLocation + WorldOffset * Eased);
+	SetActorLocation(StartLocation + Offset);
 }
 
 void ANVTrainingTarget::HandleHealthChanged(UNVHealthComponent* HealthComp, float NewHealth, float Delta, AActor* InstigatorActor, FGameplayTag DamageType)

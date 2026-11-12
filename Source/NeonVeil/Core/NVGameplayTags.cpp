@@ -8,8 +8,13 @@ namespace NVTags
 
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(HitZone_WeakPoint, "NV.HitZone.WeakPoint", "Component tag marking a weak point");
 
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_OpticalDisruption, "NV.Ability.OpticalDisruption", "Short optical cloak");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_KineticShield, "NV.Ability.KineticShield", "Shield burst: blocks incoming damage briefly");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Ability_DroneUplink, "NV.Ability.DroneUplink", "Recon drone that marks hostiles");
+
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00_SecurityArchCleared, "NV.Event.M00.SecurityArchCleared", "M00-O01 completion");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00_CalibrationComplete, "NV.Event.M00.CalibrationComplete", "M00-O02 completion");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00_HoloTableReviewed, "NV.Event.M00.HoloTableReviewed", "M00-O03 completion");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00_BiometricScanStarted, "NV.Event.M00.BiometricScanStarted", "M00-O04 completion");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00_SurveillanceBypassed, "NV.Event.M00.SurveillanceBypassed", "Simulation: reached the terminal past the surveillance cone");
 }

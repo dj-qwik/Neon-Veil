@@ -1,4 +1,5 @@
 #include "Core/NVGameMode.h"
+#include "Abilities/NVAbilityComponent.h"
 #include "Core/NVPlayerController.h"
 #include "UI/NVHUD.h"
 #include "Objectives/NVObjectiveSubsystem.h"
@@ -83,6 +84,7 @@ void ANVGameMode::StartPlay()
 			if (ANVPlayerCharacter* P = Cast<ANVPlayerCharacter>(PC->GetPawn()))
 			{
 				P->GetHealth()->SetHealthDirect(Pending->Health);
+				P->GetAbilities()->RestoreDisabledTags(Pending->DisabledAbilities);
 				if (Pending->WeaponSlots.Num() > 0)
 				{
 					P->GetWeapons()->RestoreSlots(Pending->WeaponSlots, Pending->CurrentWeaponSlot);

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "GameplayTagContainer.h"
 #include "Combat/NVWeaponComponent.h"
 #include "NVSaveGame.generated.h"
 
@@ -12,7 +13,7 @@ class NEONVEIL_API UNVSaveGame : public USaveGame
 	GENERATED_BODY()
 
 public:
-	static constexpr int32 CurrentVersion = 1;
+	static constexpr int32 CurrentVersion = 2; // 2: DisabledAbilities
 
 	UPROPERTY()
 	int32 Version = CurrentVersion;
@@ -38,6 +39,10 @@ public:
 
 	UPROPERTY()
 	int32 CurrentWeaponSlot = 0;
+
+	/** Cyberware the story has disabled (M01 failure). Empty in M00. */
+	UPROPERTY()
+	TArray<FGameplayTag> DisabledAbilities;
 
 	/** Story/world flags for later missions (betrayal state, unlocked doors...). */
 	UPROPERTY()

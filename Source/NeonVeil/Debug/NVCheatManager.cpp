@@ -1,4 +1,7 @@
 #include "Debug/NVCheatManager.h"
+#include "Abilities/NVAbilityComponent.h"
+#include "Abilities/NVAbilityData.h"
+#include "Combat/NVMeleeComponent.h"
 #include "Character/NVPlayerCharacter.h"
 #include "Combat/NVHealthComponent.h"
 #include "Combat/NVWeaponComponent.h"
@@ -155,7 +158,8 @@ void UNVCheatManager::NVGoTo(const FString& Name, float Distance, float Approach
 		Dir = FVector::ForwardVector;
 	}
 	FVector Dest = Target->GetActorLocation() + Dir * Distance;
-	Dest.Z = Player->GetActorLocation().Z + 2.f;
+	// Stand at the target's level (catwalks, upper floors), never below the current floor.
+	Dest.Z = FMath::Max(Player->GetActorLocation().Z + 2.f, Target->GetActorLocation().Z + 100.f);
 	Player->TeleportTo(Dest, (-Dir).Rotation());
 	GetPlayerController()->SetControlRotation((-Dir).Rotation());
 	UE_LOG(LogNeonVeil, Log, TEXT("NVCheat: moved to %s"), *Target->GetName());
@@ -213,6 +217,16 @@ void UNVCheatManager::NVReport()
 			UE_LOG(LogNeonVeil, Log, TEXT("  slot %d %s mag %d reserve %d %s"), i, *GetNameSafe(Slots[i].Data), Slots[i].AmmoInMag, Slots[i].ReserveAmmo,
 				i == W->GetCurrentSlotIndex() ? TEXT("<equipped>") : TEXT(""));
 		}
+		const UNVAbilityComponent* Ab = P->GetAbilities();
+		for (int32 i = 0; i < Ab->Abilities.Num(); ++i)
+		{
+			if (const FNVAbilityRuntime* R = Ab->GetRuntime(i))
+			{
+				UE_LOG(LogNeonVeil, Log, TEXT("  ability %d %s active %.1f cooldown %.1f disabled %d"), i, Ab->Abilities[i] ? *Ab->Abilities[i]->AbilityTag.ToString() : TEXT("None"),
+					R->ActiveTimeLeft, R->CooldownLeft, R->bDisabled);
+			}
+		}
+		UE_LOG(LogNeonVeil, Log, TEXT("  marked %d  cloaked %d  damage scale %.2f"), Ab->GetMarkedActors().Num(), UNVAbilityComponent::IsActorCloaked(P), P->GetHealth()->IncomingDamageScale);
 		AActor* Focus = P->GetInteraction()->GetFocusedActor();
 		UE_LOG(LogNeonVeil, Log, TEXT("  focus %s  location %s"), Focus ? *Focus->GetName() : TEXT("None"), *P->GetActorLocation().ToCompactString());
 	}
@@ -358,5 +372,50 @@ void UNVCheatManager::NVSimSkip()
 	for (TActorIterator<ANVSimulationDirector> It(GetWorld()); It; ++It)
 	{
 		It->DebugSkipStep();
+	}
+}
+
+void UNVCheatManager::NVMelee(int32 Count)
+{
+	MeleeRemaining = FMath::Max(1, Count);
+	MeleeTick();
+}
+
+void UNVCheatManager::MeleeTick()
+{
+	ANVPlayerCharacter* P = GetNVPlayer();
+	if (!P || MeleeRemaining <= 0)
+	{
+		return;
+	}
+	P->DebugMelee();
+	if (--MeleeRemaining > 0)
+	{
+		GetWorld()->GetTimerManager().SetTimer(MeleeTimer, this, &UNVCheatManager::MeleeTick, P->GetMelee()->SwingTime + 0.05f, false);
+	}
+}
+
+void UNVCheatManager::NVAbility(int32 Slot)
+{
+	if (ANVPlayerCharacter* P = GetNVPlayer())
+	{
+		P->DebugAbility(Slot);
+	}
+}
+
+void UNVCheatManager::NVAbilityReset()
+{
+	if (ANVPlayerCharacter* P = GetNVPlayer())
+	{
+		P->GetAbilities()->DebugResetCooldowns();
+	}
+}
+
+void UNVCheatManager::NVAbilityDisable(int32 Slot, int32 bDisabled)
+{
+	ANVPlayerCharacter* P = GetNVPlayer();
+	if (P && P->GetAbilities()->Abilities.IsValidIndex(Slot) && P->GetAbilities()->Abilities[Slot])
+	{
+		P->GetAbilities()->SetAbilityDisabled(P->GetAbilities()->Abilities[Slot]->AbilityTag, bDisabled != 0);
 	}
 }

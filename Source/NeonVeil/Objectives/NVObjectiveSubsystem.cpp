@@ -105,7 +105,12 @@ bool UNVObjectiveSubsystem::CompleteObjective(FName ObjectiveID)
 
 bool UNVObjectiveSubsystem::SendEvent(FGameplayTag EventTag)
 {
-	if (!CurrentMission || !EventTag.IsValid())
+	if (!EventTag.IsValid())
+	{
+		return false;
+	}
+	OnGameplayEvent.Broadcast(EventTag);
+	if (!CurrentMission)
 	{
 		return false;
 	}

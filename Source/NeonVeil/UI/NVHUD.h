@@ -3,9 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "UI/NVSubtitleLine.h"
+#include "Abilities/NVAbilityComponent.h"
 #include "NVHUD.generated.h"
 
 class ANVPlayerCharacter;
+class UNVHealthComponent;
 class UFont;
 
 /**
@@ -59,12 +61,44 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
 	float SubtitleScale = 1.f;
 
+	/** Button names in gamepad prompts: PlayStation (Triangle, R3) or Xbox (Y, RS). Settings hook. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
+	bool bPlayStationGlyphs = true;
+
+	/** Threat warning near the reticle (Bible §10 restrained threat indicator), e.g. "INCOMING VOLLEY". */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
+	void ShowThreat(const FText& Text, float Duration = 1.5f);
+
+	/** Surveillance detection meter, 0..1. Set every frame while relevant; fades when not updated. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
+	void SetDetection(float Amount);
+
+	/** Prompt label for an action: "[E]" or "Triangle" depending on the last device used. */
+	FString KeyLabel(FName Action) const;
+
+	bool IsUsingGamepad() const { return bUsingGamepad; }
+
 private:
 	UFUNCTION()
 	void HandleHitConfirmed(AActor* HitActor, bool bWeakPoint);
 
 	UFUNCTION()
 	void HandleObjectiveCompleted(FName ObjectiveID);
+
+	UFUNCTION()
+	void HandleMeleeHit(AActor* HitActor, bool bTakedown);
+
+	UFUNCTION()
+	void HandleAbilityFailed(FGameplayTag AbilityTag, ENVAbilityFailReason Reason);
+
+	UFUNCTION()
+	void HandleDamageBlocked(UNVHealthComponent* HealthComp, float BlockedAmount);
+
+	void UpdateInputDevice();
+	void DrawAbilities(const ANVPlayerCharacter& Player);
+	void DrawAbilityOverlays(const ANVPlayerCharacter& Player);
+	void DrawMarks(const ANVPlayerCharacter& Player);
+	void DrawThreat();
 
 	void BindToPawn();
 	void DrawReticle(const ANVPlayerCharacter& Player);
@@ -76,6 +110,13 @@ private:
 	void DrawTextShadowed(const FString& Text, float X, float Y, const FLinearColor& Color, UFont* Font, float Scale = 1.f, bool bRightAlign = false);
 
 	TWeakObjectPtr<ANVPlayerCharacter> BoundPawn;
+	bool bUsingGamepad = false;
+	FText ThreatText;
+	float ThreatUntil = -1.f;
+	float Detection = 0.f;
+	float DetectionSetAt = -10.f;
+	float ShieldFlashTime = -10.f;
+	bool bLastHitTakedown = false;
 	float HitMarkerTime = -10.f;
 	bool bHitMarkerWeak = false;
 

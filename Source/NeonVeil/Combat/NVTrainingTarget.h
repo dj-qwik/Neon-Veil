@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
+#include "Combat/NVStaggerable.h"
 #include "NVTrainingTarget.generated.h"
 
 class UStaticMeshComponent;
@@ -18,7 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNVOnTargetDestroyed, ANVTrainingTar
  * the weak point until the shield breaks.
  */
 UCLASS(Blueprintable)
-class NEONVEIL_API ANVTrainingTarget : public AActor
+class NEONVEIL_API ANVTrainingTarget : public AActor, public INVStaggerable
 {
 	GENERATED_BODY()
 
@@ -42,6 +43,11 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Target")
 	FNVOnTargetDestroyed OnTargetCleared;
+
+	// INVStaggerable
+	virtual void ApplyStagger(float Duration, AActor* StaggerInstigator) override;
+	virtual bool IsStaggered() const override { return StaggerTimeLeft > 0.f; }
+	virtual bool CanBeTakenDown() const override { return bAllowTakedown; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -71,6 +77,17 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target")
 	bool bStartActive = false;
+
+	/** Vertical hover bob (sim drone). 0 = none. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target")
+	float BobAmplitude = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target")
+	float BobSpeed = 2.f;
+
+	/** Melee dummy: a baton strike staggers it, a second strike while staggered is a takedown. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target")
+	bool bAllowTakedown = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target")
 	TObjectPtr<USoundBase> ClearedSound;
@@ -109,7 +126,12 @@ private:
 
 	void SetTargetVisible(bool bVisible);
 
+	bool NeedsTick() const;
+
 	FVector StartLocation;
+	FRotator StartRotation;
+	float StaggerTimeLeft = 0.f;
+	float Age = 0.f;
 	float PatrolAlpha = 0.f;
 	float PatrolDir = 1.f;
 	bool bActive = false;

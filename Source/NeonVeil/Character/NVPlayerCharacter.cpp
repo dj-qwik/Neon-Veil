@@ -3,6 +3,8 @@
 #include "Combat/NVWeaponComponent.h"
 #include "Combat/NVWeaponData.h"
 #include "Interaction/NVInteractionComponent.h"
+#include "Abilities/NVAbilityComponent.h"
+#include "Combat/NVMeleeComponent.h"
 #include "NeonVeil.h"
 
 #include "Camera/CameraComponent.h"
@@ -16,6 +18,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
+#include "Engine/StaticMesh.h"
+#include "UObject/ConstructorHelpers.h"
 
 ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -59,6 +63,22 @@ ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	WeaponStaticMesh->CastShadow = false;
 	WeaponStaticMesh->SetCollisionProfileName(TEXT("NoCollision"));
 
+	BatonMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BatonMesh"));
+	BatonMesh->SetupAttachment(FirstPersonCamera);
+	BatonMesh->SetOnlyOwnerSee(true);
+	BatonMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
+	BatonMesh->CastShadow = false;
+	BatonMesh->SetCollisionProfileName(TEXT("NoCollision"));
+	BatonMesh->SetHiddenInGame(true);
+	BatonMesh->SetRelativeScale3D(FVector(0.035f, 0.035f, 0.5f));
+	{
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> Cyl(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+		if (Cyl.Succeeded())
+		{
+			BatonMesh->SetStaticMesh(Cyl.Object);
+		}
+	}
+
 	// Full-body mesh: hidden from the owner, still casts a shadow (Bible §13: full-body shadow mesh).
 	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
@@ -69,6 +89,8 @@ ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	Health = CreateDefaultSubobject<UNVHealthComponent>(TEXT("Health"));
 	Weapons = CreateDefaultSubobject<UNVWeaponComponent>(TEXT("Weapons"));
 	Interaction = CreateDefaultSubobject<UNVInteractionComponent>(TEXT("Interaction"));
+	Abilities = CreateDefaultSubobject<UNVAbilityComponent>(TEXT("Abilities"));
+	Melee = CreateDefaultSubobject<UNVMeleeComponent>(TEXT("Melee"));
 
 	UCharacterMovementComponent* Move = GetCharacterMovement();
 	Move->MaxWalkSpeed = WalkSpeed;
@@ -116,6 +138,7 @@ void ANVPlayerCharacter::OnConstruction(const FTransform& Transform)
 
 void ANVPlayerCharacter::HandleWeaponFired()
 {
+	Abilities->NotifyAttacked();
 	if (const UNVWeaponData* W = Weapons->GetCurrentWeapon())
 	{
 		ViewmodelKick = W->ViewmodelKickBack * FMath::Lerp(1.f, 0.5f, Weapons->GetAdsAlpha());
@@ -189,6 +212,34 @@ void ANVPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	BindIf(InteractAction, ETriggerEvent::Completed, this, &ANVPlayerCharacter::InteractReleased);
 	BindIf(NextWeaponAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::NextWeapon);
 	BindIf(PrevWeaponAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::PrevWeapon);
+	BindIf(MeleeAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::MeleePressed);
+	BindIf(Ability1Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability1Pressed);
+	BindIf(Ability2Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability2Pressed);
+	BindIf(Ability3Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability3Pressed);
+}
+
+void ANVPlayerCharacter::MeleePressed()
+{
+	if (bInputLocked || bVaulting)
+	{
+		return;
+	}
+	SetSprinting(false);
+	Weapons->StopFire();
+	Melee->Strike();
+}
+
+void ANVPlayerCharacter::Ability1Pressed() { DebugAbility(0); }
+void ANVPlayerCharacter::Ability2Pressed() { DebugAbility(1); }
+void ANVPlayerCharacter::Ability3Pressed() { DebugAbility(2); }
+
+void ANVPlayerCharacter::DebugAbility(int32 Slot)
+{
+	if (bInputLocked)
+	{
+		return;
+	}
+	Abilities->TryActivateSlot(Slot);
 }
 
 // ---------------------------------------------------------------- input handlers
@@ -681,6 +732,22 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 	{
 		Rot.Roll -= 25.f;
 		Offset.Z -= 4.f;
+	}
+
+	// Shock baton swing: drop the gun out of the way and sweep the baton right to left.
+	const float Swing = Melee->GetSwingAlpha();
+	const bool bSwinging = Swing > 0.f;
+	BatonMesh->SetHiddenInGame(!bSwinging);
+	if (bSwinging)
+	{
+		const float Arc = FMath::Sin(Swing * PI);
+		Rot.Roll -= 35.f * Arc;
+		Offset.Z -= 10.f * Arc;
+		const float T = FMath::SmoothStep(0.f, 0.45f, Swing); // fast strike, slow recovery
+		const float Yaw = FMath::Lerp(55.f, -45.f, T);
+		const FRotator SweepRot(0.f, Yaw, 0.f);
+		BatonMesh->SetRelativeLocation(SweepRot.RotateVector(FVector(38.f, 0.f, -10.f)));
+		BatonMesh->SetRelativeRotation(SweepRot + FRotator(-75.f, 0.f, 0.f));
 	}
 
 	ViewmodelRoot->SetRelativeLocation(FMath::VInterpTo(ViewmodelRoot->GetRelativeLocation(), Offset, DeltaSeconds, 25.f));

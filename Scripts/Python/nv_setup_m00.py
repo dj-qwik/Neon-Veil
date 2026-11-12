@@ -99,6 +99,8 @@ M_DATA = make_material("TEMP_M_DataWall", (0.0, 0.0, 0.0), (0.15, 0.6, 1.0), 0.5
 M_CITY = make_material("TEMP_M_CityBlock", (0.015, 0.016, 0.02), None, 0.6)
 M_CITYLIT = make_material("TEMP_M_CityWindows", (0.0, 0.0, 0.0), (1.4, 0.9, 0.5), 0.6)
 M_TERMINAL = unreal.load_asset(f"{MAT}/TEMP_M_Terminal")
+M_CONE = make_material("TEMP_M_ConeVis", (0.0, 0.0, 0.0), (1.6, 0.12, 0.08), 0.5, 0.0, opacity=0.12)
+M_PAD = make_material("TEMP_M_DrillPad", (0.0, 0.0, 0.0), (0.2, 1.2, 1.8), 0.5)
 
 CUBE = unreal.load_asset("/Engine/BasicShapes/Cube")
 CYL = unreal.load_asset("/Engine/BasicShapes/Cylinder")
@@ -308,7 +310,68 @@ for i, (x, y) in enumerate(((8700, -800), (8700, 800))):
     t.get_editor_property("weak_point").set_editor_property("relative_scale3d", V(0.7, 0.7, 0.3))
     t_shield.append(t)
 
-def step(kind, instruction, lines=(), targets=(), duration=1.0, slot=0):
+# Sentry drone target (Bible: 1 drone): hovering disc with a glowing stabilizer core underneath.
+t_drone = spawn(target_cls, "C_Target_Drone", (9200, 600, 380), R(yaw=180), FC)  # ~4.6 m: clear of the 3 m dividers
+t_drone.set_editor_property("patrol_offset", V(0, 1200, 0))   # local +Y = world -Y (yaw 180)
+t_drone.set_editor_property("patrol_speed", 220.0)
+t_drone.set_editor_property("bob_amplitude", 35.0)
+t_drone.get_editor_property("health").set_editor_property("max_health", 80.0)
+t_drone.get_editor_property("body").set_editor_property("relative_scale3d", V(1.0, 1.0, 0.25))
+core = t_drone.get_editor_property("weak_point")
+core.set_editor_property("relative_scale3d", V(0.3, 0.3, 1.2))
+core.set_editor_property("relative_location", V(0, 0, -110))
+
+# Cover drill (north lane, near the entrance): barrier, area behind it, emitter at the far wall.
+box("C_DrillBarrier", (7050, 700, 65), (60, 400, 130), M_WHITE, FC)
+def area(label, center, size, folder=FC):
+    a = spawn(unreal.TriggerBox, label, center, None, folder)
+    a.get_component_by_class(unreal.BoxComponent).set_box_extent(V(size[0] / 2, size[1] / 2, size[2] / 2))
+    return a
+a_cover = area("C_Area_Cover", (6880, 700, 100), (220, 380, 200))
+emitter = spawn(unreal.NVSimVolleyEmitter, "C_VolleyEmitter", (9850, 700, 280), None, FC)
+emitter.set_editor_property("spread_deg", 0.3)
+# Shield drill: exposed pad in the north lane.
+box("C_ShieldPad", (7700, 950, 2), (200, 200, 4), M_PAD, FC)
+a_shield = area("C_Area_Shield", (7700, 950, 100), (200, 200, 200))
+
+# Baton dummy: gunfire (training and live rounds) doesn't register, 300 HP so the takedown is the practical answer.
+t_dummy = spawn(target_cls, "C_Target_MeleeDummy", (7000, 350, 0), R(yaw=180), FC)
+dh = t_dummy.get_editor_property("health")
+dh.set_editor_property("max_health", 300.0)
+imm = unreal.GameplayTagContainer()
+imm.import_text('(GameplayTags=((TagName="NV.Damage.Ballistic"),(TagName="NV.Damage.Training")))')
+dh.set_editor_property("immune_damage_types", imm)
+
+# Drone-uplink drill: walled enclosure (open top, 2.0 m) in the south lane with 3 concealed profiles.
+EX0, EX1, EY0, EY1, EH = 9400, 10000, -1350, -650, 200
+box("C_Enclosure_N", ((EX0 + EX1) / 2, EY1, EH / 2), (EX1 - EX0, 30, EH), M_DARK, FC)
+box("C_Enclosure_S", ((EX0 + EX1) / 2, EY0, EH / 2), (EX1 - EX0, 30, EH), M_DARK, FC)
+box("C_Enclosure_W", (EX0, (EY0 + EY1) / 2, EH / 2), (30, EY1 - EY0, EH), M_DARK, FC)
+box("C_Enclosure_E", (EX1, (EY0 + EY1) / 2, EH / 2), (30, EY1 - EY0, EH), M_DARK, FC)
+t_hidden = []
+for i, (x, y) in enumerate(((9720, -950), (9820, -1150), (9860, -820))):
+    t_hidden.append(spawn(target_cls, f"C_Target_Concealed{i}", (x, y, 0), R(yaw=180), FC))
+
+# Optical-disruption drill: camera on the east wall watching the catwalk; terminal at the far end.
+cam = spawn(unreal.NVSurveillanceCamera, "C_SurveillanceCamera", (10230, 1300, 750), R(pitch=-10, yaw=180), FC)
+cam.set_editor_property("view_distance", 2200.0)
+cam.set_editor_property("half_angle", 14.0)
+cam.set_editor_property("sweep_angle", 20.0)
+cam.set_editor_property("sweep_period", 5.0)
+cam.set_editor_property("cone_material", M_CONE)
+term = spawn(unreal.NVInteractableActor, "C_RelayTerminal", (9820, 1380, 475), R(yaw=180), FC)  # mesh is the root: place the actor itself
+tm = term.get_editor_property("mesh")
+tm.set_static_mesh(CUBE)
+tm.set_editor_property("relative_scale3d", V(0.5, 0.5, 1.2))
+tm.set_material(0, M_TERMINAL)
+term.set_editor_property("prompt", T("Bypass surveillance relay"))
+term.set_editor_property("hold_duration", 1.0)
+term.set_editor_property("single_use", False)
+term.set_editor_property("required_active_objective", "M00-O02")
+term.set_editor_property("completion_event_tag", tag("NV.Event.M00.SurveillanceBypassed"))
+reset = spawn(unreal.TargetPoint, "C_ConeResetPoint", (6420, 1300, 120), R(yaw=0), FC)
+
+def step(kind, instruction, lines=(), targets=(), duration=1.0, slot=0, **kw):
     s = unreal.NVSimStep()
     s.set_editor_property("type", kind)
     s.set_editor_property("instruction", T(instruction))
@@ -316,6 +379,8 @@ def step(kind, instruction, lines=(), targets=(), duration=1.0, slot=0):
     s.set_editor_property("targets", list(targets))
     s.set_editor_property("duration", duration)
     s.set_editor_property("weapon_slot", slot)
+    for k, v in kw.items():
+        s.set_editor_property(k, v)
     return s
 K = unreal.NVSimStepType
 sim = spawn(unreal.NVSimulationDirector, "C_SimulationDirector", (6800, 0, 150), None, FC)
@@ -326,12 +391,31 @@ sim.set_editor_property("steps", [
     step(K.CLEAR_TARGETS, "Neutralise the moving targets",
          [line("Simulation", "Calibration sequence initiated. Moving targets live."),
           line("AION", "Baseline reflexes nominal, Ghost-7. Proceed.")], t_moving),
-    step(K.HOLD_AIM, "Aim down sights to stabilise the suite (hold RMB / LT)",
+    step(K.HOLD_AIM, "Aim down sights to stabilise the suite {Aim}",
          [line("Simulation", "Optics calibration. Hold your sight picture.")], duration=1.0),
     step(K.CLEAR_TARGETS, "Shielded targets: strike the weak point",
          [line("Simulation", "Hardened profiles. Shields absorb body hits; weak points do not.")], t_shield),
-    step(K.EQUIP_WEAPON, "Switch to the Kestrel SMG (mouse wheel / RB)",
+    step(K.EQUIP_WEAPON, "Switch to the Kestrel SMG {NextWeapon}",
          [line("Simulation", "Secondary weapon class. Confirm handling.")], slot=1),
+    step(K.CLEAR_TARGETS, "Sentry drone: hit the glowing stabilizer core",
+         [line("Simulation", "Aerial profile. Stabilizer core exposed on the underside.")], [t_drone]),
+    step(K.VOLLEY, "Incoming fire: get behind the barrier and crouch {Crouch}",
+         [line("Simulation", "Cover discipline. Live training rounds inbound.")], duration=2.5,
+         emitter=emitter, area=a_cover, warmup_seconds=1.5, warning_text=T("Incoming volley"),
+         fail_lines=[line("Simulation", "You were exposed. Resetting.", 2.5)]),
+    step(K.VOLLEY, "Stand on the marker and survive the volley: Kinetic Shield {Ability2}",
+         [line("Simulation", "No cover this time. Trust the shield, Ghost-7.")], duration=2.0,
+         emitter=emitter, area=a_shield, warmup_seconds=1.2, warning_text=T("Incoming volley - shield now"),
+         fail_lines=[line("Simulation", "Shield timing off. Resetting.", 2.5)]),
+    step(K.CLEAR_TARGETS, "Shock baton {Melee}: strike, then strike again while it staggers",
+         [line("Simulation", "Close-quarters profile. Staggered targets are open to a takedown.")], [t_dummy]),
+    step(K.MARK_TARGETS, "Drone uplink {Ability3}: locate 3 concealed profiles in the south enclosure",
+         [line("Simulation", "Profiles concealed behind hard cover. Use the uplink.")], t_hidden, min_marks=3),
+    step(K.WAIT_FOR_EVENT, "Optical disruption {Ability1}: reach the catwalk relay unseen",
+         [line("Simulation", "Surveillance cone active. Stay out of it, or stay invisible."),
+          line("AION", "The cameras up here answer to the Directorate. Remember that.")],
+         event_tag=tag("NV.Event.M00.SurveillanceBypassed"), cameras=[cam], reset_point=reset,
+         fail_lines=[line("Simulation", "Detected. Return to the ramp.", 2.5)]),
     step(K.WAIT, "Calibration finalising", duration=2.0),
 ])
 sim.set_editor_property("lines_on_complete", [

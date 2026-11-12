@@ -10,6 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNVOnObjectiveEvent, FName, Objectiv
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNVOnMissionEvent, FName, MissionID);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNVOnCheckpointRequested, FName, ReasonObjectiveID);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNVOnObjectivesRestored);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNVOnGameplayEvent, FGameplayTag, EventTag);
 
 /**
  * Objective state and mission progression. Interactables and triggers send gameplay tags;
@@ -69,6 +70,10 @@ public:
 	/** Fired after a checkpoint load rebuilt objective state (listeners re-evaluate). */
 	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Objectives")
 	FNVOnObjectivesRestored OnObjectivesRestored;
+
+	/** Every event sent through SendEvent, whether or not it completed an objective (drill steps listen). */
+	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Objectives")
+	FNVOnGameplayEvent OnGameplayEvent;
 
 private:
 	bool ArePrerequisitesMet(const FNVObjectiveDef& Def) const;
