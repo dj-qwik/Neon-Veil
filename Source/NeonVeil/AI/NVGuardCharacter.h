@@ -7,11 +7,15 @@
 class UNVHealthComponent;
 class USkeletalMesh;
 class UAnimInstance;
+class UStaticMesh;
+class UStaticMeshComponent;
+class USkeletalMeshComponent;
 
 /**
  * Agency guard (Bible §8). In M00 guards are non-hostile ambient security: they patrol, pause and
  * acknowledge Ghost-7. Combat behaviour (flank, suppress, retreat) arrives with M01 on the same
- * controller. Placeholder mannequin until the M5 character pass.
+ * controller. Body: Waveforce mercenary restyled to the Directorate palette; the battery pack is the
+ * Bible's "exposed battery pack" tell (weak point from M01).
  */
 UCLASS(Blueprintable)
 class NEONVEIL_API ANVGuardCharacter : public ACharacter
@@ -52,6 +56,36 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
 	TSubclassOf<UAnimInstance> BodyAnimClass;
 
+	/** Extra skinned outfit pieces driven by the body's pose (leader pose). Up to MaxOutfitParts. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	TArray<TObjectPtr<USkeletalMesh>> OutfitParts;
+
+	static constexpr int32 MaxOutfitParts = 6;
+
+	/** Rigid helmet on the head bone (Bible §8 tell: helmet optics). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	TObjectPtr<UStaticMesh> HelmetMeshAsset;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	FName HelmetSocket = TEXT("head");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	FTransform HelmetOffset = FTransform::Identity;
+
+	/** Exposed battery pack on the guard's back (Bible §8 tell). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	TObjectPtr<UStaticMesh> BatteryMeshAsset;
+
+	/** Body bone/socket the pack rides on; None = mesh root. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	FName BatterySocket = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	FTransform BatteryOffset = FTransform(FRotator::ZeroRotator, FVector(0.f, -24.f, 128.f), FVector(0.45f));
+
+	UFUNCTION(BlueprintPure, Category = "NeonVeil|Guard")
+	UStaticMeshComponent* GetBatteryPack() const { return BatteryPack; }
+
 	/** World-space route captured at BeginPlay. */
 	const TArray<FVector>& GetWorldPatrol() const { return WorldPatrol; }
 
@@ -60,6 +94,15 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UNVHealthComponent> Health;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> BatteryPack;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> Helmet;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TArray<TObjectPtr<USkeletalMeshComponent>> OutfitComponents;
 
 private:
 	TArray<FVector> WorldPatrol;
