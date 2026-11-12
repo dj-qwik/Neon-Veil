@@ -1,4 +1,6 @@
 #include "Debug/NVCheatManager.h"
+#include "AI/NVGuardCharacter.h"
+#include "AI/NVEnemyController.h"
 #include "Abilities/NVAbilityComponent.h"
 #include "Abilities/NVAbilityData.h"
 #include "Combat/NVMeleeComponent.h"
@@ -229,6 +231,12 @@ void UNVCheatManager::NVReport()
 		UE_LOG(LogNeonVeil, Log, TEXT("  marked %d  cloaked %d  damage scale %.2f"), Ab->GetMarkedActors().Num(), UNVAbilityComponent::IsActorCloaked(P), P->GetHealth()->IncomingDamageScale);
 		AActor* Focus = P->GetInteraction()->GetFocusedActor();
 		UE_LOG(LogNeonVeil, Log, TEXT("  focus %s  location %s"), Focus ? *Focus->GetName() : TEXT("None"), *P->GetActorLocation().ToCompactString());
+	}
+	for (TActorIterator<ANVGuardCharacter> It(GetWorld()); It; ++It)
+	{
+		const ANVEnemyController* C = Cast<ANVEnemyController>(It->GetController());
+		UE_LOG(LogNeonVeil, Log, TEXT("  guard %s  state %s  speed %.0f  loc %s"), *It->GetName(),
+			C ? *UEnum::GetValueAsString(C->GetAIState()) : TEXT("no controller"), It->GetVelocity().Size2D(), *It->GetActorLocation().ToCompactString());
 	}
 	for (TActorIterator<ANVTrainingTarget> It(GetWorld()); It; ++It)
 	{

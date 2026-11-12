@@ -270,6 +270,33 @@ arch.set_editor_property("lines_on_complete", [
 ])
 for i, (x, y) in enumerate(((4200, -600), (4200, 600), (5600, -600), (5600, 600))):
     light(f"B_Light{i}", (x, y, 1050), 9000, 2600)
+# Agency guards (Bible §4 "moving guards"; §8 archetype). Non-hostile in M00; placeholder mannequins.
+GUARD_MESH = unreal.load_asset("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple")
+GUARD_ANIM = unreal.load_object(None, "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed_C")
+guard_immune = unreal.GameplayTagContainer()
+guard_immune.import_text('(GameplayTags=((TagName="NV.Damage.Ballistic"),(TagName="NV.Damage.Training"),(TagName="NV.Damage.Melee")))')
+def guard(label, loc, yaw, route, waits=(2.0, 4.0), speed=150.0):
+    g = spawn(unreal.NVGuardCharacter, label, loc, R(yaw=yaw), FB)
+    g.set_editor_property("body_mesh_asset", GUARD_MESH)
+    g.set_editor_property("body_anim_class", GUARD_ANIM)
+    # Route points are relative to the spawn point; convert from world for readability.
+    import math
+    c, s_ = math.cos(math.radians(-yaw)), math.sin(math.radians(-yaw))
+    rel = []
+    for (wx, wy) in route:
+        dx, dy = wx - loc[0], wy - loc[1]
+        rel.append(V(dx * c - dy * s_, dx * s_ + dy * c, 0))
+    g.set_editor_property("patrol_points", rel)
+    g.set_editor_property("wait_time_range", unreal.Vector2D(waits[0], waits[1]))
+    g.set_editor_property("walk_speed", speed)
+    g.get_editor_property("health").set_editor_property("immune_damage_types", guard_immune)
+    return g
+# Loop around the sculpture; second guard paces the glazing; third holds the arch.
+guard("B_Guard_Loop", (4100, -650, 100), 0, [(4100, -650), (5600, -650), (5600, 650), (4100, 650)])
+guard("B_Guard_Glazing", (3900, 880, 100), 0, [(3900, 880), (5300, 880)], waits=(3.0, 6.0), speed=120.0)
+guard("B_Guard_Arch", (5750, 330, 100), 180, [(5750, 330), (5750, 620)], waits=(4.0, 7.0), speed=110.0)
+nav = spawn(unreal.NavMeshBoundsVolume, "B_NavBounds", (4900, 0, 300), None, FB)
+nav.set_actor_scale3d(V(2800 / 200.0, 2200 / 200.0, 800 / 200.0))
 light("B_Sculpture_Light", (4900, 0, 300), 3000, 900, (0.6, 0.9, 1.0))
 
 # ---------------- C. Combat simulation suite (40 x 30 m)

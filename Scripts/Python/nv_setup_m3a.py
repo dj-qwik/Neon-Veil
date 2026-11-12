@@ -68,6 +68,7 @@ BINDINGS = [
     ("IA_NV_Ability2", ["G", "Gamepad_DPad_Right"]),
     ("IA_NV_Ability3", ["T", "Gamepad_DPad_Up"]),
 ]
+imc.modify()  # mark the package dirty so the save below actually writes it
 added = 0
 for action_name, keys in BINDINGS:
     for k in keys:
@@ -75,7 +76,8 @@ for action_name, keys in BINDINGS:
             continue
         imc.map_key(ia[action_name], key(k))
         added += 1
-EAL.save_loaded_asset(imc)
+saved = EAL.save_loaded_asset(imc, only_if_is_dirty=False)
+log("IMC_NV_Combat saved:", saved)
 log("IMC_NV_Combat: added", added, "mappings; total", len(imc_mappings(imc)))
 
 # ------------------------------------------------------------------ ability data (Bible §9: all available in M00)
@@ -105,7 +107,7 @@ for name, props in ABILITIES:
     for k, v in props.items():
         # bBreaksOnAttack is exposed to Python without the b prefix
         d.set_editor_property(k, v)
-    EAL.save_loaded_asset(d)
+    EAL.save_loaded_asset(d, only_if_is_dirty=False)
     assets.append(d)
 
 # ------------------------------------------------------------------ player blueprint
@@ -124,7 +126,7 @@ baton = pcdo.get_editor_property("baton_mesh")
 gun_mat = unreal.load_asset("/Game/NeonVeil/Tests/Materials/TEMP_M_Gunmetal")
 if gun_mat:
     baton.set_material(0, gun_mat)
-EAL.save_loaded_asset(pbp)
+EAL.save_loaded_asset(pbp, only_if_is_dirty=False)
 log("BP_NVPlayerCharacter: abilities", [a.get_name() for a in abil.get_editor_property("abilities")])
 
 with open(unreal.Paths.project_saved_dir() + "NV_setup_m3a.txt", "w", encoding="utf-8") as fh:
