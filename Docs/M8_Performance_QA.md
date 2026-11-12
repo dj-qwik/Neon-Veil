@@ -90,3 +90,24 @@ Settings: fullscreen 1920×1080, TSR upscaling from 67% (r.ScreenPercentage 67),
 | Antechamber (Director) | 79.2 | 14.4 ms | 22 ms | 4.46 GB |
 
 VRAM budget is 5.15 GB on the RTX 4050. The editor's "video memory exhausted" warning comes from the editor's own overhead and does not appear in the packaged build.
+
+## Update — MetaHuman guards (12 Nov 2026)
+
+- **The three atrium guards are now MetaHuman troopers.** All three share one character build: the Mateo preset wearing the free *Tactical Soldier Outfit for MetaHuman* (RMDavid) and the *Sci Fi Helmet P05* (Davlet, paid Standard licence).
+  - **Directorate recolour:** the outfit's base colour is desaturated and tinted carbon. The helmet's red trims are desaturated to white and grey, and its optics glow cyan. The outfit's backpack serves as the Bible's "exposed battery pack" tell.
+  - **How they're driven:** `ANVGuardCharacter` gained an `AppearanceClass` slot, which holds the assembled MetaHuman as a child actor. A hidden UE5 Manny running `ABP_Unarmed` keeps driving the patrols. The MetaHuman body follows the Manny's pose, and the clothing follows the body. Tested in play: the guards patrol with a walking stride, and none fall back to the default A-pose.
+  - **Earlier attempt, kept in code but unused:** the free Waveforce mercenary as modular parts. It was too stylised next to the MetaHuman Director.
+- **Textures:** 39 guard textures were capped, 29 of them 4K. Outfit and helmet are now 1024; the face, which sits under the helmet, is 512.
+- **Packaged benchmark:** 1080p, TSR from a 67% screen percentage, PSO cache re-recorded.
+
+| Stop | avg fps | p95 frame | VRAM peak |
+|---|---|---|---|
+| Tram ride | 73.4 | 15.1 ms | 4.35 GB |
+| Skybridge | 74.3 | 15.3 ms | 4.42 GB |
+| Atrium (3 guards) | 77.9 | 15.5 ms | 4.43 GB |
+| Sim suite | 80.3 | 13.9 ms | 4.50 GB |
+| Gallery | 76.3 | 14.8 ms | 4.56 GB |
+| Antechamber (Director) | 77.7 | 14.6 ms | 4.60 GB |
+
+Before the texture caps, VRAM peaked at 5.19 GB, over the 5.15 GB budget. The load spike (4.96 GB) happens under the black fade.
+- **Open:** the guards' hair grooms are still selected under the helmets. The Python API wouldn't clear them, so this needs a manual pass in MetaHuman Creator; none is visible in play. Helmet optics have only been checked from the side and at a distance.
