@@ -21,6 +21,10 @@
 #include "CanvasItem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "Fonts/FontMeasure.h"
+#include "Fonts/SlateFontInfo.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Rendering/SlateRenderer.h"
 
 ANVHUD::ANVHUD()
 {
@@ -191,6 +195,25 @@ void ANVHUD::ShowTitleCard(const FText& Title, const FText& Subtitle, float Dura
 	TitleUntil = TitleStart + Duration;
 }
 
+FSlateFontInfo ANVHUD::MakeFont(UFont* Font, float Scale) const
+{
+	// Point sizes at 1080p before the UI scale; Large = headings and numbers.
+	const float Base = (Font == LargeFont) ? 20.f : 13.f;
+	return FSlateFontInfo(Font, FMath::Max(6.f, Base * Scale * TextScale));
+}
+
+void ANVHUD::MeasureText(const FString& Text, UFont* Font, float Scale, float& OutW, float& OutH) const
+{
+	if (Font && FSlateApplication::IsInitialized() && FSlateApplication::Get().GetRenderer())
+	{
+		const FVector2D Size = FSlateApplication::Get().GetRenderer()->GetFontMeasureService()->Measure(Text, MakeFont(Font, Scale));
+		OutW = Size.X;
+		OutH = Size.Y;
+		return;
+	}
+	OutW = OutH = 0.f;
+}
+
 void ANVHUD::DrawTextShadowed(const FString& Text, float X, float Y, const FLinearColor& Color, UFont* Font, float Scale, bool bRightAlign)
 {
 	if (!Canvas || !Font)
@@ -200,12 +223,11 @@ void ANVHUD::DrawTextShadowed(const FString& Text, float X, float Y, const FLine
 	if (bRightAlign)
 	{
 		float W, H;
-		GetTextSize(Text, W, H, Font, Scale);
+		MeasureText(Text, Font, Scale, W, H);
 		X -= W;
 	}
-	FCanvasTextItem Item(FVector2D(X, Y), FText::FromString(Text), Font, Color);
-	Item.Scale = FVector2D(Scale, Scale);
-	Item.EnableShadow(FLinearColor(0.f, 0.f, 0.f, 0.7f), FVector2D(1.5f, 1.5f));
+	FCanvasTextItem Item(FVector2D(X, Y), FText::FromString(Text), MakeFont(Font, Scale), Color);
+	Item.EnableShadow(FLinearColor(0.f, 0.f, 0.f, 0.75f), FVector2D(2.f, 2.f));
 	Canvas->DrawItem(Item);
 }
 
@@ -267,6 +289,15 @@ void ANVHUD::DrawReticle(const ANVPlayerCharacter& Player)
 	// Centre dot always visible (accessibility: crosshair never hidden during combat, Bible §5).
 	DrawRect(FLinearColor(C.R, C.G, C.B, 0.9f), CX - 1.f, CY - 1.f, 2.f, 2.f);
 
+	// Weapon safety: friendly in the sights.
+	if (W->GetFriendlyInSights() && !Player.IsSprinting())
+	{
+		const FString F = TEXT("FRIENDLY");
+		float FW, FH;
+		MeasureText(F, SmallFont, 0.7f * UIScale, FW, FH);
+		DrawTextShadowed(F, CX - FW * 0.5f, CY + 26.f * UIScale, AccentColor, SmallFont, 0.7f * UIScale);
+	}
+
 	// Hit marker
 	const float Since = GetWorld()->GetTimeSeconds() - HitMarkerTime;
 	if (Since < 0.15f)
@@ -296,7 +327,11 @@ void ANVHUD::DrawHealth(const ANVPlayerCharacter& Player)
 	{
 		DrawRect(FLinearColor(0.75f, 0.85f, 1.f, 0.8f), X, Y - 5.f * S, W * (H->GetShield() / H->MaxShield), 3.f * S);
 	}
-	DrawTextShadowed(FString::Printf(TEXT("%d"), FMath::CeilToInt(H->GetHealth())), X, Y - 38.f * S, TextColor, LargeFont, S);
+	const FString HP = FString::Printf(TEXT("%d"), FMath::CeilToInt(H->GetHealth()));
+	float TW, TH;
+	MeasureText(HP, LargeFont, S, TW, TH);
+	HealthTextTop = Y - 8.f * S - TH;
+	DrawTextShadowed(HP, X, HealthTextTop, TextColor, LargeFont, S);
 }
 
 void ANVHUD::DrawAmmo(const ANVPlayerCharacter& Player)
@@ -311,12 +346,20 @@ void ANVHUD::DrawAmmo(const ANVPlayerCharacter& Player)
 	const TArray<FNVWeaponSlot>& Slots = W->GetSlots();
 	const FNVWeaponSlot& Slot = Slots[W->GetCurrentSlotIndex()];
 	const float RX = Canvas->ClipX - 48.f * S;
-	const float Y = Canvas->ClipY - 108.f * S;
 	const bool bLow = Slot.AmmoInMag <= FMath::Max(1, Data->MagazineSize / 4);
-	DrawTextShadowed(FString::Printf(TEXT("%d"), Slot.AmmoInMag), RX - 90.f * S, Y, bLow ? WarningColor : TextColor, LargeFont, 1.6f * S, true);
-	DrawTextShadowed(FString::Printf(TEXT("/ %d"), Slot.ReserveAmmo), RX, Y + 14.f * S, TextColor * 0.8f, SmallFont, 1.2f * S, true);
+	const FString Mag = FString::Printf(TEXT("%d"), Slot.AmmoInMag);
+	const FString Reserve = FString::Printf(TEXT("/ %d"), Slot.ReserveAmmo);
 	const FString Name = W->IsReloading() ? TEXT("RELOADING") : Data->DisplayName.ToString().ToUpper();
-	DrawTextShadowed(Name, RX, Y + 48.f * S, W->IsReloading() ? WarningColor : AccentColor, SmallFont, 0.9f * S, true);
+	float MW, MH, RW, RH, NW, NH;
+	MeasureText(Mag, LargeFont, 1.5f * S, MW, MH);
+	MeasureText(Reserve, SmallFont, 1.15f * S, RW, RH);
+	MeasureText(Name, SmallFont, 0.9f * S, NW, NH);
+	// Stack from the bottom: weapon name, then magazine / reserve on one baseline.
+	const float NameY = Canvas->ClipY - 58.f * S - NH;
+	const float MagY = NameY - 4.f * S - MH;
+	DrawTextShadowed(Reserve, RX, MagY + MH - RH - 4.f * S, TextColor * 0.8f, SmallFont, 1.15f * S, true);
+	DrawTextShadowed(Mag, RX - RW - 10.f * S, MagY, bLow ? WarningColor : TextColor, LargeFont, 1.5f * S, true);
+	DrawTextShadowed(Name, RX, NameY, W->IsReloading() ? WarningColor : AccentColor, SmallFont, 0.9f * S, true);
 }
 
 void ANVHUD::DrawObjectives()
@@ -328,15 +371,37 @@ void ANVHUD::DrawObjectives()
 	}
 	const float S = Canvas->ClipY / 1080.f;
 	const float RX = Canvas->ClipX - 48.f * S;
-	float Y = 44.f * S;
-	DrawTextShadowed(Obj->GetCurrentMission()->MissionTitle.ToString().ToUpper(), RX, Y, AccentColor, SmallFont, 0.85f * S, true);
-	Y += 26.f * S;
+	float Y = 40.f * S;
+	float TW, TH;
+	const FString Title = Obj->GetCurrentMission()->MissionTitle.ToString().ToUpper();
+	MeasureText(Title, SmallFont, 0.85f * S, TW, TH);
+	DrawTextShadowed(Title, RX, Y, AccentColor, SmallFont, 0.85f * S, true);
+	Y += TH + 6.f * S;
 	for (const FNVObjectiveDef& Def : Obj->GetActiveObjectives())
 	{
 		const FString Line = Def.bOptional ? FString::Printf(TEXT("(Optional) %s"), *Def.DisplayText.ToString()) : Def.DisplayText.ToString();
+		MeasureText(Line, SmallFont, 1.05f * S, TW, TH);
 		DrawTextShadowed(Line, RX, Y, Def.bOptional ? TextColor * 0.75f : TextColor, SmallFont, 1.05f * S, true);
-		Y += 28.f * S;
+		Y += TH + 4.f * S;
 	}
+	DrawInstruction(Y + 14.f * S);
+}
+
+void ANVHUD::DrawInstruction(float Y)
+{
+	if (InstructionText.IsEmpty())
+	{
+		return;
+	}
+	const float S = Canvas->ClipY / 1080.f;
+	FString T = InstructionText.ToString();
+	// Device-aware button tokens, e.g. "{Ability2}" -> "[G]" or "[D-pad Right]".
+	static const TCHAR* Tokens[] = { TEXT("Interact"), TEXT("Melee"), TEXT("Ability1"), TEXT("Ability2"), TEXT("Ability3"), TEXT("Crouch"), TEXT("Aim"), TEXT("NextWeapon") };
+	for (const TCHAR* Tok : Tokens)
+	{
+		T.ReplaceInline(*FString::Printf(TEXT("{%s}"), Tok), *KeyLabel(Tok), ESearchCase::CaseSensitive);
+	}
+	DrawTextShadowed(T, Canvas->ClipX - 48.f * S, Y, AccentColor, SmallFont, 1.05f * S, true);
 }
 
 void ANVHUD::DrawPrompt(const ANVPlayerCharacter& Player)
@@ -354,11 +419,15 @@ void ANVHUD::DrawPrompt(const ANVPlayerCharacter& Player)
 	const float Hold = INVInteractable::Execute_GetHoldDuration(Focus);
 	const FString Key = KeyLabel(TEXT("Interact"));
 	const FString Label = Hold > 0.f ? FString::Printf(TEXT("Hold %s"), *Key) : Key;
-	DrawTextShadowed(FString::Printf(TEXT("%s  %s"), *Label, *Prompt.ToString()), X, Y, TextColor, SmallFont, 1.05f * S);
+	const FString PromptText = FString::Printf(TEXT("%s  %s"), *Label, *Prompt.ToString());
+	float PW, PH;
+	MeasureText(PromptText, SmallFont, 1.05f * S, PW, PH);
+	DrawTextShadowed(PromptText, X, Y, TextColor, SmallFont, 1.05f * S);
 	if (Hold > 0.f && I->GetHoldProgress() > 0.f)
 	{
-		DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.45f), X, Y + 30.f * S, 160.f * S, 3.f * S);
-		DrawRect(AccentColor, X, Y + 30.f * S, 160.f * S * I->GetHoldProgress(), 3.f * S);
+		const float BarW = FMath::Max(160.f * S, PW);
+		DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.45f), X, Y + PH + 6.f * S, BarW, 4.f * S);
+		DrawRect(AccentColor, X, Y + PH + 6.f * S, BarW * I->GetHoldProgress(), 4.f * S);
 	}
 }
 
@@ -379,20 +448,6 @@ void ANVHUD::DrawMessages()
 		}
 	}
 
-	if (!InstructionText.IsEmpty() && bHUDVisible)
-	{
-		FString T = InstructionText.ToString();
-		// Device-aware button tokens, e.g. "{Ability2}" -> "[G]" or "[D-pad Right]".
-		static const TCHAR* Tokens[] = { TEXT("Interact"), TEXT("Melee"), TEXT("Ability1"), TEXT("Ability2"), TEXT("Ability3"), TEXT("Crouch"), TEXT("Aim"), TEXT("NextWeapon") };
-		for (const TCHAR* Tok : Tokens)
-		{
-			T.ReplaceInline(*FString::Printf(TEXT("{%s}"), Tok), *KeyLabel(Tok), ESearchCase::CaseSensitive);
-		}
-		float W, H;
-		GetTextSize(T, W, H, SmallFont, 1.05f * S);
-		DrawTextShadowed(T, Canvas->ClipX - 48.f * S - W, 190.f * S, AccentColor, SmallFont, 1.05f * S);
-	}
-
 	if (Now < TitleUntil)
 	{
 		const float Fade = FMath::Clamp((Now - TitleStart) / 1.2f, 0.f, 1.f) * FMath::Clamp((TitleUntil - Now) / 1.0f, 0.f, 1.f);
@@ -402,17 +457,19 @@ void ANVHUD::DrawMessages()
 		A2.A = Fade;
 		float W, H;
 		const FString T = TitleText.ToString().ToUpper();
-		GetTextSize(T, W, H, LargeFont, 2.2f * S);
-		DrawTextShadowed(T, (Canvas->ClipX - W) * 0.5f, Canvas->ClipY * 0.44f, C, LargeFont, 2.2f * S);
+		MeasureText(T, LargeFont, 2.2f * S, W, H);
+		const float TitleY = Canvas->ClipY * 0.42f;
+		DrawTextShadowed(T, (Canvas->ClipX - W) * 0.5f, TitleY, C, LargeFont, 2.2f * S);
+		const float SubY = TitleY + H + 16.f * S;
 		const FString Sub = TitleSubText.ToString();
-		GetTextSize(Sub, W, H, SmallFont, 1.1f * S);
-		DrawTextShadowed(Sub, (Canvas->ClipX - W) * 0.5f, Canvas->ClipY * 0.44f + 70.f * S, A2, SmallFont, 1.1f * S);
+		MeasureText(Sub, SmallFont, 1.1f * S, W, H);
+		DrawTextShadowed(Sub, (Canvas->ClipX - W) * 0.5f, SubY, A2, SmallFont, 1.1f * S);
 	}
 	if (Now < NoticeUntil)
 	{
 		float W, H;
 		const FString T = NoticeText.ToString().ToUpper();
-		GetTextSize(T, W, H, SmallFont, 1.1f * S);
+		MeasureText(T, SmallFont, 1.1f * S, W, H);
 		DrawTextShadowed(T, (Canvas->ClipX - W) * 0.5f, Canvas->ClipY * 0.22f, AccentColor, SmallFont, 1.1f * S);
 	}
 	if (Now < SubtitleUntil)
@@ -420,9 +477,9 @@ void ANVHUD::DrawMessages()
 		const float Scale = 1.15f * S * SubtitleScale;
 		const FString Line = FString::Printf(TEXT("%s:  %s"), *SubtitleSpeaker.ToString().ToUpper(), *SubtitleLine.ToString());
 		float W, H;
-		GetTextSize(Line, W, H, SmallFont, Scale);
+		MeasureText(Line, SmallFont, Scale, W, H);
 		const float X = (Canvas->ClipX - W) * 0.5f;
-		const float Y = Canvas->ClipY - 190.f * S;
+		const float Y = Canvas->ClipY - 225.f * S - H; // clear of the ability bar and health
 		// Readable background box (Bible §10).
 		DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.55f), X - 14.f * S, Y - 8.f * S, W + 28.f * S, H + 16.f * S);
 		DrawTextShadowed(Line, X, Y, TextColor, SmallFont, Scale);
@@ -437,9 +494,13 @@ void ANVHUD::DrawAbilities(const ANVPlayerCharacter& Player)
 		return;
 	}
 	const float S = Canvas->ClipY / 1080.f;
-	const float Size = 46.f * S, Gap = 10.f * S;
-	const float X0 = 48.f * S, Y = Canvas->ClipY - 170.f * S;
+	const float Size = 46.f * S * FMath::Max(1.f, TextScale * 0.85f), Gap = 12.f * S;
 	static const FName Actions[] = { TEXT("Ability1"), TEXT("Ability2"), TEXT("Ability3") };
+	float LW, LH;
+	MeasureText(TEXT("Ag"), SmallFont, 0.62f * S, LW, LH);
+	const float Bottom = (HealthTextTop > 0.f ? HealthTextTop : Canvas->ClipY - 120.f * S) - 10.f * S;
+	const float Y = Bottom - LH - 4.f * S - Size;
+	float X = 48.f * S;
 	for (int32 i = 0; i < A->Abilities.Num() && i < 3; ++i)
 	{
 		const UNVAbilityData* D = A->Abilities[i];
@@ -448,7 +509,6 @@ void ANVHUD::DrawAbilities(const ANVPlayerCharacter& Player)
 		{
 			continue;
 		}
-		const float X = X0 + i * (Size + Gap);
 		DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.5f), X, Y, Size, Size);
 		FLinearColor LabelColor = TextColor;
 		if (R->bDisabled)
@@ -473,9 +533,15 @@ void ANVHUD::DrawAbilities(const ANVPlayerCharacter& Player)
 			// Ready: thin accent underline.
 			DrawRect(AccentColor, X, Y + Size - 2.f * S, Size, 2.f * S);
 		}
-		DrawTextShadowed(D->ShortLabel.ToString(), X + 8.f * S, Y + 8.f * S, LabelColor, SmallFont, 0.95f * S);
+		const FString Short = D->ShortLabel.ToString();
+		float SW, SH;
+		MeasureText(Short, SmallFont, 0.95f * S, SW, SH);
+		DrawTextShadowed(Short, X + (Size - SW) * 0.5f, Y + (Size - SH) * 0.5f, LabelColor, SmallFont, 0.95f * S);
 		const FString Under = R->bDisabled ? TEXT("OFFLINE") : (R->CooldownLeft > 0.f ? FString::Printf(TEXT("%.0f"), FMath::CeilToFloat(R->CooldownLeft)) : KeyLabel(Actions[i]));
-		DrawTextShadowed(Under, X + 2.f * S, Y + Size + 3.f * S, R->bDisabled ? WarningColor : TextColor * 0.75f, SmallFont, 0.6f * S);
+		float UW, UH;
+		MeasureText(Under, SmallFont, 0.62f * S, UW, UH);
+		DrawTextShadowed(Under, X, Y + Size + 4.f * S, R->bDisabled ? WarningColor : TextColor * 0.8f, SmallFont, 0.62f * S);
+		X += FMath::Max(Size, UW) + Gap;
 	}
 }
 
@@ -548,7 +614,7 @@ void ANVHUD::DrawThreat()
 	{
 		float TW = 0.f, TH = 0.f;
 		const FString T = ThreatText.ToString().ToUpper();
-		Canvas->TextSize(SmallFont, T, TW, TH, 0.95f * S, 0.95f * S);
+		MeasureText(T, SmallFont, 0.95f * S, TW, TH);
 		const float Blink = FMath::Fmod(Now * 4.f, 1.f) < 0.65f ? 1.f : 0.45f;
 		DrawTextShadowed(T, CX - TW * 0.5f, CY + 60.f * S, WarningColor * Blink, SmallFont, 0.95f * S);
 	}

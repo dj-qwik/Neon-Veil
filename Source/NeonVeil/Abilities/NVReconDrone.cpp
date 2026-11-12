@@ -1,4 +1,5 @@
 #include "Abilities/NVReconDrone.h"
+#include "Combat/NVFriendly.h"
 #include "Abilities/NVAbilityComponent.h"
 #include "Combat/NVHealthComponent.h"
 #include "NeonVeil.h"
@@ -119,7 +120,7 @@ void ANVReconDrone::Scan()
 	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
 	{
 		AActor* A = *It;
-		if (A == this || A == GetOwner() || A->IsHidden())
+		if (A == this || A == GetOwner() || A->IsHidden() || NVFriendly::IsFriendly(A))
 		{
 			continue;
 		}

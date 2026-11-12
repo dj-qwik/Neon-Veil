@@ -1,4 +1,5 @@
 #include "AI/NVGuardCharacter.h"
+#include "Combat/NVFriendly.h"
 #include "AI/NVEnemyController.h"
 #include "Combat/NVHealthComponent.h"
 
@@ -49,6 +50,10 @@ void ANVGuardCharacter::PostInitializeComponents()
 	for (const FVector& P : PatrolPoints)
 	{
 		WorldPatrol.Add(GetActorTransform().TransformPosition(P));
+	}
+	if (bNonHostile)
+	{
+		Tags.AddUnique(NVFriendly::Tag);
 	}
 	Super::PostInitializeComponents();
 }

@@ -1,4 +1,5 @@
 #include "Combat/NVWeaponComponent.h"
+#include "Combat/NVFriendly.h"
 #include "Combat/NVWeaponData.h"
 #include "Combat/NVHealthComponent.h"
 #include "Core/NVGameplayTags.h"
@@ -185,6 +186,33 @@ void UNVWeaponComponent::SetAiming(bool bAim)
 	bWantsAim = bAim;
 }
 
+AActor* UNVWeaponComponent::GetFriendlyInSights() const
+{
+	const UNVWeaponData* Data = GetCurrentWeapon();
+	if (!Data || !Camera)
+	{
+		return nullptr;
+	}
+	FVector AimDir = Camera->GetForwardVector();
+	if (const APawn* Pawn = Cast<APawn>(GetOwner()))
+	{
+		if (const AController* C = Pawn->GetController())
+		{
+			AimDir = C->GetControlRotation().Vector();
+		}
+	}
+	// Pawn channel: walls stop it and character capsules block it, so cover still counts.
+	const FVector Start = Camera->GetComponentLocation();
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(NVWeaponSafety), false, GetOwner());
+	FHitResult Hit;
+	if (GetWorld()->SweepSingleByChannel(Hit, Start, Start + AimDir * Data->Range, FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(12.f), Params)
+		&& NVFriendly::IsFriendly(Hit.GetActor()))
+	{
+		return Hit.GetActor();
+	}
+	return nullptr;
+}
+
 float UNVWeaponComponent::GetCurrentSpreadDeg() const
 {
 	const UNVWeaponData* Data = GetCurrentWeapon();
@@ -201,6 +229,14 @@ void UNVWeaponComponent::FireShot()
 	FNVWeaponSlot* Slot = CurrentSlotPtr();
 	if (!Data || !Slot || bReloading || !Camera)
 	{
+		return;
+	}
+
+	// Weapon safety: never fire into a friendly. No round is spent; the trigger stays live so
+	// fire resumes as soon as the sights move off them.
+	if (const AActor* Friendly = GetFriendlyInSights())
+	{
+		UE_LOG(LogNeonVeil, Log, TEXT("Weapon safety: %s in the sights, not firing"), *Friendly->GetName());
 		return;
 	}
 

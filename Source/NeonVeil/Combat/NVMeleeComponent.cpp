@@ -1,4 +1,5 @@
 #include "Combat/NVMeleeComponent.h"
+#include "Combat/NVFriendly.h"
 #include "Abilities/NVAbilityComponent.h"
 #include "Combat/NVHealthComponent.h"
 #include "Combat/NVStaggerable.h"
@@ -76,6 +77,15 @@ void UNVMeleeComponent::ResolveHit()
 	const FVector End = Start + Dir * Range;
 
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(NVMeleeSweep), false, GetOwner());
+	{
+		FHitResult PawnHit;
+		if (GetWorld()->SweepSingleByChannel(PawnHit, Start, End, FQuat::Identity, ECC_Pawn, FCollisionShape::MakeSphere(SweepRadius), Params)
+			&& NVFriendly::IsFriendly(PawnHit.GetActor()))
+		{
+			UE_LOG(LogNeonVeil, Log, TEXT("Baton held: %s is friendly"), *PawnHit.GetActor()->GetName());
+			return;
+		}
+	}
 	TArray<FHitResult> Hits;
 	GetWorld()->SweepMultiByChannel(Hits, Start, End, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(SweepRadius), Params);
 

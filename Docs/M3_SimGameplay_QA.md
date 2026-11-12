@@ -73,7 +73,19 @@ All patrol on the navmesh (dynamic generation) and pause 2–7 s at each point. 
 
 - **Gamepad bindings:** the new ones (R3, D-pad) are untested with a controller. They need the user with the DualSense.
 - **Drill difficulty and tuning:** not play-tested by a person yet. In particular the cover and shield timing, cone sweep speed and drone target speed.
-- **Shooting guards:** the guards ignore all damage and don't react. The Bible doesn't say what happens if Ghost-7 fires on Directorate guards in M00, so this is an open design question.
 - **Destructible light props:** the Bible's sim-suite note is not built yet (planned for M5/M6 art).
 - **Optional interactables:** the news feed, trophy case and others are unchanged since M2.
 - **Old saves:** v1 checkpoints from M2 are refused by the version check, so start a new game.
+
+## Post-M3 changes (user decisions)
+
+- **Weapon safety (friendly fire):** actors tagged `Friendly` (the non-hostile M00 guards) can't be shot, struck or marked.
+  - Gun: refuses to fire while a friendly is first in the sights. No round is spent, and fire resumes when the sights move off.
+  - HUD: shows FRIENDLY under the reticle.
+  - Baton: holds its swing.
+  - Drone uplink: skips friendlies.
+  - Test result: 3 trigger pulls at the arch guard gave 3x `Weapon safety ... not firing` and the magazine stayed at 12. The baton logged `Baton held`. The drone marked 0. Firing at a wall afterwards spent rounds normally (12 to 10).
+- **Larger HUD text:** all HUD text is now drawn with sized Slate fonts, so it stays sharp. The new `TextScale` setting defaults to 1.4.
+  - Layout now follows the measured text height: objectives, drill instruction, ammo stack, prompt bar, title card, and the ability bar above the health readout.
+  - Subtitles sit higher, clear of the ability bar.
+  - Checked by eye at 1080p.

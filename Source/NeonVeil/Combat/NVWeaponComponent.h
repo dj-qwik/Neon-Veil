@@ -88,6 +88,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "NeonVeil|Weapon")
 	int32 GetCurrentSlotIndex() const { return CurrentSlot; }
 
+	/** First pawn along the aim if it is friendly (weapon safety engaged), else null. */
+	UFUNCTION(BlueprintPure, Category = "NeonVeil|Weapon")
+	AActor* GetFriendlyInSights() const;
+
 	/** Restore ammo counts from a save without firing events per slot. */
 	void RestoreSlots(const TArray<FNVWeaponSlot>& InSlots, int32 InCurrentSlot);
 

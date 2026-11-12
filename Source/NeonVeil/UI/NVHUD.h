@@ -61,6 +61,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
 	float SubtitleScale = 1.f;
 
+	/** Global HUD text size multiplier (settings hook). Text is rendered at size, so it stays sharp. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD", meta = (ClampMin = "0.75", ClampMax = "2.5"))
+	float TextScale = 1.4f;
+
 	/** Button names in gamepad prompts: PlayStation (Triangle, R3) or Xbox (Y, RS). Settings hook. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
 	bool bPlayStationGlyphs = true;
@@ -108,6 +112,9 @@ private:
 	void DrawPrompt(const ANVPlayerCharacter& Player);
 	void DrawMessages();
 	void DrawTextShadowed(const FString& Text, float X, float Y, const FLinearColor& Color, UFont* Font, float Scale = 1.f, bool bRightAlign = false);
+	void MeasureText(const FString& Text, UFont* Font, float Scale, float& OutW, float& OutH) const;
+	struct FSlateFontInfo MakeFont(UFont* Font, float Scale) const;
+	void DrawInstruction(float Y);
 
 	TWeakObjectPtr<ANVPlayerCharacter> BoundPawn;
 	bool bUsingGamepad = false;
@@ -117,6 +124,7 @@ private:
 	float DetectionSetAt = -10.f;
 	float ShieldFlashTime = -10.f;
 	bool bLastHitTakedown = false;
+	float HealthTextTop = 0.f;
 	float HitMarkerTime = -10.f;
 	bool bHitMarkerWeak = false;
 
