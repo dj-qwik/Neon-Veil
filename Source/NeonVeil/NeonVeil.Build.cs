@@ -25,7 +25,8 @@ public class NeonVeil : ModuleRules
 			"GameplayStateTreeModule",
 			"Niagara",
 			"PhysicsCore",
-			"DeveloperSettings"
+			"DeveloperSettings",
+			"RHI"
 		});
 	}
 }
