@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "NV DualSense Input",
+	"Description": "Native PS5 DualSense gamepad input on Windows via HID, mapped to the standard Unreal gamepad keys.",
+	"Category": "Input Devices",
+	"CreatedBy": "Neon Veil",
+	"EnabledByDefault": true,
+	"CanContainContent": false,
+	"Modules": [
+		{
+			"Name": "NVDualSense",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault",
+			"PlatformAllowList": [ "Win64" ]
+		}
+	]
+}

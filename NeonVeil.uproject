@@ -52,6 +52,10 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+		{
+			"Name": "NVDualSense",
+			"Enabled": true
 		}
 	]
 }
