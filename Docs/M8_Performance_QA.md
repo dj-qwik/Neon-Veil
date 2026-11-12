@@ -12,19 +12,20 @@ Settings: fullscreen 1920×1080, TSR upscaling from 67% (r.ScreenPercentage 67),
 - `Scripts/NV_Benchmark.bat` is the same tour in the editor binary (`-game`).
 - F10 quits the game in any build. This is an interim measure until a pause menu exists.
 
-## Final packaged result (12 Nov 2026, after fixes)
+## Final packaged result (12 Nov 2026, with bundled PSO cache)
 | Stop | avg fps | p95 frame | GPU | max frame |
 |---|---|---|---|---|
-| C00 tram ride | 71.6 | 15.3 ms | 13.0 ms | 409 ms (one PSO compile) |
-| A skybridge | 74.2 | 15.1 ms | 12.9 ms | 62 ms |
-| B atrium | 81.3 | 14.3 ms | 11.8 ms | 22 ms |
-| C sim suite | 82.9 | 13.5 ms | 11.5 ms | 22 ms |
-| D gallery | 77.8 | 14.2 ms | 12.3 ms | 22 ms |
-| E antechamber | 80.0 | 13.9 ms | 11.9 ms | 24 ms |
+| C00 tram ride | 73.8 | 15.2 ms | 13.0 ms | 71 ms |
+| A skybridge | 75.0 | 14.9 ms | 12.8 ms | 16 ms |
+| B atrium | 82.5 | 14.1 ms | 11.6 ms | 17 ms |
+| C sim suite | 83.9 | 13.3 ms | 11.4 ms | 20 ms |
+| D gallery | 78.7 | 14.2 ms | 12.2 ms | 16 ms |
+| E antechamber | 81.2 | 13.6 ms | 11.8 ms | 21 ms |
 
-- **Target 60 fps at 1080p with upscaling: met in every room.** 95% of frames are under 15.3 ms.
-- **VRAM:** the previous packaged run peaked at 4.43 GB of a 5.15 GB budget. In the editor, play-in-editor sits at the budget; that is an editor-only overhead.
-- **Tram ride wall time:** 14.49 s, inside the Bible's 12–18 s.
+- **Target 60 fps at 1080p with upscaling: met everywhere.** No gameplay frame was over 250 ms, and there were 0 PSO waits.
+- **Load frame:** 1.8 s while the level first appears. It happens before the tram moves.
+- **VRAM:** peaked at 4.43 GB of a 5.15 GB budget in packaged runs.
+- **Tram ride wall time:** 14.01 s.
 - **Top GPU passes:** TSR about 2.0 ms, shadow depths 1.2–1.7, Lumen reflections 1.2–2.6, lights 0.8–2.0, volumetric fog about 0.5.
 
 ## Fixes made in M8
@@ -34,11 +35,19 @@ Settings: fullscreen 1920×1080, TSR upscaling from 67% (r.ScreenPercentage 67),
    - Collision was stripped in the five tower Blueprint templates (`nv_m8_skyline_bp.py`; local Fab content, gitignored). Overlap and navigation relevance were turned off on the visual-only atmosphere meshes (`nv_m8_perf.py`).
    - Verified: 0 skyline bodies. Load stall 9.4 s → 1.8 s; tram stall 10.3 s → gone.
    - No visual change: the towers are 160 m to 1 km away and unreachable.
-2. **Tram timing.** The tram parks out on the line and waits for steady frames, then glides on wall-clock time, so start-up hitches no longer stretch or skip the ride.
+2. **Bundled PSO cache.**
+   - `NV_PSO_Pipeline.bat` does four things:
+     - Cooks with shader stable keys, with `bShareMaterialShaderCode` on.
+     - Records pipelines during the `-nvbench` tour (`-logPSO`).
+     - Expands them with the SM6 `.shk` keys into `Build/Windows/PipelineCaches/PSO_NeonVeil_PCD3D_SM6.spc` (261 stable PSOs).
+     - Repackages.
+   - The game precompiles 127 pipelines at startup in 0.02 s. The 0.38 s first-sight hitch is gone.
+   - `NV_PSO_Finish.bat` redoes only the expand and repackage steps.
+   - Gotcha: pass only the `*PCD3D_SM6.shk` files. Mixing the SM5 keys asserts in the cook (`OutTargetPlatform == ShaderKey->TargetPlatform`).
+   - Re-record after adding new materials or areas.
+3. **Tram timing.** The tram parks out on the line and waits for steady frames, then glides on wall-clock time, so start-up hitches no longer stretch or skip the ride.
 
 ## Open
-- **First-time shader (PSO) compiles:** one 0.38 s hitch on the ride, and the 1.8 s start-up frame, which happens while the tram is still parked.
-  - "0 of them were precached" in the log.
-  - Fix: record a bundled PSO cache. Run the packaged game with `-logPSO`, convert with `ShaderPipelineCacheTools`, and add it to the project, then repackage.
+- **Load frame (1.8 s):** a loading screen or fade would hide it. It needs a UI pass.
 - **Disk:** keep at least 15 GB free on C:. Cooking, the DDC and the staged build need it; an earlier package failed with a full disk.
 - **Shipping config** (no cheats or benchmark) and an installer or zip are not produced yet.
