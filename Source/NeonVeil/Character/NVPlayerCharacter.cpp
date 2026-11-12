@@ -734,19 +734,25 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 		Offset.Z -= 4.f;
 	}
 
-	// Shock baton swing: drop the gun out of the way and sweep the baton right to left.
+	// Shock baton swing in the OFF hand (left): the gun stays in the right hand, dipping slightly, while the
+	// baton comes in from the left shoulder and sweeps left to right across the view.
 	const float Swing = Melee->GetSwingAlpha();
 	const bool bSwinging = Swing > 0.f;
 	BatonMesh->SetHiddenInGame(!bSwinging);
 	if (bSwinging)
 	{
 		const float Arc = FMath::Sin(Swing * PI);
-		Rot.Roll -= 35.f * Arc;
-		Offset.Z -= 10.f * Arc;
-		const float T = FMath::SmoothStep(0.f, 0.45f, Swing); // fast strike, slow recovery
-		const float Yaw = FMath::Lerp(55.f, -45.f, T);
+		Rot.Roll += 6.f * Arc;
+		Offset.Z -= 4.f * Arc;
+		Offset.Y += 3.f * Arc;
+		// Strike (0-0.4): sweep from the left shoulder to just past centre. Recovery (0.4-1): pull back down-left
+		// and out of view, so the baton never rests beside the gun.
+		const float Strike = FMath::SmoothStep(0.f, 0.4f, Swing);
+		const float Recover = FMath::SmoothStep(0.4f, 1.f, Swing);
+		const float Yaw = FMath::Lerp(-60.f, 12.f, Strike) - 72.f * Recover;
 		const FRotator SweepRot(0.f, Yaw, 0.f);
-		BatonMesh->SetRelativeLocation(SweepRot.RotateVector(FVector(38.f, 0.f, -10.f)));
+		const FVector LeftShoulder(0.f, -20.f, -6.f - 18.f * Recover);
+		BatonMesh->SetRelativeLocation(LeftShoulder + SweepRot.RotateVector(FVector(36.f, 0.f, -8.f)));
 		BatonMesh->SetRelativeRotation(SweepRot + FRotator(-75.f, 0.f, 0.f));
 	}
 
