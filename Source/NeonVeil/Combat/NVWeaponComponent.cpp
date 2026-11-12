@@ -17,6 +17,7 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
 #include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimationAsset.h"
 #include "Animation/AnimSequenceBase.h"
@@ -99,6 +100,7 @@ bool UNVWeaponComponent::EquipSlot(int32 SlotIndex)
 	if (bReloading)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(ReloadTimer);
+		StopReloadAudio();
 		bReloading = false;
 		OnReloadStateChanged.Broadcast(false);
 	}
@@ -107,6 +109,10 @@ bool UNVWeaponComponent::EquipSlot(int32 SlotIndex)
 	RefreshWeaponVisual();
 
 	UNVWeaponData* Data = GetCurrentWeapon();
+	if (USoundBase* EquipSnd = Data ? Data->EquipSound.LoadSynchronous() : nullptr)
+	{
+		UGameplayStatics::SpawnSound2D(this, EquipSnd, 1.f, 1.f, 0.f, nullptr, false, true);
+	}
 	if (ACharacter* Char = Cast<ACharacter>(GetOwner()))
 	{
 		if (UAnimMontage* Equip = Data ? Data->EquipMontage.LoadSynchronous() : nullptr)
@@ -248,7 +254,7 @@ void UNVWeaponComponent::FireShot()
 	{
 		if (USoundBase* Dry = Data->DryFireSound.LoadSynchronous())
 		{
-			UGameplayStatics::PlaySound2D(this, Dry);
+			UGameplayStatics::SpawnSound2D(this, Dry, 1.f, 1.f, 0.f, nullptr, false, true);
 		}
 		bTriggerHeld = false;
 		Reload();
@@ -405,7 +411,11 @@ void UNVWeaponComponent::PlayFireEffects(const UNVWeaponData& Data, const FVecto
 			UNiagaraFunctionLibrary::SpawnSystemAttached(Casing, MuzzleParent, TEXT("Eject"), FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true);
 		}
 	}
-	if (USoundBase* Shot = Data.FireSound.LoadSynchronous())
+	if (Data.FireSoundVariants.Num() > 0)
+	{
+		PlayFireAudio(Data);
+	}
+	else if (USoundBase* Shot = Data.FireSound.LoadSynchronous())
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, Shot, MuzzleLoc);
 	}
@@ -439,7 +449,11 @@ void UNVWeaponComponent::Reload()
 	}
 	bReloading = true;
 	OnReloadStateChanged.Broadcast(true);
-	if (USoundBase* Snd = Data->ReloadSound.LoadSynchronous())
+	if (Data->ReloadSequence.Num() > 0)
+	{
+		StartReloadAudio(*Data);
+	}
+	else if (USoundBase* Snd = Data->ReloadSound.LoadSynchronous())
 	{
 		UGameplayStatics::PlaySound2D(this, Snd);
 	}
@@ -529,4 +543,101 @@ void UNVWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 			FireShot();
 		}
 	}
+}
+
+int32 UNVWeaponComponent::PickVariant(int32 Num, int32& Last) const
+{
+	if (Num <= 0)
+	{
+		return INDEX_NONE;
+	}
+	int32 Pick = FMath::RandRange(0, Num - 1);
+	if (Num > 1 && Pick == Last)
+	{
+		Pick = (Pick + FMath::RandRange(1, Num - 1)) % Num;
+	}
+	Last = Pick;
+	return Pick;
+}
+
+void UNVWeaponComponent::PlayFireAudio(const UNVWeaponData& Data)
+{
+	const float Pitch = FMath::FRandRange(Data.FirePitchRange.X, Data.FirePitchRange.Y);
+
+	const int32 ShotIdx = PickVariant(Data.FireSoundVariants.Num(), LastShotVariant);
+	if (USoundBase* Shot = Data.FireSoundVariants.IsValidIndex(ShotIdx) ? Data.FireSoundVariants[ShotIdx].LoadSynchronous() : nullptr)
+	{
+		UAudioComponent* A = UGameplayStatics::SpawnSound2D(this, Shot, Data.FireVolume, Pitch, 0.f, nullptr, false, true);
+		UE_LOG(LogNeonVeil, Verbose, TEXT("weapon audio: shot %s playing=%d"), *Shot->GetName(), A && A->IsPlaying());
+	}
+
+	const int32 LayerIdx = PickVariant(Data.FireLayerVariants.Num(), LastLayerVariant);
+	if (USoundBase* Layer = Data.FireLayerVariants.IsValidIndex(LayerIdx) ? Data.FireLayerVariants[LayerIdx].LoadSynchronous() : nullptr)
+	{
+		UAudioComponent* A = UGameplayStatics::SpawnSound2D(this, Layer, Data.FireLayerVolume, Pitch, 0.f, nullptr, false, true);
+		UE_LOG(LogNeonVeil, Verbose, TEXT("weapon audio: layer %s playing=%d"), *Layer->GetName(), A && A->IsPlaying());
+	}
+
+	const int32 TailIdx = PickVariant(Data.FireTailVariants.Num(), LastTailVariant);
+	if (USoundBase* Tail = Data.FireTailVariants.IsValidIndex(TailIdx) ? Data.FireTailVariants[TailIdx].LoadSynchronous() : nullptr)
+	{
+		TailVoices.RemoveAll([](const TObjectPtr<UAudioComponent>& A) { return !IsValid(A) || !A->IsPlaying(); });
+		while (TailVoices.Num() >= Data.MaxFireTailVoices)
+		{
+			if (UAudioComponent* Oldest = TailVoices[0])
+			{
+				Oldest->FadeOut(0.12f, 0.f);
+			}
+			TailVoices.RemoveAt(0);
+		}
+		if (UAudioComponent* Voice = UGameplayStatics::SpawnSound2D(this, Tail, Data.FireTailVolume, Pitch, 0.f, nullptr, false, true))
+		{
+			TailVoices.Add(Voice);
+			UE_LOG(LogNeonVeil, Verbose, TEXT("weapon audio: tail %s playing=%d voices=%d"), *Tail->GetName(), Voice->IsPlaying(), TailVoices.Num());
+		}
+	}
+}
+
+void UNVWeaponComponent::StartReloadAudio(const UNVWeaponData& Data)
+{
+	StopReloadAudio();
+	FTimerManager& TM = GetWorld()->GetTimerManager();
+	for (const FNVTimedSound& Step : Data.ReloadSequence)
+	{
+		USoundBase* Snd = Step.Sound.LoadSynchronous();
+		if (!Snd)
+		{
+			continue;
+		}
+		const float Delay = FMath::Clamp(Step.Time, 0.f, 1.f) * Data.ReloadTime;
+		const float Vol = Step.Volume;
+		if (Delay <= KINDA_SMALL_NUMBER)
+		{
+			UGameplayStatics::SpawnSound2D(this, Snd, Vol, 1.f, 0.f, nullptr, false, true);
+			continue;
+		}
+		FTimerHandle& H = ReloadSoundTimers.AddDefaulted_GetRef();
+		TWeakObjectPtr<UNVWeaponComponent> WeakThis(this);
+		TWeakObjectPtr<USoundBase> WeakSnd(Snd);
+		TM.SetTimer(H, FTimerDelegate::CreateLambda([WeakThis, WeakSnd, Vol]()
+		{
+			if (WeakThis.IsValid() && WeakSnd.IsValid())
+			{
+				UAudioComponent* A = UGameplayStatics::SpawnSound2D(WeakThis.Get(), WeakSnd.Get(), Vol, 1.f, 0.f, nullptr, false, true);
+				UE_LOG(LogNeonVeil, Verbose, TEXT("weapon audio: reload step %s playing=%d"), *WeakSnd->GetName(), A && A->IsPlaying());
+			}
+		}), Delay, false);
+	}
+}
+
+void UNVWeaponComponent::StopReloadAudio()
+{
+	if (UWorld* World = GetWorld())
+	{
+		for (FTimerHandle& H : ReloadSoundTimers)
+		{
+			World->GetTimerManager().ClearTimer(H);
+		}
+	}
+	ReloadSoundTimers.Reset();
 }

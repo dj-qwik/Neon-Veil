@@ -14,6 +14,23 @@ class UMaterialInterface;
 class UCameraShakeBase;
 class UAnimationAsset;
 
+/** One step of a timed sound sequence (e.g. reload: mag out / mag in / charge). */
+USTRUCT(BlueprintType)
+struct FNVTimedSound
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	TSoftObjectPtr<USoundBase> Sound;
+
+	/** When to play, as a fraction of the action's duration (0 = start, 1 = end). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio", meta = (ClampMin = "0", ClampMax = "1"))
+	float Time = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	float Volume = 1.f;
+};
+
 UENUM(BlueprintType)
 enum class ENVFireMode : uint8
 {
@@ -187,6 +204,42 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	TSoftObjectPtr<USoundBase> DryFireSound;
+
+	// --- Layered weapon audio (used instead of FireSound/ReloadSound when set)
+	/** Close shot variants; one is picked at random each shot, never the same twice in a row. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	TArray<TSoftObjectPtr<USoundBase>> FireSoundVariants;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	float FireVolume = 1.f;
+
+	/** Random pitch per shot (applied to every layer of that shot). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	FVector2D FirePitchRange = FVector2D(0.97f, 1.03f);
+
+	/** Room/reverb tails; voices are capped so full-auto fire doesn't stack dozens of tails. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	TArray<TSoftObjectPtr<USoundBase>> FireTailVariants;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	float FireTailVolume = 0.6f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio", meta = (ClampMin = "1"))
+	int32 MaxFireTailVoices = 3;
+
+	/** Sci-fi/tech accent layered on each shot (Directorate hardware). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	TArray<TSoftObjectPtr<USoundBase>> FireLayerVariants;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	float FireLayerVolume = 0.3f;
+
+	/** Reload foley timed against ReloadTime. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	TArray<FNVTimedSound> ReloadSequence;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Audio")
+	TSoftObjectPtr<USoundBase> EquipSound;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	TSoftObjectPtr<USoundBase> ReloadSound;

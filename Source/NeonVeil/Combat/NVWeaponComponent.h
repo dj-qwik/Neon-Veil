@@ -7,6 +7,7 @@
 class UNVWeaponData;
 class USkeletalMeshComponent;
 class UStaticMeshComponent;
+class UAudioComponent;
 class UCameraComponent;
 
 USTRUCT(BlueprintType)
@@ -154,4 +155,18 @@ private:
 	float PendingRecoveryPitch = 0.f;
 	float RecoveryTimeLeft = 0.f;
 	FTimerHandle ReloadTimer;
+
+	/** Layered fire audio: picks a variant (no immediate repeat), plays shot + tail + accent. */
+	void PlayFireAudio(const UNVWeaponData& Data);
+	void StartReloadAudio(const UNVWeaponData& Data);
+	void StopReloadAudio();
+	int32 PickVariant(int32 Num, int32& Last) const;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UAudioComponent>> TailVoices;
+
+	TArray<FTimerHandle> ReloadSoundTimers;
+	int32 LastShotVariant = INDEX_NONE;
+	int32 LastTailVariant = INDEX_NONE;
+	int32 LastLayerVariant = INDEX_NONE;
 };

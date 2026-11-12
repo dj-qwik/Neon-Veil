@@ -134,3 +134,26 @@ Before the texture caps, VRAM peaked at 5.19 GB, over the 5.15 GB budget. The lo
 - **Textures:** gun textures capped at 2048 (32 textures).
 - **Packaged benchmark** (PSO cache re-recorded): 72.9–79.6 fps across all stops, p95 ≤ 15.5 ms, VRAM peak 4.60 GB, and no PSO events after load.
 - **Not used:** the Infima Free FPS Template (one stylised rifle with a flat 11 KB texture). The engine's UE5 mannequin already supplies pistol and rifle animation sets.
+
+## Update — weapon audio (12 Nov 2026)
+
+- **Sources (both free, Fab Standard licence):**
+  - *Free Weapon Sound Effects* by SoundLab1: realistic shots (3 variants each), reverb tails, reload and handling foley.
+  - *Sci-Fi Shots Pack2: Game Of Weapons* by ShashiRaj Productions: a subtle tech accent layer.
+- **How the accent layer was chosen:** I exported the 99 short sci-fi shots to WAV and analysed them offline. Kept: 12 clips about 0.2 s long, with attack under 7 ms, spectral centroid 3.6–4.4 kHz and tonal (spectral flatness under 0.35). I measured rather than listened, so the mix still needs a listen.
+- **Code:** `UNVWeaponData` gains `FireSoundVariants`, `FireTailVariants` (with a voice cap), `FireLayerVariants`, `FirePitchRange`, `ReloadSequence` (each `FNVTimedSound` step is timed as a fraction of `ReloadTime`) and `EquipSound`.
+  - `UNVWeaponComponent` plays every weapon sound as a 2D audio component, with no repeated variant twice in a row.
+  - Reload foley is cancelled if you switch weapons mid-reload.
+  - The older `FireSound` and `ReloadSound` remain as fallbacks.
+
+| Weapon | Shot | Pitch | Tail (voices) | Accent | Reload steps |
+|---|---|---|---|---|---|
+| VX-9 | handgun ×3 | 0.97–1.03 | handgun, 0.55 vol (3) | 4 clips, 0.22 | mag out / draw / in / slide lock |
+| Kestrel | rifle ×3 | 1.08–1.15 (compact SMG) | rifle, 0.40 vol (2) | 4 clips, 0.18 | mag out / draw / in / charge |
+| Harrow | rifle ×3 | 0.82–0.88 (heavy) | shotgun, 0.70 vol (2) | 3 clips, 0.25 | mag out / in / charge (untested in play) |
+
+- **Verified in play (verbose log, `log LogNeonVeil Verbose`):**
+  - Every layer reports `playing=1`.
+  - VX-9 reload steps fire at 0.03 / 0.38 / 0.71 / 1.08 s against a 1.45 s reload.
+  - In an 8-round Kestrel burst no variant repeats back-to-back, and tails stay at 2 voices or fewer.
+  - **Not verified by ear:** the levels and the accent's character are design choices and need a listening pass.
