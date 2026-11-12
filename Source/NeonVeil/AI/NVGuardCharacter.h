@@ -10,6 +10,7 @@ class UAnimInstance;
 class UStaticMesh;
 class UStaticMeshComponent;
 class USkeletalMeshComponent;
+class UChildActorComponent;
 
 /**
  * Agency guard (Bible §8). In M00 guards are non-hostile ambient security: they patrol, pause and
@@ -56,6 +57,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
 	TSubclassOf<UAnimInstance> BodyAnimClass;
 
+	/**
+	 * Optional assembled MetaHuman (BP_*) worn as the guard's look. The base mesh keeps animating (hidden) and the
+	 * MetaHuman's "Body" follows it via leader pose; its face follows the body through its own post-process ABP.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	TSubclassOf<AActor> AppearanceClass;
+
+	/** Placement of the appearance actor relative to the capsule (feet at -half height). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	FTransform AppearanceOffset = FTransform(FRotator::ZeroRotator, FVector(0.f, 0.f, -92.f));
+
 	/** Extra skinned outfit pieces driven by the body's pose (leader pose). Up to MaxOutfitParts. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
 	TArray<TObjectPtr<USkeletalMesh>> OutfitParts;
@@ -100,6 +112,12 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> Helmet;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UChildActorComponent> Appearance;
+
+	/** Leader-pose the appearance actor's body to our animated mesh. */
+	void BindAppearance();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TArray<TObjectPtr<USkeletalMeshComponent>> OutfitComponents;

@@ -5,6 +5,7 @@
 
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/ChildActorComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -26,6 +27,9 @@ ANVGuardCharacter::ANVGuardCharacter(const FObjectInitializer& ObjectInitializer
 	BatteryPack->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	BatteryPack->SetGenerateOverlapEvents(false);
 	BatteryPack->SetCanEverAffectNavigation(false);
+
+	Appearance = CreateDefaultSubobject<UChildActorComponent>(TEXT("Appearance"));
+	Appearance->SetupAttachment(GetCapsuleComponent());
 
 	Helmet = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Helmet"));
 	Helmet->SetupAttachment(GetMesh(), HelmetSocket);
@@ -75,6 +79,13 @@ void ANVGuardCharacter::OnConstruction(const FTransform& Transform)
 		Part->SetLeaderPoseComponent(PartMesh ? GetMesh() : nullptr);
 	}
 
+	if (Appearance->GetChildActorClass() != AppearanceClass)
+	{
+		Appearance->SetChildActorClass(AppearanceClass);
+	}
+	Appearance->SetRelativeTransform(AppearanceOffset);
+	BindAppearance();
+
 	Helmet->SetStaticMesh(HelmetMeshAsset);
 	Helmet->SetVisibility(HelmetMeshAsset != nullptr);
 	Helmet->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, HelmetSocket);
@@ -101,8 +112,48 @@ void ANVGuardCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 }
 
+void ANVGuardCharacter::BindAppearance()
+{
+	AActor* Look = Appearance ? Appearance->GetChildActor() : nullptr;
+	USkeletalMeshComponent* Base = GetMesh();
+	if (!Look)
+	{
+		Base->SetVisibility(true, false);
+		return;
+	}
+	// The base mesh still drives locomotion; keep its pose updating while hidden.
+	Base->SetVisibility(false, false);
+	Base->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+
+	TArray<USkeletalMeshComponent*> Skins;
+	Look->GetComponents<USkeletalMeshComponent>(Skins);
+	USkeletalMeshComponent* Body = nullptr;
+	for (USkeletalMeshComponent* S : Skins)
+	{
+		if (S->GetFName() == TEXT("Body"))
+		{
+			Body = S;
+		}
+	}
+	if (Body)
+	{
+		Body->SetLeaderPoseComponent(Base, true);
+		Body->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+	}
+	for (USkeletalMeshComponent* S : Skins)
+	{
+		S->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// Clothing pieces (anything not the face) follow the body's pose too.
+		if (S != Body && Body && S->GetFName() != TEXT("Face") && !S->LeaderPoseComponent.IsValid())
+		{
+			S->SetLeaderPoseComponent(Body, true);
+		}
+	}
+}
+
 void ANVGuardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	BindAppearance();
 	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
 }
