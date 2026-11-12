@@ -47,8 +47,28 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram")
 	TObjectPtr<USoundBase> DockSound;
 
+	/** Sliding exit door (Movable). Opens DoorDelay s after docking; while closed it is what holds the player in. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Door")
+	TObjectPtr<AActor> Door;
+
+	/** World-space slide from closed to open. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Door")
+	FVector DoorOpenOffset = FVector(0.f, 90.f, 0.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Door", meta = (ClampMin = "0"))
+	float DoorDelay = 0.8f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Door", meta = (ClampMin = "0.1"))
+	float DoorOpenTime = 1.1f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Door")
+	TObjectPtr<USoundBase> DoorSound;
+
 	UFUNCTION(BlueprintPure, Category = "Tram")
 	bool IsArriving() const { return bArriving; }
+
+	UFUNCTION(BlueprintPure, Category = "Tram")
+	bool IsDoorOpen() const { return DoorAlpha >= 1.f; }
 
 protected:
 	/** Holds the player inside until docked (sits across the open front). */
@@ -60,6 +80,14 @@ protected:
 
 private:
 	void ApplyOffset(float Offset);
+	void SetDoorAlpha(float Alpha);
+	void BeginDoorOpen();
+
+	FVector DoorClosed = FVector::ZeroVector;
+	float DoorAlpha = 0.f;
+	float DoorElapsed = 0.f;
+	bool bDoorOpening = false;
+	bool bDoorSoundPlayed = false;
 
 	TArray<FVector> Home;
 	TWeakObjectPtr<APawn> Rider;

@@ -33,6 +33,33 @@ void ANVTramArrival::BeginPlay()
 		Home.Add(P ? P->GetActorLocation() : FVector::ZeroVector);
 	}
 	FrontBarrier->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (Door)
+	{
+		DoorClosed = Door->GetActorLocation();
+		SetDoorAlpha(0.f);
+	}
+}
+
+void ANVTramArrival::SetDoorAlpha(float Alpha)
+{
+	DoorAlpha = FMath::Clamp(Alpha, 0.f, 1.f);
+	if (Door)
+	{
+		// the door rides with the tram (not in Parts) and slides open once docked
+		Door->SetActorLocation(DoorClosed + GetActorForwardVector() * LastOffset + DoorOpenOffset * FMath::SmoothStep(0.f, 1.f, DoorAlpha), false, nullptr, ETeleportType::TeleportPhysics);
+	}
+}
+
+void ANVTramArrival::BeginDoorOpen()
+{
+	if (!Door)
+	{
+		SetActorTickEnabled(false);
+		return;
+	}
+	bDoorOpening = true;
+	DoorElapsed = 0.f;
+	SetActorTickEnabled(true);
 }
 
 void ANVTramArrival::ApplyOffset(float Offset)
@@ -47,6 +74,7 @@ void ANVTramArrival::ApplyOffset(float Offset)
 			P->SetActorLocation(Home[i] + Dir * Offset, false, nullptr, ETeleportType::None);
 		}
 	}
+	SetDoorAlpha(DoorAlpha);
 	FrontBarrier->SetRelativeLocation(FVector(Offset, 0.f, 0.f) + FVector(0.f, 0.f, 150.f));
 	// The rider is carried by CharacterMovement's based movement (the cabin floor is Movable).
 	(void)Delta;
@@ -55,6 +83,31 @@ void ANVTramArrival::ApplyOffset(float Offset)
 void ANVTramArrival::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (bDoorOpening)
+	{
+		DoorElapsed += FMath::Min(DeltaSeconds, 0.1f);
+		const float T = DoorElapsed - DoorDelay;
+		if (T >= 0.f && !bDoorSoundPlayed)
+		{
+			bDoorSoundPlayed = true;
+			if (DoorSound && Door)
+			{
+				UGameplayStatics::PlaySoundAtLocation(this, DoorSound, Door->GetActorLocation());
+			}
+		}
+		if (T >= 0.f)
+		{
+			SetDoorAlpha(T / DoorOpenTime);
+		}
+		if (DoorAlpha >= 1.f)
+		{
+			bDoorOpening = false;
+			SetActorTickEnabled(false);
+			UE_LOG(LogNeonVeil, Log, TEXT("%s: tram door open"), *GetName());
+		}
+		return;
+	}
 
 	if (!bChecked)
 	{
@@ -71,6 +124,7 @@ void ANVTramArrival::Tick(float DeltaSeconds)
 		if (FMath::Abs(Local.X) > CabinExtent.X || FMath::Abs(Local.Y) > CabinExtent.Y || FMath::Abs(Local.Z) > CabinExtent.Z)
 		{
 			UE_LOG(LogNeonVeil, Log, TEXT("%s: player not in cabin, arrival skipped"), *GetName());
+			SetDoorAlpha(1.f);
 			SetActorTickEnabled(false);
 			return;
 		}
@@ -80,7 +134,8 @@ void ANVTramArrival::Tick(float DeltaSeconds)
 		SteadyFrames = 0;
 		LastOffset = 0.f;
 		LastRealTime = FPlatformTime::Seconds();
-		FrontBarrier->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		// With a door, the closed door holds the player in; the invisible barrier is only the fallback.
+		FrontBarrier->SetCollisionEnabled(Door ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryAndPhysics);
 		ApplyOffset(-Distance);   // park out on the line immediately; glide starts once frames are steady
 		UE_LOG(LogNeonVeil, Log, TEXT("%s: C00 tram staged %.0f cm out"), *GetName(), Distance);
 		return;
@@ -130,7 +185,7 @@ void ANVTramArrival::Tick(float DeltaSeconds)
 		{
 			UGameplayStatics::PlaySound2D(this, DockSound);
 		}
-		SetActorTickEnabled(false);
+		BeginDoorOpen();
 		UE_LOG(LogNeonVeil, Log, TEXT("%s: docked (wall %.2f s, %d ticks, elapsed %.2f s)"), *GetName(), FPlatformTime::Seconds() - RideStartTime, RideTicks, Elapsed);
 	}
 }
