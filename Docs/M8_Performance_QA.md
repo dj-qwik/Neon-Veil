@@ -51,3 +51,23 @@ Settings: fullscreen 1920×1080, TSR upscaling from 67% (r.ScreenPercentage 67),
 - **Load frame (1.8 s):** a loading screen or fade would hide it. It needs a UI pass.
 - **Disk:** keep at least 15 GB free on C:. Cooking, the DDC and the staged build need it; an earlier package failed with a full disk.
 - **Shipping config** (no cheats or benchmark) and an installer or zip are not produced yet.
+
+## Update — skybridge lighting pass and pause menu (12 Nov 2026)
+- **Skybridge (Bible §14 Crown: high-key pools against dark windows):** `nv_m9_skybridge.py`.
+  - Ceiling changed to pale ceramic.
+  - Seven soft 3.6 m rect-light panels at 900 cd and 6200 K, unshadowed, replace four point lights.
+  - Cyan floor-edge lines run along both glazing lines.
+- **Removed the M2 graybox skyline** (folder `Skyline`, 25 boxes and window cards; `nv_m9_remove_old_skyline.py`). Its window cards showed as a flat tan panel beyond the glass, and the boxes hid the real City Sample towers.
+- **Swapped 9 `BPP_NYG_Ref` towers for `CHE_B01` towers** (`nv_m9_skyline_swap.py`). The ref towers were suspected first; the swap is harmless.
+- **Pause menu:** Esc or gamepad Options; P in the editor. Resume / Restart Mission / Quit to Desktop, with keyboard, mouse and gamepad navigation. All three were tested in play.
+- **Start-of-level fade from black:** it holds until frames are steady, then fades over 1.6 s, which hides the load hitch.
+- **PSO cache re-recorded** (125 pipelines). Packaged benchmark:
+
+| Stop | avg fps | p95 frame | max frame |
+|---|---|---|---|
+| Tram ride | 79.1 | 14.0 ms | 20 ms |
+| Skybridge | 78.1 | 14.6 ms | 21 ms |
+| Atrium | 83.9 | 13.6 ms | 129 ms (one streaming frame after teleport) |
+| Sim suite | 86.0 | 12.9 ms | 16 ms |
+| Gallery | 80.1 | 13.8 ms | 15 ms |
+| Antechamber | 82.9 | 13.5 ms | 22 ms |

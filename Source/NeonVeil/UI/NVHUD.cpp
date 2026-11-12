@@ -12,6 +12,8 @@
 #include "Core/NVGameplayTags.h"
 #include "InputCoreTypes.h"
 #include "GameFramework/PlayerController.h"
+#include "Core/NVPlayerController.h"
+#include "HAL/PlatformTime.h"
 
 #include "Camera/CameraComponent.h"
 #include "Engine/Canvas.h"
@@ -245,21 +247,101 @@ void ANVHUD::DrawHUD()
 		DrawAbilityOverlays(*P); // full-screen tints go under everything else
 	}
 	DrawMessages();
-	if (!bHUDVisible)
+	if (bHUDVisible)
+	{
+		if (const ANVPlayerCharacter* Player = BoundPawn.Get())
+		{
+			DrawReticle(*Player);
+			DrawHealth(*Player);
+			DrawAmmo(*Player);
+			DrawPrompt(*Player);
+			DrawAbilities(*Player);
+			DrawMarks(*Player);
+		}
+		DrawThreat();
+		DrawObjectives();
+	}
+	DrawFadeIn();
+	DrawPauseMenu();
+}
+
+void ANVHUD::DrawFadeIn()
+{
+	const double Now = FPlatformTime::Seconds();
+	if (FadeStartTime < 0.0)
+	{
+		const double Step = FadeLastTime > 0.0 ? Now - FadeLastTime : 1.0;
+		FadeLastTime = Now;
+		FadeSteadyFrames = (Step < 0.1) ? FadeSteadyFrames + 1 : 0;
+		if (FadeSteadyFrames >= 15)
+		{
+			FadeStartTime = Now;
+		}
+	}
+	const float Alpha = FadeStartTime < 0.0 ? 1.f : 1.f - FMath::Clamp(static_cast<float>((Now - FadeStartTime) / 1.6), 0.f, 1.f);
+	if (Alpha <= 0.f)
 	{
 		return;
 	}
-	if (const ANVPlayerCharacter* Player = BoundPawn.Get())
+	FCanvasTileItem Black(FVector2D::ZeroVector, FVector2D(Canvas->ClipX, Canvas->ClipY), FLinearColor(0.f, 0.f, 0.f, Alpha * Alpha * (3.f - 2.f * Alpha)));
+	Black.BlendMode = SE_BLEND_Translucent;
+	Canvas->DrawItem(Black);
+}
+
+void ANVHUD::DrawPauseMenu()
+{
+	ANVPlayerController* PC = Cast<ANVPlayerController>(GetOwningPlayerController());
+	if (!PC || !PC->IsPauseMenuOpen())
 	{
-		DrawReticle(*Player);
-		DrawHealth(*Player);
-		DrawAmmo(*Player);
-		DrawPrompt(*Player);
-		DrawAbilities(*Player);
-		DrawMarks(*Player);
+		return;
 	}
-	DrawThreat();
-	DrawObjectives();
+	const float S = Canvas->ClipY / 1080.f;
+	FCanvasTileItem Dim(FVector2D::ZeroVector, FVector2D(Canvas->ClipX, Canvas->ClipY), FLinearColor(0.01f, 0.015f, 0.02f, 0.72f));
+	Dim.BlendMode = SE_BLEND_Translucent;
+	Canvas->DrawItem(Dim);
+
+	const float Left = Canvas->ClipX * 0.12f;
+	float Y = Canvas->ClipY * 0.36f;
+	FCanvasTileItem Rule(FVector2D(Left, Y - 18.f * S), FVector2D(64.f * S, 2.f * S), AccentColor);
+	Rule.BlendMode = SE_BLEND_Translucent;
+	Canvas->DrawItem(Rule);
+	DrawTextShadowed(TEXT("PAUSED"), Left, Y, TextColor, LargeFont, 1.6f * S);
+	float W, H;
+	MeasureText(TEXT("PAUSED"), LargeFont, 1.6f * S, W, H);
+	Y += H + 36.f * S;
+
+	const TArray<FText>& Items = ANVPlayerController::GetPauseItems();
+	PC->PauseItemRects.SetNum(Items.Num());
+	float MaxW = 0.f;
+	for (const FText& It : Items)
+	{
+		MeasureText(It.ToString().ToUpper(), SmallFont, 1.25f * S, W, H);
+		MaxW = FMath::Max(MaxW, W);
+	}
+	for (int32 i = 0; i < Items.Num(); ++i)
+	{
+		const bool bSel = (i == PC->GetPauseSelection());
+		const FString Label = Items[i].ToString().ToUpper();
+		MeasureText(Label, SmallFont, 1.25f * S, W, H);
+		const float RowH = H + 18.f * S;
+		const FBox2D Rect(FVector2D(Left - 16.f * S, Y - 9.f * S), FVector2D(Left + MaxW + 40.f * S, Y - 9.f * S + RowH));
+		PC->PauseItemRects[i] = Rect;
+		if (bSel)
+		{
+			FCanvasTileItem Bar(Rect.Min, Rect.GetSize(), FLinearColor(AccentColor.R, AccentColor.G, AccentColor.B, 0.14f));
+			Bar.BlendMode = SE_BLEND_Translucent;
+			Canvas->DrawItem(Bar);
+			FCanvasTileItem Tick(Rect.Min, FVector2D(3.f * S, RowH), AccentColor);
+			Tick.BlendMode = SE_BLEND_Translucent;
+			Canvas->DrawItem(Tick);
+		}
+		DrawTextShadowed(Label, Left, Y, bSel ? AccentColor : TextColor, SmallFont, 1.25f * S);
+		Y += RowH + 6.f * S;
+	}
+	const FString Hint = bUsingGamepad
+		? (bPlayStationGlyphs ? TEXT("Cross  Select      Options  Resume") : TEXT("A  Select      Menu  Resume"))
+		: TEXT("Enter / Click  Select      Esc  Resume");
+	DrawTextShadowed(Hint, Left, Y + 24.f * S, FLinearColor(TextColor.R, TextColor.G, TextColor.B, 0.55f), SmallFont, 0.9f * S);
 }
 
 void ANVHUD::DrawReticle(const ANVPlayerCharacter& Player)

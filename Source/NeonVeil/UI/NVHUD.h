@@ -103,6 +103,8 @@ private:
 	void DrawAbilityOverlays(const ANVPlayerCharacter& Player);
 	void DrawMarks(const ANVPlayerCharacter& Player);
 	void DrawThreat();
+	void DrawFadeIn();
+	void DrawPauseMenu();
 
 	void BindToPawn();
 	void DrawReticle(const ANVPlayerCharacter& Player);
@@ -136,6 +138,11 @@ private:
 	float SubtitleUntil = -1.f;
 
 	bool bHUDVisible = true;
+
+	// Start-of-level fade: hold black until frames are steady (hides load hitches), then fade out.
+	int32 FadeSteadyFrames = 0;
+	double FadeLastTime = 0.0;
+	double FadeStartTime = -1.0;
 
 	TArray<FNVSubtitleLine> SubtitleQueue;
 	FText InstructionText;
