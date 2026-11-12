@@ -111,3 +111,26 @@ VRAM budget is 5.15 GB on the RTX 4050. The editor's "video memory exhausted" wa
 
 Before the texture caps, VRAM peaked at 5.19 GB, over the 5.15 GB budget. The load spike (4.96 GB) happens under the black fade.
 - **Open:** the guards' hair grooms are still selected under the helmets. The Python API wouldn't clear them, so this needs a manual pass in MetaHuman Creator; none is visible in play. Helmet optics have only been checked from the side and at a distance.
+
+## Update — real weapon models (12 Nov 2026)
+
+- **Source:** the free *Sci Fi gunpack* by PStudio (Fab, Standard licence). It replaces the placeholder cubes:
+
+| Weapon | Pack model | Orientation | Weapon animation |
+|---|---|---|---|
+| VX-9 Service Pistol | `SK_A_Sci_fi_Pistol` | yaw -90 | slide `punch` on fire, `reload` |
+| Kestrel SMG | `SK_b_w_smg_mini` (a bullpup, so the muzzle is at +Y) | yaw -92 | `fire`, `reload` |
+| Harrow Precision Rifle | `SK_SCI_fi_sniper_rifle_ANIMATION` | yaw -90 | `TRIGGER`, `RELOAD` |
+
+- **Code:**
+  - `UNVWeaponData` gains `MuzzleOffset` (the pack has no sockets), `WeaponFireAnim` and `WeaponReloadAnim`.
+  - The reload animation's play rate is auto-fitted to `ReloadTime`.
+  - `UNVWeaponComponent` plays both animations on the weapon's own skeletal mesh.
+- **Tuning:** viewmodel hip and ADS offsets were tuned live in play with `nv_gun_tune` and the `NVAim` cheat. Final values are in `nv_guns_setup.py`.
+- **Tested in play:**
+  - **VX-9:** hip pose, ADS sight alignment, firing.
+  - **Kestrel:** hip pose, ADS, firing, reload (ammo goes 27 → 30, the "RELOADING" state shows, and the viewmodel tilts).
+  - **Harrow:** configured from its bounds but **not seen in play**. It isn't a Level 1 weapon (the Bible's M00 simulation uses two classes), and its ADS height is an estimate.
+- **Textures:** gun textures capped at 2048 (32 textures).
+- **Packaged benchmark** (PSO cache re-recorded): 72.9–79.6 fps across all stops, p95 ≤ 15.5 ms, VRAM peak 4.60 GB, and no PSO events after load.
+- **Not used:** the Infima Free FPS Template (one stylised rifle with a flat 11 KB texture). The engine's UE5 mannequin already supplies pistol and rifle animation sets.
