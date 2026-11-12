@@ -47,7 +47,7 @@ An earlier run (run 1) also verified the same chain, but it used `NVSimSkip` for
 
 ## Known gaps (not claimed as working)
 
-- **Gamepad:** a PS5 DualSense (Bluetooth) works through the new native NVDualSense plugin. The user played and reported it working, and the log shows Cross, Circle, L1, R1, L2, R2, L3 and R3 registering, with a slide triggered. Square (reload), Triangle (interact) and the D-pad were not exercised. An Xbox/XInput pad is untested (no hardware).
+- **Gamepad:** a PS5 DualSense (Bluetooth) works through the native NVDualSense plugin. The log registers all 14 face, shoulder, trigger, stick-click and D-pad buttons, and both sticks and both triggers drive the game. Create, Options, PS, touchpad and mute did not appear in the log; none of them is bound yet, so their mapping gets re-checked when the pause menu (Options) is built. An Xbox/XInput pad is untested (no hardware).
 - **Packaged build:** not attempted yet (planned for M8).
 - **Lighting:** the graybox interiors are overexposed. Lighting is a placeholder until the M6 lighting pass.
 - **Guards, drone, abilities, surveillance cone, cover prompts:** M3.
