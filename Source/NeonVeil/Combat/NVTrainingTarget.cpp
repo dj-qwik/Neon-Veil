@@ -71,6 +71,13 @@ void ANVTrainingTarget::ResetTarget()
 	Activate();
 }
 
+void ANVTrainingTarget::Deactivate()
+{
+	bActive = false;
+	SetActorTickEnabled(false);
+	SetTargetVisible(false);
+}
+
 void ANVTrainingTarget::SetTargetVisible(bool bVisible)
 {
 	SetActorHiddenInGame(!bVisible);

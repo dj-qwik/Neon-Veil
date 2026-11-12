@@ -27,7 +27,9 @@ void UNVObjectiveSubsystem::RestoreState(UNVMissionData* Mission, const TArray<F
 	Completed = TSet<FName>(CompletedIDs);
 	Active.Reset();
 	bMissionComplete = false;
-	RefreshActive(true);
+	RefreshActive(false);
+	UE_LOG(LogNeonVeil, Log, TEXT("Objectives restored: %d complete, %d active"), Completed.Num(), Active.Num());
+	OnObjectivesRestored.Broadcast();
 	// Restoring never triggers the mission-complete transition; the save happens before it.
 }
 

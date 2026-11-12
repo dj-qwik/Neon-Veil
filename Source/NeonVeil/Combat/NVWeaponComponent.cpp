@@ -8,6 +8,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Controller.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
@@ -218,10 +219,19 @@ void UNVWeaponComponent::FireShot()
 
 	--Slot->AmmoInMag;
 
-	// Trace from the camera so shots land on the crosshair.
+	// Trace from the camera along the controller's current aim. The camera component's rotation
+	// is only refreshed once per frame, so using it would fire along last frame's view.
 	const FVector Start = Camera->GetComponentLocation();
+	FVector AimDir = Camera->GetForwardVector();
+	if (const APawn* Pawn = Cast<APawn>(GetOwner()))
+	{
+		if (const AController* C = Pawn->GetController())
+		{
+			AimDir = C->GetControlRotation().Vector();
+		}
+	}
 	const float SpreadRad = FMath::DegreesToRadians(GetCurrentSpreadDeg());
-	const FVector Dir = FMath::VRandCone(Camera->GetForwardVector(), SpreadRad);
+	const FVector Dir = FMath::VRandCone(AimDir, SpreadRad);
 	const FVector End = Start + Dir * Data->Range;
 
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(NVWeaponTrace), true, GetOwner());

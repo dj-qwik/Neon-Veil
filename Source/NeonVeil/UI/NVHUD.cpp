@@ -13,6 +13,8 @@
 #include "Engine/Font.h"
 #include "Engine/World.h"
 #include "CanvasItem.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 ANVHUD::ANVHUD()
 {
@@ -69,6 +71,19 @@ void ANVHUD::ShowSubtitle(const FText& Speaker, const FText& Line, float Duratio
 	SubtitleSpeaker = Speaker;
 	SubtitleLine = Line;
 	SubtitleUntil = GetWorld()->GetTimeSeconds() + Duration;
+}
+
+void ANVHUD::QueueSubtitles(const TArray<FNVSubtitleLine>& Lines)
+{
+	SubtitleQueue.Append(Lines);
+}
+
+void ANVHUD::ShowTitleCard(const FText& Title, const FText& Subtitle, float Duration)
+{
+	TitleText = Title;
+	TitleSubText = Subtitle;
+	TitleStart = GetWorld()->GetTimeSeconds();
+	TitleUntil = TitleStart + Duration;
 }
 
 void ANVHUD::DrawTextShadowed(const FString& Text, float X, float Y, const FLinearColor& Color, UFont* Font, float Scale, bool bRightAlign)
@@ -237,6 +252,42 @@ void ANVHUD::DrawMessages()
 {
 	const float Now = GetWorld()->GetTimeSeconds();
 	const float S = Canvas->ClipY / 1080.f;
+
+	// Advance the subtitle queue when the current line has finished.
+	if (Now >= SubtitleUntil && SubtitleQueue.Num() > 0)
+	{
+		const FNVSubtitleLine Line = SubtitleQueue[0];
+		SubtitleQueue.RemoveAt(0);
+		ShowSubtitle(Line.Speaker, Line.Text, Line.Duration);
+		if (Line.Voice)
+		{
+			UGameplayStatics::PlaySound2D(this, Line.Voice);
+		}
+	}
+
+	if (!InstructionText.IsEmpty() && bHUDVisible)
+	{
+		const FString T = InstructionText.ToString();
+		float W, H;
+		GetTextSize(T, W, H, SmallFont, 1.05f * S);
+		DrawTextShadowed(T, Canvas->ClipX - 48.f * S - W, 190.f * S, AccentColor, SmallFont, 1.05f * S);
+	}
+
+	if (Now < TitleUntil)
+	{
+		const float Fade = FMath::Clamp((Now - TitleStart) / 1.2f, 0.f, 1.f) * FMath::Clamp((TitleUntil - Now) / 1.0f, 0.f, 1.f);
+		FLinearColor C = TextColor;
+		C.A = Fade;
+		FLinearColor A2 = AccentColor;
+		A2.A = Fade;
+		float W, H;
+		const FString T = TitleText.ToString().ToUpper();
+		GetTextSize(T, W, H, LargeFont, 2.2f * S);
+		DrawTextShadowed(T, (Canvas->ClipX - W) * 0.5f, Canvas->ClipY * 0.44f, C, LargeFont, 2.2f * S);
+		const FString Sub = TitleSubText.ToString();
+		GetTextSize(Sub, W, H, SmallFont, 1.1f * S);
+		DrawTextShadowed(Sub, (Canvas->ClipX - W) * 0.5f, Canvas->ClipY * 0.44f + 70.f * S, A2, SmallFont, 1.1f * S);
+	}
 	if (Now < NoticeUntil)
 	{
 		float W, H;

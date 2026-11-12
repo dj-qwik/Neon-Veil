@@ -4,6 +4,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "Engine/GameInstance.h"
+#include "UI/NVHUD.h"
+#include "GameFramework/PlayerController.h"
 
 ANVInteractableActor::ANVInteractableActor()
 {
@@ -15,7 +17,16 @@ ANVInteractableActor::ANVInteractableActor()
 
 bool ANVInteractableActor::CanInteract_Implementation(AActor* Interactor) const
 {
-	return bEnabled && !(bSingleUse && UseCount > 0);
+	if (!bEnabled || (bSingleUse && UseCount > 0))
+	{
+		return false;
+	}
+	if (!RequiredActiveObjective.IsNone())
+	{
+		const UNVObjectiveSubsystem* Obj = UNVObjectiveSubsystem::Get(this);
+		return Obj && Obj->IsObjectiveActive(RequiredActiveObjective);
+	}
+	return true;
 }
 
 void ANVInteractableActor::Interact_Implementation(AActor* Interactor)
@@ -34,6 +45,16 @@ void ANVInteractableActor::Interact_Implementation(AActor* Interactor)
 		if (UNVObjectiveSubsystem* Objectives = UNVObjectiveSubsystem::Get(this))
 		{
 			Objectives->SendEvent(CompletionEventTag);
+		}
+	}
+	if (LinesOnUse.Num() > 0)
+	{
+		if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+		{
+			if (ANVHUD* HUD = Cast<ANVHUD>(PC->GetHUD()))
+			{
+				HUD->QueueSubtitles(LinesOnUse);
+			}
 		}
 	}
 	BP_OnInteracted(Interactor);

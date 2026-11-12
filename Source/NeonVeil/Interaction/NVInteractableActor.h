@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "Interaction/NVInteractable.h"
+#include "UI/NVSubtitleLine.h"
 #include "NVInteractableActor.generated.h"
 
 class UStaticMeshComponent;
@@ -61,6 +62,14 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
 	TObjectPtr<USoundBase> UseSound;
+
+	/** Read-outs or dialogue shown when used (news feeds, logs, AION replies). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+	TArray<FNVSubtitleLine> LinesOnUse;
+
+	/** Only usable while this objective is active. None = always. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
+	FName RequiredActiveObjective;
 
 	/** Custom-depth stencil value used by the focus outline post-process. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")

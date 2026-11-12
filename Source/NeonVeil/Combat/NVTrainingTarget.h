@@ -33,6 +33,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Target")
 	void ResetTarget();
 
+	/** Hide and stop the target without counting it as cleared. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Target")
+	void Deactivate();
+
 	UFUNCTION(BlueprintPure, Category = "NeonVeil|Target")
 	bool IsCleared() const { return bCleared; }
 

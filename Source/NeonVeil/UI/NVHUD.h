@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
+#include "UI/NVSubtitleLine.h"
 #include "NVHUD.generated.h"
 
 class ANVPlayerCharacter;
@@ -33,6 +34,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
 	void SetHUDVisible(bool bVisible) { bHUDVisible = bVisible; }
+
+	/** Plays lines one after another (each for its Duration), after anything already queued. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
+	void QueueSubtitles(const TArray<FNVSubtitleLine>& Lines);
+
+	/** Persistent instruction under the objectives (simulation prompts). Empty clears it. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
+	void SetInstruction(const FText& Text) { InstructionText = Text; }
+
+	/** Large centred title card, e.g. the end-of-mission card. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
+	void ShowTitleCard(const FText& Title, const FText& Subtitle, float Duration = 5.f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
 	FLinearColor AccentColor = FLinearColor(0.35f, 0.9f, 1.f, 1.f); // controlled cyan
@@ -74,6 +87,13 @@ private:
 	float SubtitleUntil = -1.f;
 
 	bool bHUDVisible = true;
+
+	TArray<FNVSubtitleLine> SubtitleQueue;
+	FText InstructionText;
+	FText TitleText;
+	FText TitleSubText;
+	float TitleUntil = -1.f;
+	float TitleStart = -1.f;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UFont> SmallFont;

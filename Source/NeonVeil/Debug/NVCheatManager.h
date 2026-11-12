@@ -16,11 +16,11 @@ class NEONVEIL_API UNVCheatManager : public UCheatManager
 	GENERATED_BODY()
 
 public:
-	/** Point the view at the first actor whose label/name contains Name. WeakPoint=1 aims at its weak point. */
+	/** Point the view at the first actor whose label/name contains Name. WeakPoint=1 aims at its weak point. "none" clears tracking. */
 	UFUNCTION(Exec)
 	void NVAimAt(const FString& Name, int32 WeakPoint = 0);
 
-	/** Fire N shots at the weapon's own fire rate (semi-auto taps). */
+	/** Fire N shots at the weapon's own fire rate, re-aiming at the last NVAimAt target before each shot. */
 	UFUNCTION(Exec)
 	void NVFire(int32 Shots = 1);
 
@@ -70,6 +70,26 @@ public:
 	UFUNCTION(Exec)
 	void NVFace(float Yaw);
 
+	/** Save a checkpoint at the given checkpoint ID now. */
+	UFUNCTION(Exec)
+	void NVSave(const FString& CheckpointID);
+
+	/** Reload the last checkpoint (logs load-to-control time). */
+	UFUNCTION(Exec)
+	void NVLoad();
+
+	/** Delete the checkpoint and restart the current map fresh. */
+	UFUNCTION(Exec)
+	void NVNewGame();
+
+	/** Force-complete an active objective by ID. */
+	UFUNCTION(Exec)
+	void NVComplete(const FString& ObjectiveID);
+
+	/** Complete the current simulation step. */
+	UFUNCTION(Exec)
+	void NVSimSkip();
+
 private:
 	ANVPlayerCharacter* GetNVPlayer() const;
 	AActor* FindActor(const FString& Name) const;
@@ -79,6 +99,8 @@ private:
 	void MoveTick();
 
 	int32 ShotsRemaining = 0;
+	FString LastAimName;
+	int32 LastAimWeakPoint = 0;
 	FTimerHandle FireTimer;
 	FTimerHandle UseTimer;
 	FTimerHandle SampleTimer;

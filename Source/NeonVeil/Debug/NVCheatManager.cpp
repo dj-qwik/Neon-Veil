@@ -7,6 +7,9 @@
 #include "Interaction/NVInteractionComponent.h"
 #include "Objectives/NVObjectiveSubsystem.h"
 #include "NeonVeil.h"
+#include "Save/NVSaveSubsystem.h"
+#include "Missions/NVSimulationDirector.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Camera/CameraComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -23,18 +26,26 @@ ANVPlayerCharacter* UNVCheatManager::GetNVPlayer() const
 
 AActor* UNVCheatManager::FindActor(const FString& Name) const
 {
+	// Exact label/name wins; otherwise fall back to the first partial match.
+	AActor* Partial = nullptr;
 	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
 	{
+		FString Label = It->GetName();
 #if WITH_EDITOR
-		if (It->GetActorLabel().Contains(Name))
-		{
-			return *It;
-		}
+		Label = It->GetActorLabel();
 #endif
-		if (It->GetName().Contains(Name))
+		if (Label.Equals(Name, ESearchCase::IgnoreCase) || It->GetName().Equals(Name, ESearchCase::IgnoreCase))
 		{
 			return *It;
 		}
+		if (!Partial && (Label.Contains(Name) || It->GetName().Contains(Name)))
+		{
+			Partial = *It;
+		}
+	}
+	if (Partial)
+	{
+		return Partial;
 	}
 	UE_LOG(LogNeonVeil, Warning, TEXT("NVCheat: no actor matching '%s'"), *Name);
 	return nullptr;
@@ -42,6 +53,13 @@ AActor* UNVCheatManager::FindActor(const FString& Name) const
 
 void UNVCheatManager::NVAimAt(const FString& Name, int32 WeakPoint)
 {
+	if (Name.Equals(TEXT("none"), ESearchCase::IgnoreCase))
+	{
+		LastAimName.Reset();
+		return;
+	}
+	LastAimName = Name;
+	LastAimWeakPoint = WeakPoint;
 	ANVPlayerCharacter* Player = GetNVPlayer();
 	AActor* Target = FindActor(Name);
 	if (!Player || !Target)
@@ -80,6 +98,12 @@ void UNVCheatManager::FireTick()
 	if (!Player || ShotsRemaining <= 0)
 	{
 		return;
+	}
+	if (!LastAimName.IsEmpty())
+	{
+		// Re-aim quietly: tracks moving targets and cancels recoil drift between test shots.
+		const FString Name = LastAimName;
+		NVAimAt(Name, LastAimWeakPoint);
 	}
 	UNVWeaponComponent* W = Player->GetWeapons();
 	W->StartFire();
@@ -293,5 +317,46 @@ void UNVCheatManager::NVFace(float Yaw)
 	if (APlayerController* PC = GetPlayerController())
 	{
 		PC->SetControlRotation(FRotator(0.f, Yaw, 0.f));
+	}
+}
+
+void UNVCheatManager::NVSave(const FString& CheckpointID)
+{
+	if (UNVSaveSubsystem* S = UNVSaveSubsystem::Get(this))
+	{
+		S->SaveCheckpoint(FName(*CheckpointID));
+	}
+}
+
+void UNVCheatManager::NVLoad()
+{
+	if (UNVSaveSubsystem* S = UNVSaveSubsystem::Get(this))
+	{
+		S->LoadCheckpoint();
+	}
+}
+
+void UNVCheatManager::NVNewGame()
+{
+	if (UNVSaveSubsystem* S = UNVSaveSubsystem::Get(this))
+	{
+		S->NewGame(UWorld::RemovePIEPrefix(GetWorld()->GetOutermost()->GetName()));
+	}
+}
+
+void UNVCheatManager::NVComplete(const FString& ObjectiveID)
+{
+	if (UNVObjectiveSubsystem* O = UNVObjectiveSubsystem::Get(this))
+	{
+		const bool bOk = O->CompleteObjective(FName(*ObjectiveID));
+		UE_LOG(LogNeonVeil, Log, TEXT("NVComplete %s -> %s"), *ObjectiveID, bOk ? TEXT("done") : TEXT("not active"));
+	}
+}
+
+void UNVCheatManager::NVSimSkip()
+{
+	for (TActorIterator<ANVSimulationDirector> It(GetWorld()); It; ++It)
+	{
+		It->DebugSkipStep();
 	}
 }
