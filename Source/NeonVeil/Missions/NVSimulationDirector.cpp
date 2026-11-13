@@ -10,7 +10,10 @@
 #include "World/NVSurveillanceCamera.h"
 #include "NeonVeil.h"
 
+#include "Components/AudioComponent.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/AmbientSound.h"
 #include "GameFramework/PlayerController.h"
 
 ANVSimulationDirector::ANVSimulationDirector()
@@ -98,7 +101,37 @@ void ANVSimulationDirector::BeginRun()
 		P->GetHealth()->OnHealthChanged.AddUniqueDynamic(this, &ANVSimulationDirector::HandlePlayerHealthChanged);
 	}
 	SetActorTickEnabled(true);
+	StartSimMusic();
 	StartStep(0);
+}
+
+void ANVSimulationDirector::StartSimMusic()
+{
+	if (SimMusic && !SimMusicComp)
+	{
+		SimMusicComp = UGameplayStatics::SpawnSound2D(this, SimMusic, 1.f, 1.f, 0.f, nullptr, false, false);
+		if (SimMusicComp)
+		{
+			SimMusicComp->FadeIn(SimMusicFadeIn, SimMusicVolume);
+		}
+	}
+	if (MusicToDuck && MusicToDuck->GetAudioComponent())
+	{
+		MusicToDuck->GetAudioComponent()->AdjustVolume(SimMusicFadeIn, DuckLevel);
+	}
+}
+
+void ANVSimulationDirector::StopSimMusic()
+{
+	if (SimMusicComp)
+	{
+		SimMusicComp->FadeOut(SimMusicFadeOut, 0.f);
+		SimMusicComp = nullptr;
+	}
+	if (MusicToDuck && MusicToDuck->GetAudioComponent())
+	{
+		MusicToDuck->GetAudioComponent()->AdjustVolume(SimMusicFadeOut, 1.f);
+	}
 }
 
 void ANVSimulationDirector::StartStep(int32 Index)
@@ -411,6 +444,7 @@ void ANVSimulationDirector::Finish()
 	CurrentStep = INDEX_NONE;
 	SetActorTickEnabled(false);
 	UE_LOG(LogNeonVeil, Log, TEXT("Simulation complete"));
+	StopSimMusic();
 	// Retire anything still live (e.g. from a skipped step) so the suite goes quiet.
 	for (FNVSimStep& Step : Steps)
 	{

@@ -12,6 +12,9 @@ class ANVSimVolleyEmitter;
 class ANVSurveillanceCamera;
 class ANVPlayerCharacter;
 class UNVHealthComponent;
+class USoundBase;
+class UAudioComponent;
+class AAmbientSound;
 
 UENUM(BlueprintType)
 enum class ENVSimStepType : uint8
@@ -123,6 +126,26 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simulation")
 	TArray<FNVSubtitleLine> LinesOnComplete;
 
+	/** Combat-state score layer: 2D, fades in when the run starts and out when it finishes. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simulation|Music")
+	TObjectPtr<USoundBase> SimMusic;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simulation|Music", meta = (ClampMin = "0"))
+	float SimMusicVolume = 0.22f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simulation|Music", meta = (ClampMin = "0"))
+	float SimMusicFadeIn = 3.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simulation|Music", meta = (ClampMin = "0"))
+	float SimMusicFadeOut = 6.f;
+
+	/** Explore bed to duck while the combat layer plays (restored on finish). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simulation|Music")
+	TObjectPtr<AAmbientSound> MusicToDuck;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Simulation|Music", meta = (ClampMin = "0", ClampMax = "1"))
+	float DuckLevel = 0.15f;
+
 	UFUNCTION(BlueprintPure, Category = "NeonVeil")
 	int32 GetCurrentStep() const { return CurrentStep; }
 
@@ -171,6 +194,12 @@ private:
 	void CompleteStep();
 	void Finish();
 	bool IsStepDone(const FNVSimStep& Step) const;
+
+	void StartSimMusic();
+	void StopSimMusic();
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAudioComponent> SimMusicComp;
 
 	enum class EVolleyState : uint8 { WaitArea, Running, Passed, Retry };
 	EVolleyState VolleyState = EVolleyState::WaitArea;
