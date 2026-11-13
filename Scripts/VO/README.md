@@ -14,6 +14,10 @@ The spoken lines are listed in `Scripts/VO/<set>_lines.json`. Each line has an i
 
 The ElevenLabs flow is "NEON VEIL - M00 Voice Lines". It holds two takes per line, and take 1 is the one imported.
 
+## Rule for future runs
+Generate one take per line (`generations_count=1`) to save credits. The user asked for this on 2026-11-12.
+Regenerate a single line only when it is asked for.
+
 ## Pipeline
 
 1. Generate the lines in ElevenLabs. Pronunciation tweaks go in the spoken prompt only (for example "Ghost-Seven").
