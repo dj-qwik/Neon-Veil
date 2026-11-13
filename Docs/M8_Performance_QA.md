@@ -157,3 +157,19 @@ Before the texture caps, VRAM peaked at 5.19 GB, over the 5.15 GB budget. The lo
   - VX-9 reload steps fire at 0.03 / 0.38 / 0.71 / 1.08 s against a 1.45 s reload.
   - In an 8-round Kestrel burst no variant repeats back-to-back, and tails stay at 2 voices or fewer.
   - **Not verified by ear:** the levels and the accent's character are design choices and need a listening pass.
+
+## Packaged benchmark after the subway tram (2026-11-12)
+NV_PSO_Pipeline (539 stable PSOs) then NV_BenchmarkPackaged, RTX 4050 6 GB, 1080p, TSR 67%, vsync off.
+
+| Segment | avg fps | p95 ms | max ms |
+|---|---|---|---|
+| A_TramArrival | 65.3 | 17.32 | 21.2 |
+| A_Skybridge | 72.9 | 15.40 | 34.4 |
+| B_Atrium | 78.0 | 15.16 | 18.2 |
+| C_SimSuite | 80.5 | 13.73 | 17.3 |
+| D_Gallery | 77.2 | 14.60 | 17.0 |
+| E_Antechamber | 78.2 | 14.40 | 20.9 |
+
+VRAM peak (GPUMem/LocalUsedMB) 4924 MB of the 5152 MB budget (was 4600 MB before the tram): under budget, ~230 MB headroom.
+The editor's "video memory exhausted" warnings were editor overhead; the packaged game stays within budget.
+Note: packaging fails with "Unable to build while Live Coding is active" if any editor instance is still open.
