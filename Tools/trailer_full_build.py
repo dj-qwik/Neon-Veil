@@ -143,13 +143,14 @@ gate = f"if(between(t,{DROP:.3f},{RESUME-0.004:.3f}),0,1)*min(1,max(0,({DROP:.3f
 fm.append("".join(f"[m{k}]" for k in range(len(SEGS))) + f"amix=inputs={len(SEGS)}:normalize=0,apad=whole_dur={TOTAL},atrim=0:{TOTAL},"
           f"volume='{intro}':eval=frame,volume='min(1,{gate})':eval=frame[mraw]")
 run(["ffmpeg", "-v", "error", "-y"] + ins + ["-filter_complex", ";".join(fm), "-map", "[mraw]", f"{B}/music_raw.wav"])
-# level: full section sits at -21 LUFS (VO at -15 -> clear without ducking)
+# level: music is the loudest element; full section ~1 dB over the VO lines, bass shelf for punch
+MUSIC_LUFS = float(os.environ.get("MUSIC_LUFS", "-14.5"))
 full = lufs(f"{B}/music_raw.wav", f"atrim={tbar(4):.2f}:{tbar(18):.2f}")
-mg = -21.0 - full
+mg = MUSIC_LUFS - full
 # clarity without dips: only the 300 Hz-4 kHz band yields ~2-3 dB to the voice; lows and highs untouched
 run(["ffmpeg", "-v", "error", "-y", "-i", f"{B}/music_raw.wav", "-i", f"{B}/stem_vo.wav", "-filter_complex",
-     f"[0:a]volume={mg:.2f}dB,acrossover=split=300 4000:order=8th[lo][mid][hi];"
-     f"[1:a]asplit=1[sc];[mid][sc]sidechaincompress=threshold=0.05:ratio=2:attack=30:release=350:knee=6[midd];"
+     f"[0:a]volume={mg:.2f}dB,bass=g=3.5:f=70:w=0.8,acrossover=split=300 4000:order=8th[lo][mid][hi];"
+     f"[1:a]asplit=1[sc];[mid][sc]sidechaincompress=threshold=0.03:ratio=3:attack=25:release=300:knee=6[midd];"
      f"[lo][midd][hi]amix=inputs=3:normalize=0[m]", "-map", "[m]", f"{B}/stem_music.wav"])
 print(f"music gain {mg:.1f} dB  drop {DROP:.3f}-{RESUME:.3f}  neither ends {NEITHER_END:.3f}")
 
@@ -182,6 +183,6 @@ run(["ffmpeg", "-v", "error", "-y", "-i", f"{B}/stem_vo.wav", "-i", f"{B}/stem_m
      "-map", "[a]", "-ar", "48000", "-c:a", "pcm_s16le", f"{B}/mix.wav"])
 run(["ffmpeg", "-v", "error", "-y", "-i", f"{B}/video.mp4", "-i", f"{B}/mix.wav", "-map", "0:v", "-map", "1:a",
      "-c:v", "libx264", "-preset", "slow", "-crf", "20", "-maxrate", "16M", "-bufsize", "32M", "-pix_fmt", "yuv420p",
-     "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", "-shortest", f"{B}/NeonVeil_Trailer_v3.mp4"])
+     "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", "-shortest", f"{B}/NeonVeil_Trailer_v3b.mp4"])
 json.dump({"st": st, "cuts": CUTS, "vo": VOINT, "drop": DROP, "resume": RESUME, "title": TITLE_AT, "total": TOTAL}, open(f"{B}/timeline.json", "w"))
 print("built")
