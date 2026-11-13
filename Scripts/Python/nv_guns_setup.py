@@ -21,7 +21,7 @@ CFG = {
         mesh=P + "Sci_fi_sniper_rifle/mesh/SK_SCI_fi_sniper_rifle_ANIMATION",
         fire=P + "Sci_fi_sniper_rifle/animation/A_SCI_fi_sniper_rifle_ANIMATION_Anim_Armature_SCI_FI_SNIPER_RIFLE_TRIGGER",
         reload=P + "Sci_fi_sniper_rifle/animation/A_SCI_fi_sniper_rifle_ANIMATION_Anim_Armature_SCI_FI_SNIPER_RIFLE_RELOAD",
-        yaw=-90.0, pitch=0.0, scale=0.62, hip=V(42, 12, -15), ads=V(16, 0, -11.5), muzzle=V(0, 60, 5)),  # not in M00; untested in play
+        yaw=-90.0, pitch=0.0, scale=0.62, hip=V(42, 12, -15), ads=V(16, 0, -12.1), muzzle=V(0, 60, 5)),  # not in M00; ADS checked in PIE (scope lens centred)
 }
 for name, c in CFG.items():
     w = unreal.load_asset("/Game/NeonVeil/Data/Weapons/" + name)
