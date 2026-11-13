@@ -15,6 +15,13 @@ In-game credit text:
 
 > Music: "Background 6" from *Cyber Punk Music v11* by Kloudization (via Fab).
 
+## Intro trailer (`NeonVeil_Intro_v1`)
+
+- **Music:** "Background 6" from *Cyber Punk Music v11* by Kloudization (via Fab).
+- **Visuals:** generated with ElevenLabs. Stills were made with Google Nano Banana Pro and animated with Google Veo 3.1 Fast. Flow: "NEON VEIL – Intro Trailer".
+- **Voices:** AION (N.A.V.I.), Crown News (Daniel), Ops Monitor (EVA), Security (Vector).
+- **Sound effects:** rain, impact and glitch, generated with ElevenLabs Sound Effects.
+
 ## Voice
 
 | Role | Voice | Source |
