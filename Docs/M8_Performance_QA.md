@@ -190,3 +190,21 @@ PSO cache re-recorded (234 PSOs) and repackaged. Packaged run: 1920x1080, TSR at
 - **Before adding Armor Pack 05 / Etherion:** cap their textures, or budget for them.
 - **Editor PIE:** shows "video memory exhausted" (up to ~100 MB over). This comes from editor overhead; the packaged build stays under budget.
 - **Stale editor sessions:** once, after long editor sessions, a guard rendered with stretched skinning. A clean editor restart fixed it, and the packaged build is unaffected.
+
+### 2026-11-12: skyline round-tower fix
+- CHE_B01 is also a round tower, and its window lights spiral. All 24 were swapped for the square-plan CHJ_A01/CHJ_B01 designs.
+- The first packaged run after the swap: skybridge 63.6 fps, VRAM 5081/5152 MB. The CHJ towers are much heavier.
+- Removed the 9 farthest replacements (0.9–1.1 km out, mostly lost in the haze).
+
+Packaged run after the trim:
+
+| Stop | avg fps |
+|---|---|
+| Tram | 63.7 |
+| Skybridge | 67.1 |
+| Atrium | 78.0 |
+| Sim suite | 81.1 |
+| Gallery | 77.1 |
+| Antechamber | 77.2 |
+
+VRAM peak after the trim is 4854 MB, about 300 MB of headroom.

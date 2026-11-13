@@ -1,0 +1,127 @@
+[
+ {
+  "id": "M00_Security_01",
+  "speaker": "Security",
+  "text": "Clearance verified. Proceed to the simulation suite for calibration."
+ },
+ {
+  "id": "M00_Simulation_01",
+  "speaker": "Simulation",
+  "text": "Calibration sequence initiated. Moving targets live."
+ },
+ {
+  "id": "M00_AION_01",
+  "speaker": "AION",
+  "text": "Baseline reflexes nominal, Ghost-7. Proceed."
+ },
+ {
+  "id": "M00_Simulation_02",
+  "speaker": "Simulation",
+  "text": "Optics calibration. Hold your sight picture."
+ },
+ {
+  "id": "M00_Simulation_03",
+  "speaker": "Simulation",
+  "text": "Hardened profiles. Shields absorb body hits; weak points do not."
+ },
+ {
+  "id": "M00_Simulation_04",
+  "speaker": "Simulation",
+  "text": "Secondary weapon class. Confirm handling."
+ },
+ {
+  "id": "M00_Simulation_05",
+  "speaker": "Simulation",
+  "text": "Aerial profile. Stabilizer core exposed on the underside."
+ },
+ {
+  "id": "M00_Simulation_06",
+  "speaker": "Simulation",
+  "text": "Cover discipline. Live training rounds inbound."
+ },
+ {
+  "id": "M00_Simulation_07",
+  "speaker": "Simulation",
+  "text": "You were exposed. Resetting."
+ },
+ {
+  "id": "M00_Simulation_08",
+  "speaker": "Simulation",
+  "text": "No cover this time. Trust the shield, Ghost-7."
+ },
+ {
+  "id": "M00_Simulation_09",
+  "speaker": "Simulation",
+  "text": "Shield timing off. Resetting."
+ },
+ {
+  "id": "M00_Simulation_10",
+  "speaker": "Simulation",
+  "text": "Close-quarters profile. Staggered targets are open to a takedown."
+ },
+ {
+  "id": "M00_Simulation_11",
+  "speaker": "Simulation",
+  "text": "Profiles concealed behind hard cover. Use the uplink."
+ },
+ {
+  "id": "M00_Simulation_12",
+  "speaker": "Simulation",
+  "text": "Surveillance cone active. Stay out of it, or stay invisible."
+ },
+ {
+  "id": "M00_AION_02",
+  "speaker": "AION",
+  "text": "The cameras up here answer to the Directorate. Remember that."
+ },
+ {
+  "id": "M00_Simulation_13",
+  "speaker": "Simulation",
+  "text": "Detected. Return to the ramp."
+ },
+ {
+  "id": "M00_AION_03",
+  "speaker": "AION",
+  "text": "Combat suite calibrated. The Director's office has your assignment queued in the operations gallery."
+ },
+ {
+  "id": "M00_AION_04",
+  "speaker": "AION",
+  "text": "Assignment: personal briefing with the Director. Your clearance is elevated for the duration."
+ },
+ {
+  "id": "M00_AION_05",
+  "speaker": "AION",
+  "text": "Proceed to the antechamber. Biometric authorization will be required at the door."
+ },
+ {
+  "id": "M00_AION_06",
+  "speaker": "AION",
+  "text": "Welcome back, Ghost-7. Crown Sector is secure. The Directorate is expecting you."
+ },
+ {
+  "id": "M00_AION_07",
+  "speaker": "AION",
+  "text": "Report to security for access confirmation."
+ },
+ {
+  "id": "M00_CrownNews_01",
+  "speaker": "Crown News",
+  "text": "Directorate approval holds at 91 percent. Lower-district curfew extended indefinitely."
+ },
+ {
+  "id": "M00_CrownNews_02",
+  "speaker": "Crown News",
+  "text": "AION oversight credited with a fourteenth consecutive quarter without a Crown Sector incident."
+ },
+ {
+  "id": "M00_OpsMonitor_01",
+  "speaker": "Ops Monitor",
+  "text": "Gallery feed just dropped. One-eight-zero milliseconds, all cameras."
+ },
+ {
+  "id": "M00_AION_08",
+  "speaker": "AION",
+  "text": "Correction. Feed continuity is nominal. No anomaly is recorded."
+ }
+]
