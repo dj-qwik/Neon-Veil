@@ -26,3 +26,6 @@
 *.py text eol=crlf
 *.bat text eol=crlf
 RawAssets/** !text !filter !merge !diff
+
+# Small doc reference images stay out of LFS (LFS uploads are blocked from the build workspace)
+Docs/Reference/** -filter -diff -merge binary

@@ -16,7 +16,7 @@ Status key:
 | Cyber Punk Music v11 | Kloudization | **In use (M00 sim suite)** | 10 tracks of about 171 s each. Heavily compressed (about -9 LUFS, LRA 0.9–2.8), 99–129 BPM, constant high energy. Background 6 is the darkest and least busy, so it is the M00 sim-suite combat layer. |
 | FREE Cyber Metal Music Pack | Intersonic | Added | Reborn, The Devil's Confidant, Focus, Focus 2, Cauldronized, Opener. Metal energy is too much for M00. **M01** escape/lockdown could use Opener (dynamic, LRA 11.8) or Cauldronized. **M02** Hunter boss could use Reborn or Devil's Confidant. |
 
-**Bible conflict to resolve:** §Music says *"Original compositions only."* These are licensed library tracks, not original compositions. They work as placeholder/temp score, or as final score only if that Bible line is relaxed. Each use is labelled `Fab` in the asset name so it's easy to swap out.
+**Licensing:** *resolved.* Bible addendum A1 (`Docs/Bible_Addendum_A1_Licensed_Music.md`) allows licensed library music, as long as every track is credited in `Docs/Credits.md` and the in-game credits.
 
 ### Environments and city building (later levels)
 
