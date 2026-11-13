@@ -22,6 +22,13 @@ In-game credit text:
 - **Voices:** AION (N.A.V.I.), Crown News (Daniel), Ops Monitor (EVA), Security (Vector).
 - **Sound effects:** rain, impact and glitch, generated with ElevenLabs Sound Effects.
 
+## Full-game trailer (`NeonVeil_Trailer_v1`)
+
+- **Music:** "Opener" and "Cauldronized" from the *FREE Cyber Metal Music Pack* by Intersonic (via Fab).
+- **Visuals:** generated with ElevenLabs. Ghost-7 reference stills come from Google Nano Banana Pro, shot stills from Nano Banana 2, and the clips from Google Veo 3.1 Fast. Flow: "NEON VEIL – Ghost Protocol Trailer". The trailer also reuses Act I trailer clips.
+- **Voices:** AION (N.A.V.I.) and GHOST-7 (Vane – Rugged and gravelly).
+- **Sound effects:** ElevenLabs Sound Effects.
+
 ## Voice
 
 | Role | Voice | Source |
@@ -31,6 +38,7 @@ In-game credit text:
 | Ops Monitor | EVA | ElevenLabs |
 | Security | Vector | ElevenLabs |
 | Crown News | Daniel | ElevenLabs |
+| GHOST-7 | Vane – Rugged and gravelly | ElevenLabs |
 
 ## Art, characters and audio (third-party, in use in M00)
 

@@ -11,6 +11,7 @@ The spoken lines are listed in `Scripts/VO/<set>_lines.json`. Each line has an i
 | Ops Monitor | Eva – Futuristic Robot Helper (`weA4Q36twV5kwSaTEL0Q`) | eleven_v4 |
 | Security | Vector – Tec Voice (`NoiYxL9g25M4orC8Q0ls`) | eleven_v4 |
 | Crown News | Daniel – Steady Broadcaster (`onwK4e9ZLuTAKqWW03F9`) | eleven_v4 |
+| **GHOST-7** | Vane – Rugged and gravelly (`cymHWdiF8WjUCg6vvFxx`) | eleven_v4. Cast by the owner on 2026-11-13 for the game and all trailers. Direction: weary, restrained anger. |
 
 The ElevenLabs flow is "NEON VEIL - M00 Voice Lines". It holds two takes per line, and take 1 is the one imported.
 
