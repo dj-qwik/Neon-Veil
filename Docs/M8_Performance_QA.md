@@ -173,3 +173,20 @@ NV_PSO_Pipeline (539 stable PSOs) then NV_BenchmarkPackaged, RTX 4050 6 GB, 1080
 VRAM peak (GPUMem/LocalUsedMB) 4924 MB of the 5152 MB budget (was 4600 MB before the tram): under budget, ~230 MB headroom.
 The editor's "video memory exhausted" warnings were editor overhead; the packaged game stays within budget.
 Note: packaging fails with "Unable to build while Live Coding is active" if any editor instance is still open.
+
+### 2026-11-12: after Megascans floors/walls, sim drone, contrast pass
+PSO cache re-recorded (234 PSOs) and repackaged. Packaged run: 1920x1080, TSR at 67%, vsync off.
+
+| Stop | avg fps | p95 frame | max frame |
+|---|---|---|---|
+| A_TramArrival | 66.7 | 17.17 ms | 28.0 ms |
+| A_Skybridge | 74.0 | 15.18 ms | 34.1 ms |
+| B_Atrium | 81.6 | 14.71 ms | 34.0 ms |
+| C_SimSuite | 82.7 | 13.53 ms | 118.4 ms (one spike) |
+| D_Gallery | 78.6 | 14.12 ms | 28.7 ms |
+| E_Antechamber | 79.8 | 13.99 ms | 23.3 ms |
+
+- **VRAM peak:** 4989 MB of the 5152 MB budget (GPUMem/LocalUsedMB). That leaves about 160 MB of headroom, down from about 230 MB.
+- **Before adding Armor Pack 05 / Etherion:** cap their textures, or budget for them.
+- **Editor PIE:** shows "video memory exhausted" (up to ~100 MB over). This comes from editor overhead; the packaged build stays under budget.
+- **Stale editor sessions:** once, after long editor sessions, a guard rendered with stretched skinning. A clean editor restart fixed it, and the packaged build is unaffected.
