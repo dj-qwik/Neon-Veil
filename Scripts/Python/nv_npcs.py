@@ -56,9 +56,10 @@ NPCS = [
     # station concourse main hall (floor z 400, x 6250..7250)
     ("NPC_Cn_1", (6900, 600, 400.0), [(6900, 600), (6850, -2900)], (1.0, 3.0), 140.0, False),
     ("NPC_Cn_3", (7150, 2300, 400.0), [(7150, 2300), (7100, 1600), (7000, 1300)], (5.0, 10.0), 100.0, False),   # reading the board
-    # north service corridor (x 6550..6900) - station staff
-    ("NPC_Cn_2", (6720, 4600, 400.0), [(6720, 4600), (6720, 3100)], (2.0, 4.0), 120.0, True),
-    ("NPC_Cn_4", (6750, 3300, 400.0), [(6750, 3300), (6700, 4300)], (3.0, 6.0), 110.0, False),
+    # north service corridor (x 6550..6900, narrow): one station tech on post against the wall, out of the way
+    ("NPC_Cn_2", (6580, 3650, 400.0), [(6580, 3650)], (5.0, 9.0), 100.0, True),
+    # east wing (wide): a second officer pacing the security office
+    ("NPC_Cn_4", (7700, 2050, 400.0), [(7700, 2050), (8100, 2350), (7600, 2350)], (3.0, 6.0), 110.0, False),
     # east wing security office: officer on post
     ("NPC_Sec_1", (8300, 2000, 400.0), [(8300, 2000)], (5.0, 9.0), 90.0, False),
     # Platform One (north, walk surface z 0, y -250..-1000; track pit y -1130..-1720 is off limits)
@@ -149,7 +150,7 @@ def outfit_for(look_cls):
     return gs, [material_for(g, sex, build) for g in gs]
 
 for i, (label, (x, y, z), route, waits, speed, courier) in enumerate(NPCS):
-    yaw = 180.0 if label == "NPC_Sec_1" else 0.0
+    yaw = {"NPC_Sec_1": 180.0, "NPC_Cn_2": 0.0}.get(label, 0.0)
     g = EAS.spawn_actor_from_class(unreal.NVGuardCharacter, V(x, y, z + 100), unreal.Rotator(roll=0, pitch=0, yaw=yaw))
     g.set_actor_label(label); g.set_folder_path(FOLDER); g.tags = [TAG]
     look = LOOKS[i % len(LOOKS)] if LOOKS else None
@@ -197,7 +198,7 @@ for i, (label, (x, y, z), route, waits, speed, courier) in enumerate(NPCS):
 NAV = [("NPC_Nav_Street", (7046, -11400, ZS + 200), (3900, 9400, 600)),
        ("NPC_Nav_Lobby", (7046, -5724, ZS + 200), (2500, 1700, 600)),
        ("NPC_Nav_Concourse", (7500, 430, 600), (3400, 9600, 600)),
-       ("NPC_Nav_Platform", (2830, -1525, 100), (5000, 3700, 700))]
+       ("NPC_Nav_Platform", (2350, -1200, 100), (8000, 5600, 700))]   # both platforms, SW control rooms, crew room annex, service stairs
 for label, c, size in NAV:
     nv = EAS.spawn_actor_from_class(unreal.NavMeshBoundsVolume, V(*c))
     nv.set_actor_label(label); nv.set_folder_path(FOLDER); nv.tags = [TAG]

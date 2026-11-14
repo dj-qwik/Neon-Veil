@@ -175,6 +175,26 @@ if sh:
     l = sh.get_actor_location()
     sh.set_actor_location(V(l.x, l.y, 140 + 150), False, False)
 
+# platform-to-car gap fillers: the docked car stands ~10 cm off each platform edge over a 4.5 m pit; walk-on plates
+# (invisible, pawn-only) keep anyone from dropping between platform and doors
+for lab, y0, y1 in (("Plat_GapFill_N", -1190, -1060), ("Plat_GapFill_S", -1840, -1650)):
+    a = EAS.spawn_actor_from_object(CUBE, V(2200, (y0 + y1) / 2, -5), R())
+    a.set_actor_scale3d(V(4400 / 100.0, (y1 - y0) / 100.0, 0.1))
+    a.set_actor_label(lab); a.set_folder_path(FOLDER); a.tags = [unreal.Name(TAG)]
+    c = a.static_mesh_component
+    c.set_collision_profile_name("InvisibleWall")
+    a.set_actor_hidden_in_game(True)
+    c.set_editor_property("can_ever_affect_navigation", False)
+
+# the station's BP_Door_A only senses people on ONE side (its trigger box sits 70 cm off-centre), so the north
+# service corridor door could not be opened from the concourse. Centre the trigger and make it reach both sides.
+for a in EAS.get_all_level_actors():
+    if a.get_class().get_name() == "BP_Door_A_C":
+        for c in a.get_components_by_class(unreal.BoxComponent):
+            sp(c, "relative_location", V(0, 0, 170))
+            c.set_box_extent(V(160, 260, 170))
+        log("door trigger centred:", a.get_actor_label())
+
 # ------------------------------------------------------------------ signs
 def sign(label, text, loc, yaw, size=30.0, color=(0.35, 0.95, 1.0)):
     a = spawn(unreal.TextRenderActor, label, loc, R(y=yaw))
