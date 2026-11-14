@@ -12,6 +12,19 @@ class UBlendSpace;
 /** Directions in the 8-way sets, clockwise from forward. */
 enum class ENVBodyDir : uint8 { Fwd, FwdRight, Right, BwdRight, Bwd, BwdLeft, Left, FwdLeft, Num };
 
+/** One gait cycle of a locomotion clip, from its L/R foot sync markers: left plant, right plant, next left plant. */
+struct FNVGaitCycle
+{
+	float L0 = 0.f, R = 0.5f, L1 = 1.f, Len = 1.f;
+	float Duration() const { return FMath::Max(L1 - L0, 0.05f); }
+	/** Clip time for a gait phase (0 = left foot plant, 0.5 = right foot plant). */
+	float TimeAt(float G) const
+	{
+		const float T = G < 0.5f ? L0 + (G / 0.5f) * (R - L0) : R + ((G - 0.5f) / 0.5f) * (L1 - R);
+		return FMath::Fmod(T, Len);
+	}
+};
+
 /** One animation set for the third-person body: unarmed, rifle or pistol. */
 USTRUCT(BlueprintType)
 struct FNVBodyAnimSet
@@ -50,6 +63,11 @@ struct FNVBodyAnimSet
 	/** Root speed the jog/walk cycles were authored at (cm/s); measured from root motion when present. */
 	float JogSpeed = 380.f;
 	float WalkSpeed = 160.f;
+
+	/** Foot-synced cycles for Jog[i] / Walk[i] (directional clips hold 1-3 strides each, so they are synced by
+	 *  foot plants, not by normalized clip time). */
+	FNVGaitCycle JogCycle[8];
+	FNVGaitCycle WalkCycle[8];
 };
 
 /** Everything the worker thread needs to build one frame's pose (raw pointers kept alive by the instance). */

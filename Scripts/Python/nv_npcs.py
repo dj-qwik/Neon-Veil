@@ -33,7 +33,7 @@ log("looks:", len(LOOKS))
 rng = random.Random(11)
 rng.shuffle(LOOKS)
 MANNY = unreal.load_asset("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple")
-ABP = unreal.load_object(None, "/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed.ABP_Unarmed_C")
+ABP = unreal.NVBodyAnimInstance.static_class()   # native foot-synced body animation (was ABP_Unarmed)
 HELMET = unreal.load_asset("/Game/SciFi_Armor_Pack_05/Mesh/Parts/SKM_SciFi_Helmet_v1_P05")
 IMMUNE = unreal.GameplayTagContainer()
 IMMUNE.import_text('(GameplayTags=((TagName="NV.Damage.Ballistic"),(TagName="NV.Damage.Training"),(TagName="NV.Damage.Melee")))')
@@ -187,7 +187,7 @@ for i, (label, (x, y, z), route, waits, speed, courier) in enumerate(NPCS):
     g.set_editor_property("glance_radius", 380.0)
     g.set_editor_property("patrol_points", [V(px - x, py - y, 0) for (px, py) in route])
     g.set_editor_property("wait_time_range", unreal.Vector2D(*waits))
-    g.set_editor_property("walk_speed", speed * rng.uniform(0.92, 1.06))
+    g.set_editor_property("walk_speed", max(170.0, min(235.0, 110.0 + speed * 0.85)) * rng.uniform(0.95, 1.04))  # walk cycle is authored at ~300 cm/s
     try:
         g.get_editor_property("health").set_editor_property("immune_damage_types", IMMUNE)
     except Exception as e:

@@ -113,36 +113,134 @@ namespace
 			P.Rect(FVector2f(CX - 150.f * K, BandY), FVector2f(300.f * K, 1.f), NVUI::WithAlpha(NVUI::Accent, 0.6f));
 			P.Flush(Out, LayerId);
 
-			auto Poly = [&](std::initializer_list<FVector2f> Pts, const FLinearColor& C, float Th)
+			// --- Holographic body: filled anatomical silhouette, x-ray skeleton inside, glowing contour.
+			using FPtList = TArray<FVector2f>;
+			auto Mirror = [](const TArray<FVector2D>& Right, bool bClose)
 			{
-				NVUI::Lines(Out, LayerId + 1, G, TArray<FVector2f>(Pts), C, Th);
+				// Right half (x >= 0, top to bottom) + mirrored left half back up = closed outline in local units.
+				TArray<FVector2D> All = Right;
+				for (int32 i = Right.Num() - 1; i >= 0; --i)
+				{
+					if (!FMath::IsNearlyZero(Right[i].X))
+					{
+						All.Add(FVector2D(-Right[i].X, Right[i].Y));
+					}
+				}
+				if (bClose) { const FVector2D First = All[0]; All.Add(First); }
+				return All;
 			};
-			// head (octagon), neck, torso, pelvis
-			Poly({ Pt(-14, 0), Pt(14, 0), Pt(24, 14), Pt(24, 44), Pt(12, 62), Pt(-12, 62), Pt(-24, 44), Pt(-24, 14), Pt(-14, 0) }, Wire, 1.5f);
-			Poly({ Pt(-10, 62), Pt(-10, 76), Pt(10, 76), Pt(10, 62) }, Wire, 1.2f);
-			Poly({ Pt(-62, 86), Pt(62, 86), Pt(48, 200), Pt(30, 236), Pt(-30, 236), Pt(-48, 200), Pt(-62, 86) }, Wire, 1.5f);
-			Poly({ Pt(-30, 236), Pt(-36, 262), Pt(36, 262), Pt(30, 236) }, Wire, 1.2f);
-			Poly({ Pt(0, 92), Pt(0, 232) }, WireDim, 1.f);
-			Poly({ Pt(-40, 120), Pt(40, 120) }, WireDim, 1.f);
-			Poly({ Pt(-36, 160), Pt(36, 160) }, WireDim, 1.f);
-			// arms
-			Poly({ Pt(-62, 86), Pt(-84, 96), Pt(-98, 178), Pt(-110, 250), Pt(-104, 276) }, Wire, 1.5f);
-			Poly({ Pt(62, 86), Pt(84, 96), Pt(98, 178), Pt(110, 250), Pt(104, 276) }, Wire, 1.5f);
-			// legs
-			Poly({ Pt(-34, 262), Pt(-46, 370), Pt(-44, 470), Pt(-60, 486) }, Wire, 1.5f);
-			Poly({ Pt(-8, 262), Pt(-16, 370), Pt(-22, 470), Pt(-30, 486) }, WireDim, 1.f);
-			Poly({ Pt(34, 262), Pt(46, 370), Pt(44, 470), Pt(60, 486) }, Wire, 1.5f);
-			Poly({ Pt(8, 262), Pt(16, 370), Pt(22, 470), Pt(30, 486) }, WireDim, 1.f);
+			auto ToPts = [&](const TArray<FVector2D>& L, float Flip = 1.f)
+			{
+				FPtList R;
+				for (const FVector2D& V : L) { R.Add(Pt(static_cast<float>(V.X) * Flip, static_cast<float>(V.Y))); }
+				return R;
+			};
+			auto Fan = [&](NVUI::FPainter& Painter, const FPtList& Outline, const FLinearColor& Top, const FLinearColor& Bottom)
+			{
+				// Star-shaped fill: fan from the centroid (the pieces are not convex).
+				FVector2f C(0.f, 0.f);
+				for (const FVector2f& V : Outline) { C += V; }
+				C /= static_cast<float>(FMath::Max(1, Outline.Num()));
+				FPtList F;
+				F.Add(C);
+				F.Append(Outline);
+				F.Add(Outline[0]);
+				Painter.PolyV(F, Top, Bottom);
+			};
+
+			// Pieces (right side; arms/legs mirrored). Local units: 0..490 tall, centre x = 0.
+			const TArray<FVector2D> HeadR = { {0,0},{14,2},{23,10},{27,24},{27,40},{24,52},{17,62},{8,70},{0,73} };
+			const TArray<FVector2D> NeckR = { {0,66},{10,67},{12,88},{0,88} };
+			const TArray<FVector2D> TorsoR = { {0,84},{12,86},{30,90},{52,96},{60,105},{56,122},{50,128},{48,150},{42,200},{48,236},{52,262},{26,272},{0,280} };
+			const TArray<FVector2D> ArmR = { {60,105},{70,120},{74,150},{78,190},{84,230},{88,262},{93,280},{89,299},{80,302},{76,284},{74,262},{66,226},{60,192},{56,150},{50,128},{56,122} };
+			const TArray<FVector2D> LegR = { {52,262},{54,300},{50,360},{46,378},{48,410},{42,456},{36,470},{45,483},{39,491},{18,491},{20,476},{20,460},{18,410},{14,378},{12,330},{4,282},{26,272} };
+			const TArray<FVector2D> OutlineR = { {0,0},{14,2},{23,10},{27,24},{27,40},{24,52},{17,62},{10,70},{11,84},{30,90},{52,96},{60,105},{70,120},{74,150},{78,190},{84,230},{88,262},{93,280},{89,299},{80,302},{76,284},{74,262},{66,226},{60,192},{56,150},{50,128},{48,150},{42,200},{48,236},{52,262},{54,300},{50,360},{46,378},{48,410},{42,456},{36,470},{45,483},{39,491},{18,491},{20,476},{20,460},{18,410},{14,378},{12,330},{4,282},{0,280} };
+
+			const FLinearColor FillTop = NVUI::WithAlpha(NVUI::Accent, 0.20f);
+			const FLinearColor FillBot = NVUI::WithAlpha(NVUI::Accent, 0.05f);
+			NVUI::FPainter Body(G, Tint);
+			Fan(Body, ToPts(Mirror(HeadR, false)), FillTop, FillBot);
+			Fan(Body, ToPts(Mirror(NeckR, false)), FillTop, FillBot);
+			Fan(Body, ToPts(Mirror(TorsoR, false)), FillTop, FillBot);
+			for (float Side : { 1.f, -1.f })
+			{
+				Fan(Body, ToPts(ArmR, Side), FillTop, FillBot);
+				Fan(Body, ToPts(LegR, Side), FillTop, FillBot);
+			}
+			// horizontal hologram lines across the silhouette
+			for (float Y = 4.f; Y < 490.f; Y += 7.f)
+			{
+				Body.Rect(Pt(-96.f, Y), FVector2f(192.f * K, 1.f), NVUI::WithAlpha(NVUI::Accent, 0.025f));
+			}
+			Body.Flush(Out, LayerId + 1);
+
+			auto Line = [&](const FPtList& P2, const FLinearColor& C, float Th) { NVUI::Lines(Out, LayerId + 1, G, P2, C, Th); };
+			auto L2 = [&](std::initializer_list<FVector2D> Pts, float Side, const FLinearColor& C, float Th)
+			{
+				Line(ToPts(TArray<FVector2D>(Pts), Side), C, Th);
+			};
+			const FLinearColor Bone = NVUI::WithAlpha(NVUI::Accent, 0.42f) * Tint;
+			const FLinearColor Faint = NVUI::WithAlpha(NVUI::Accent, 0.16f) * Tint;
+
+			// x-ray skeleton
+			for (float Y = 92.f; Y <= 268.f; Y += 8.f)          // vertebrae
+			{
+				L2({ { -3.0, Y }, { 3.0, Y } }, 1.f, Bone, 1.2f);
+			}
+			L2({ { 0, 88 }, { 0, 272 } }, 1.f, Faint, 1.f);
+			for (int32 i = 0; i < 6; ++i)                      // ribs
+			{
+				const double Y = 108.0 + i * 13.0;
+				const double W = 40.0 - FMath::Abs(i - 2) * 3.0;
+				for (float Side : { 1.f, -1.f })
+				{
+					L2({ { 3, Y }, { W * 0.55, Y - 3 }, { W, Y + 6 }, { W - 2, Y + 15 } }, Side, Bone, 1.f);
+				}
+			}
+			for (float Side : { 1.f, -1.f })
+			{
+				L2({ { 6, 93 }, { 30, 92 }, { 52, 100 } }, Side, Bone, 1.2f);              // clavicle
+				L2({ { 8, 236 }, { 30, 230 }, { 42, 240 }, { 36, 258 }, { 14, 268 } }, Side, Bone, 1.2f); // pelvis
+				L2({ { 62, 112 }, { 67, 190 } }, Side, Bone, 1.5f);                         // humerus
+				L2({ { 68, 196 }, { 79, 262 } }, Side, Bone, 1.2f);                         // forearm
+				L2({ { 71, 196 }, { 83, 260 } }, Side, Faint, 1.f);
+				L2({ { 35, 266 }, { 32, 374 } }, Side, Bone, 1.6f);                         // femur
+				L2({ { 30, 384 }, { 29, 462 } }, Side, Bone, 1.4f);                         // tibia
+				L2({ { 34, 386 }, { 34, 458 } }, Side, Faint, 1.f);
+				L2({ { 4, 104 }, { 28, 102 }, { 46, 114 }, { 40, 132 }, { 12, 136 } }, Side, Faint, 1.f); // chest plate
+				L2({ { 8, 150 }, { 34, 156 }, { 38, 200 }, { 10, 214 } }, Side, Faint, 1.f);  // abdomen panel
+				L2({ { 20, 300 }, { 44, 304 } }, Side, Faint, 1.f);                         // thigh band
+				L2({ { 22, 420 }, { 44, 424 } }, Side, Faint, 1.f);                         // shin band
+			}
+			// skull + visor
+			L2({ { -18, 6 }, { 18, 6 } }, 1.f, Faint, 1.f);
+			L2({ { -22, 46 }, { -14, 60 }, { 0, 66 }, { 14, 60 }, { 22, 46 } }, 1.f, Bone, 1.f);
+			NVUI::FPainter Joints(G, Tint);
+			Joints.Rect(Pt(-20.f, 29.f), FVector2f(40.f * K, 4.f * K), NVUI::WithAlpha(NVUI::Accent, 0.85f));   // visor
+			Joints.Rect(Pt(-20.f, 29.f), FVector2f(40.f * K, 1.f), NVUI::WithAlpha(FLinearColor::White, 0.6f));
+			for (float Side : { 1.f, -1.f })
+			{
+				for (const FVector2D& J : { FVector2D(62, 108), FVector2D(67, 193), FVector2D(80, 264), FVector2D(35, 264), FVector2D(31, 379), FVector2D(29, 465) })
+				{
+					Joints.Diamond(Pt(static_cast<float>(J.X) * Side, static_cast<float>(J.Y)), 3.f, NVUI::WithAlpha(NVUI::Accent, 0.55f));
+				}
+			}
+			Joints.Flush(Out, LayerId + 1);
+
+			// contour: soft glow + crisp edge
+			const FPtList Contour = ToPts(Mirror(OutlineR, true));
+			Line(Contour, NVUI::WithAlpha(NVUI::Accent, 0.10f) * Tint, 5.f);
+			Line(Contour, NVUI::WithAlpha(NVUI::Accent, 0.85f) * Tint, 1.4f);
 
 			// callouts: slot marker on the body, leader line, label at the side
 			struct FCallout { const TCHAR* Name; float X, Y; bool bLeft; };
 			static const FCallout Calls[] = {
-				{ TEXT("NEURAL"), 0.f, 24.f, true },
-				{ TEXT("OCULAR"), 10.f, 30.f, false },
-				{ TEXT("DERMAL"), -30.f, 140.f, true },
-				{ TEXT("SKELETAL"), 0.f, 200.f, false },
-				{ TEXT("ARMS"), -104.f, 220.f, true },
-				{ TEXT("LEGS"), 45.f, 400.f, false },
+				{ TEXT("NEURAL"), 0.f, 16.f, true },
+				{ TEXT("OCULAR"), 12.f, 31.f, false },
+				{ TEXT("DERMAL"), -28.f, 140.f, true },
+				{ TEXT("SKELETAL"), 0.f, 196.f, false },
+				{ TEXT("ARMS"), -72.f, 214.f, true },
+				{ TEXT("LEGS"), 32.f, 410.f, false },
 			};
 			const FSlateFontInfo LabelFont = NVUI::Font(NVUI::EFont::Mono, 11.f, 120);
 			const FSlateFontInfo SubFont = NVUI::Font(NVUI::EFont::Mono, 9.f, 60);

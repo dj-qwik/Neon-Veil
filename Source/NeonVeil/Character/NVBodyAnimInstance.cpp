@@ -23,6 +23,45 @@ namespace NVBody
 
 	static float Len(const UAnimSequence* S) { return S ? FMath::Max(S->GetPlayLength(), 0.01f) : 1.f; }
 
+	/** First L -> R -> L foot-plant cycle from the clip's sync markers (wrapping), or false if it has none. */
+	static bool CycleFromMarkers(const UAnimSequence* S, FNVGaitCycle& Out)
+	{
+		if (!S)
+		{
+			return false;
+		}
+		const float L = Len(S);
+		TArray<FAnimSyncMarker> M = S->AuthoredSyncMarkers;
+		M.Sort([](const FAnimSyncMarker& A, const FAnimSyncMarker& B) { return A.Time < B.Time; });
+		auto IsL = [](const FAnimSyncMarker& X) { return X.MarkerName.ToString().StartsWith(TEXT("L")); };
+		auto IsR = [](const FAnimSyncMarker& X) { return X.MarkerName.ToString().StartsWith(TEXT("R")); };
+		int32 IL = M.IndexOfByPredicate(IsL);
+		if (IL == INDEX_NONE || M.Num() < 2)
+		{
+			return false;
+		}
+		// Walk forward (wrapping) from that L to the next R and the next L.
+		const int32 N = M.Num();
+		float T0 = M[IL].Time, TR = -1.f, T1 = -1.f;
+		for (int32 k = 1; k <= N && T1 < 0.f; ++k)
+		{
+			const FAnimSyncMarker& X = M[(IL + k) % N];
+			const float T = X.Time + ((IL + k) >= N ? L : 0.f);
+			if (TR < 0.f && IsR(X)) { TR = T; }
+			else if (TR >= 0.f && IsL(X)) { T1 = T; }
+		}
+		if (TR < 0.f)
+		{
+			return false;
+		}
+		if (T1 < 0.f)
+		{
+			T1 = T0 + L;   // a single stride pair in the clip
+		}
+		Out.L0 = T0; Out.R = TR; Out.L1 = T1; Out.Len = L;
+		return true;
+	}
+
 	/** Root speed of a cycle in cm/s, or 0 if it is in place. */
 	static float CycleSpeed(const UAnimSequence* S)
 	{
@@ -63,6 +102,40 @@ void UNVBodyAnimInstance::LoadDefaults()
 		if (!S.Fire && !Fire.IsEmpty()) { S.Fire = Load<UAnimSequence>(Fire); }
 		if (!S.Attack && !Attack.IsEmpty()) { S.Attack = Load<UAnimSequence>(Attack); }
 		if (!S.AimOffset && !AO.IsEmpty()) { S.AimOffset = Load<UBlendSpace>(AO); }
+
+		for (int32 Pass = 0; Pass < 2; ++Pass)
+		{
+			TArray<TObjectPtr<UAnimSequence>>& Clips = Pass == 0 ? S.Jog : S.Walk;
+			FNVGaitCycle* Cyc = Pass == 0 ? S.JogCycle : S.WalkCycle;
+			bool bOk[8] = {};
+			for (int32 i = 0; i < 8 && i < Clips.Num(); ++i)
+			{
+				bOk[i] = CycleFromMarkers(Clips[i], Cyc[i]);
+			}
+			for (int32 i = 0; i < 8 && i < Clips.Num(); ++i)
+			{
+				if (bOk[i] || !Clips[i])
+				{
+					continue;
+				}
+				// Unmarked diagonals are the neighbouring cardinal clip re-rooted: borrow its cycle when lengths match.
+				const float Li = Len(Clips[i]);
+				bool bDone = false;
+				for (int32 Nb : { (i + 7) % 8, (i + 1) % 8 })
+				{
+					if (bOk[Nb] && Clips[Nb] && FMath::IsNearlyEqual(Len(Clips[Nb]), Li, 0.02f))
+					{
+						Cyc[i] = Cyc[Nb];
+						bDone = true;
+						break;
+					}
+				}
+				if (!bDone)
+				{
+					Cyc[i].L0 = 0.f; Cyc[i].R = Li * 0.5f; Cyc[i].L1 = Li; Cyc[i].Len = Li;
+				}
+			}
+		}
 
 		const float J = CycleSpeed(S.Jog.IsValidIndex(0) ? S.Jog[0].Get() : nullptr);
 		const float W = CycleSpeed(S.Walk.IsValidIndex(0) ? S.Walk[0].Get() : nullptr);
@@ -201,12 +274,6 @@ void UNVBodyAnimInstance::BuildFrame(float Dt)
 	const float GaitTarget = bHasWalk ? FMath::Clamp((Speed - S.WalkSpeed) / FMath::Max(S.JogSpeed - S.WalkSpeed, 1.f), 0.f, 1.f) : 1.f;
 	GaitAlpha = FMath::FInterpTo(GaitAlpha, GaitTarget, Dt, 6.f);
 
-	const float LenJ = Len(S.Jog.IsValidIndex(0) ? S.Jog[0].Get() : nullptr);
-	const float LenW = bHasWalk ? Len(S.Walk[0]) : LenJ;
-	const float RateJ = FMath::Clamp(Speed / S.JogSpeed, 0.55f, 1.75f);
-	const float RateW = FMath::Clamp(Speed / S.WalkSpeed, 0.55f, 1.6f);
-	Phase = FMath::Fmod(Phase + Dt * FMath::Lerp(RateW / LenW, RateJ / LenJ, GaitAlpha), 1.f);
-
 	IdleTime += Dt;
 	if (S.Idle)
 	{
@@ -220,7 +287,38 @@ void UNVBodyAnimInstance::BuildFrame(float Dt)
 		const int32 I0 = FMath::FloorToInt(Idx) % 8;
 		const int32 I1 = (I0 + 1) % 8;
 		const float Fr = Idx - FMath::FloorToFloat(Idx);
-		auto AddDir = [&](const TArray<TObjectPtr<UAnimSequence>>& Set, float GaitW)
+
+		// Gait phase is one left-right stride pair, shared by every clip through its foot-plant markers, and advanced
+		// so the planted foot keeps pace with the ground: cycles per second = speed / (clip speed * cycle duration).
+		float RateSum = 0.f, WSum = 0.f;
+		auto Accum = [&](const FNVGaitCycle* Cyc, const TArray<TObjectPtr<UAnimSequence>>& Set, float ClipSpeed, float GaitW)
+		{
+			if (Set.Num() != 8 || GaitW <= 0.001f)
+			{
+				return;
+			}
+			for (const TPair<int32, float>& T : { TPair<int32, float>(I0, 1.f - Fr), TPair<int32, float>(I1, Fr) })
+			{
+				if (Set[T.Key] && T.Value > 0.001f)
+				{
+					const float W = GaitW * T.Value;
+					RateSum += W * Speed / (FMath::Max(ClipSpeed, 1.f) * Cyc[T.Key].Duration());
+					WSum += W;
+				}
+			}
+		};
+		const float JogW = bHasWalk ? GaitAlpha : 1.f;
+		Accum(S.JogCycle, S.Jog, S.JogSpeed, JogW);
+		if (bHasWalk)
+		{
+			Accum(S.WalkCycle, S.Walk, S.WalkSpeed, 1.f - JogW);
+		}
+		if (WSum > 0.f)
+		{
+			Phase = FMath::Fmod(Phase + Dt * RateSum / WSum, 1.f);
+		}
+
+		auto AddDir = [&](const FNVGaitCycle* Cyc, const TArray<TObjectPtr<UAnimSequence>>& Set, float GaitW)
 		{
 			if (Set.Num() != 8 || GaitW <= 0.001f)
 			{
@@ -228,13 +326,13 @@ void UNVBodyAnimInstance::BuildFrame(float Dt)
 			}
 			const UAnimSequence* A = Set[I0];
 			const UAnimSequence* B = Set[I1];
-			if (A) { F.Loco[F.NumLoco++] = { A, Phase * Len(A), MoveWeight * GaitW * (1.f - Fr) }; }
-			if (B) { F.Loco[F.NumLoco++] = { B, Phase * Len(B), MoveWeight * GaitW * Fr }; }
+			if (A) { F.Loco[F.NumLoco++] = { A, Cyc[I0].TimeAt(Phase), MoveWeight * GaitW * (1.f - Fr) }; }
+			if (B) { F.Loco[F.NumLoco++] = { B, Cyc[I1].TimeAt(Phase), MoveWeight * GaitW * Fr }; }
 		};
-		AddDir(S.Jog, bHasWalk ? GaitAlpha : 1.f);
+		AddDir(S.JogCycle, S.Jog, JogW);
 		if (bHasWalk)
 		{
-			AddDir(S.Walk, 1.f - GaitAlpha);
+			AddDir(S.WalkCycle, S.Walk, 1.f - JogW);
 		}
 	}
 

@@ -5,14 +5,21 @@ args = sys.argv[2:]
 ang = float(args[0]) if len(args) > 0 else 90.0
 dist = float(args[1]) if len(args) > 1 else 220.0
 h = float(args[2]) if len(args) > 2 else 40.0
+label = args[3] if len(args) > 3 else ""
 ues = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 world = ues.get_game_world()
 OUT = []
 p = None
 if world:
-    for a in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.NVPlayerCharacter):
-        p = a
-        break
+    if label:
+        for a in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.Character):
+            if label.lower() in a.get_actor_label().lower() or label.lower() in a.get_name().lower():
+                p = a
+                break
+    else:
+        for a in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.NVPlayerCharacter):
+            p = a
+            break
 if p:
     loc = p.get_actor_location()
     yaw = p.get_actor_rotation().yaw + ang
