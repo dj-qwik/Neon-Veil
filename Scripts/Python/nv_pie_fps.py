@@ -14,7 +14,7 @@ for cmd in sys.argv[-1].split(";"):
     if not a:
         continue
     if a[0] == "give" and wc:
-        for n in ("DA_Weapon_VX9", "DA_Weapon_Kestrel", "DA_Weapon_Harrow"):
+        for n in ("DA_Weapon_VX9", "DA_Weapon_Kestrel", "DA_Weapon_ARX", "DA_Weapon_TP12", "DA_Weapon_Harrow"):
             wc.give_weapon(unreal.load_asset("/Game/NeonVeil/Data/Weapons/" + n), n == "DA_Weapon_VX9")
         OUT.append("gave 3")
     elif a[0] == "arms" and pawn:
@@ -26,6 +26,15 @@ for cmd in sys.argv[-1].split(";"):
         d.set_editor_property("viewmodel_hip_offset", unreal.Vector(*v[:3]))
         d.set_editor_property("viewmodel_ads_offset", unreal.Vector(*v[3:6]))
         OUT.append("vm %s %s" % (a[1], v))
+    elif a[0] == "aw":   # aw DA x y z pitch yaw roll scale  (weapon on the arms' gun bone)
+        d = unreal.load_asset("/Game/NeonVeil/Data/Weapons/" + a[1])
+        v = [float(x) for x in a[2:9]]
+        d.set_editor_property("arms_weapon_offset", unreal.Transform(location=unreal.Vector(*v[:3]),
+            rotation=unreal.Rotator(pitch=v[3], yaw=v[4], roll=v[5]), scale=unreal.Vector(v[6], v[6], v[6])))
+        OUT.append("aw %s %s" % (a[1], v))
+    elif a[0] == "rot":   # rot DA pitch yaw  (hip convergence)
+        d = unreal.load_asset("/Game/NeonVeil/Data/Weapons/" + a[1])
+        d.set_editor_property("viewmodel_rotation", unreal.Rotator(pitch=float(a[2]), yaw=float(a[3]), roll=0))
     elif a[0] == "bone":   # bone DA_name bonename
         d = unreal.load_asset("/Game/NeonVeil/Data/Weapons/" + a[1])
         d.set_editor_property("arms_weapon_bone", unreal.Name(a[2]))

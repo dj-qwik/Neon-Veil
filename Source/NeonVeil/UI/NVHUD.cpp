@@ -17,10 +17,15 @@
 
 #include "Camera/CameraComponent.h"
 #include "Engine/Canvas.h"
+#include "CanvasItem.h"
+#include "Engine/Texture2D.h"
+#include "TextureResource.h"
 #include "Engine/Engine.h"
 #include "Engine/Font.h"
 #include "Engine/World.h"
 #include "CanvasItem.h"
+#include "Engine/Texture2D.h"
+#include "TextureResource.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 #include "Fonts/FontMeasure.h"
@@ -253,7 +258,14 @@ void ANVHUD::DrawHUD()
 	{
 		if (const ANVPlayerCharacter* Player = BoundPawn.Get())
 		{
-			DrawReticle(*Player);
+			if (Player->IsScopedIn())
+			{
+				DrawScope(*Player);
+			}
+			else
+			{
+				DrawReticle(*Player);
+			}
 			DrawHealth(*Player);
 			DrawAmmo(*Player);
 			DrawPrompt(*Player);
@@ -344,6 +356,84 @@ void ANVHUD::DrawPauseMenu()
 		? (bPlayStationGlyphs ? TEXT("Cross  Select      Options  Resume") : TEXT("A  Select      Menu  Resume"))
 		: TEXT("Enter / Click  Select      Esc  Resume");
 	DrawTextShadowed(Hint, Left, Y + 24.f * S, FLinearColor(TextColor.R, TextColor.G, TextColor.B, 0.55f), SmallFont, 0.9f * S);
+}
+
+void ANVHUD::DrawScope(const ANVPlayerCharacter& Player)
+{
+	// Sniper scope: black mask outside a round eyepiece, soft dark rim, fine reticle with mil ticks.
+	// Vertex-coloured triangles still need a texture to sample: the engine's white square.
+	static TWeakObjectPtr<UTexture2D> WhiteTex;
+	if (!WhiteTex.IsValid())
+	{
+		WhiteTex = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture"));
+	}
+	const FTexture* White = WhiteTex.IsValid() ? WhiteTex->GetResource() : nullptr;
+	if (!White)
+	{
+		return;
+	}
+	const float W = Canvas->ClipX, H = Canvas->ClipY;
+	const float CX = W * 0.5f, CY = H * 0.5f;
+	const float R = H * 0.46f;
+	const float Far = FMath::Sqrt(W * W + H * H);
+	const int32 N = 96;
+	TArray<FCanvasUVTri> Mask, Rim;
+	Mask.Reserve(N * 2);
+	Rim.Reserve(N * 2);
+	const FLinearColor Black(0.f, 0.f, 0.f, 1.f);
+	const FLinearColor Clear(0.f, 0.f, 0.f, 0.f);
+	auto Tri = [](TArray<FCanvasUVTri>& Out, const FVector2D& A, const FVector2D& B, const FVector2D& C,
+	              const FLinearColor& CA, const FLinearColor& CB, const FLinearColor& CC)
+	{
+		FCanvasUVTri T;
+		T.V0_Pos = A; T.V1_Pos = B; T.V2_Pos = C;
+		T.V0_Color = CA; T.V1_Color = CB; T.V2_Color = CC;
+		Out.Add(T);
+	};
+	for (int32 i = 0; i < N; ++i)
+	{
+		const float A0 = 2.f * PI * i / N, A1 = 2.f * PI * (i + 1) / N;
+		const FVector2D D0(FMath::Cos(A0), FMath::Sin(A0)), D1(FMath::Cos(A1), FMath::Sin(A1));
+		const FVector2D C(CX, CY);
+		// opaque mask from the eyepiece edge out past the screen corners
+		Tri(Mask, C + D0 * R, C + D0 * Far, C + D1 * Far, Black, Black, Black);
+		Tri(Mask, C + D0 * R, C + D1 * Far, C + D1 * R, Black, Black, Black);
+		// rim shading: fades from clear (inside) to black at the edge
+		const float Ri = R * 0.86f;
+		Tri(Rim, C + D0 * Ri, C + D0 * R, C + D1 * R, Clear, Black, Black);
+		Tri(Rim, C + D0 * Ri, C + D1 * R, C + D1 * Ri, Clear, Black, Clear);
+	}
+	FCanvasTriangleItem MaskItem(Mask, White);
+	MaskItem.BlendMode = SE_BLEND_Translucent;
+	Canvas->DrawItem(MaskItem);
+	FCanvasTriangleItem RimItem(Rim, White);
+	RimItem.BlendMode = SE_BLEND_Translucent;
+	Canvas->DrawItem(RimItem);
+
+	// Thin lines in a light grey so they read against a night city; heavy outer posts in black.
+	const FLinearColor Ret(0.85f, 0.9f, 0.95f, 0.75f);
+	const FLinearColor Post(0.01f, 0.01f, 0.01f, 0.95f);
+	const FLinearColor Glow(1.f, 0.25f, 0.2f, 0.95f);
+	const float Gap = R * 0.04f;
+	// thick outer posts, thin centre lines
+	DrawLine(CX - R, CY, CX - R * 0.45f, CY, Post, 5.f);
+	DrawLine(CX + R * 0.45f, CY, CX + R, CY, Post, 5.f);
+	DrawLine(CX, CY + R * 0.45f, CX, CY + R, Post, 5.f);
+	DrawLine(CX - R * 0.45f, CY, CX - Gap, CY, Ret, 1.2f);
+	DrawLine(CX + Gap, CY, CX + R * 0.45f, CY, Ret, 1.2f);
+	DrawLine(CX, CY - R, CX, CY - Gap, Ret, 1.2f);
+	DrawLine(CX, CY + Gap, CX, CY + R * 0.45f, Ret, 1.2f);
+	for (int32 k = 1; k <= 4; ++k)
+	{
+		const float O = R * 0.09f * k;
+		const float T = (k % 2 == 0) ? R * 0.025f : R * 0.015f;
+		DrawLine(CX - O, CY - T, CX - O, CY + T, Ret, 1.2f);
+		DrawLine(CX + O, CY - T, CX + O, CY + T, Ret, 1.2f);
+		DrawLine(CX - T, CY + O, CX + T, CY + O, Ret, 1.2f);
+	}
+	// illuminated centre dot: this is exactly where the round goes
+	DrawRect(Glow, CX - 1.5f, CY - 1.5f, 3.f, 3.f);
+	(void)Player;
 }
 
 void ANVHUD::DrawReticle(const ANVPlayerCharacter& Player)

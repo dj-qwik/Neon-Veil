@@ -832,15 +832,16 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 	Offset.X -= ViewmodelKick;
 	ViewmodelKick = FMath::FInterpTo(ViewmodelKick, 0.f, DeltaSeconds, 14.f);
 
-	// Lower the weapon while sprinting or reloading.
-	FRotator Rot = W->ViewmodelRotation;
+	// Lower the weapon while sprinting or reloading. For arms-held weapons ViewmodelRotation is the hip convergence
+	// (barrel toward the crosshair); it fades out as the sights come up so ADS is dead straight.
+	FRotator Rot = ArmsWeapon ? W->ViewmodelRotation * (1.f - Ads) : W->ViewmodelRotation;
 	if (bSprinting)
 	{
 		Rot.Pitch -= 12.f;
 		Rot.Yaw += 10.f;
 		Offset.Z -= 3.f;
 	}
-	if (Weapons->IsReloading() && !ArmsWeapon)
+	if (Weapons->IsReloading() && !(ArmsWeapon && !ArmsWeapon->ArmsReloadAnim.IsNull()))
 	{
 		Rot.Roll -= 25.f;
 		Offset.Z -= 4.f;
@@ -871,4 +872,14 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 	ViewmodelRoot->SetRelativeLocation(FMath::VInterpTo(ViewmodelRoot->GetRelativeLocation(), Offset, DeltaSeconds, 25.f));
 	ViewmodelRoot->SetRelativeRotation(FMath::RInterpTo(ViewmodelRoot->GetRelativeRotation(), Rot, DeltaSeconds, 12.f));
 	ViewmodelRoot->SetRelativeScale3D(W->ViewmodelScale);
+
+	// Scope: once the sights are up, hand over to the HUD's scope view.
+	const bool bScoped = W->bScopeOverlay && Ads > 0.92f && !Weapons->IsReloading();
+	if (bScoped != bScopedIn)
+	{
+		bScopedIn = bScoped;
+		WeaponMesh->SetHiddenInGame(bScoped);
+		WeaponStaticMesh->SetHiddenInGame(bScoped);
+		FirstPersonMesh->SetHiddenInGame(bScoped);
+	}
 }

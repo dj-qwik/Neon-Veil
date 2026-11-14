@@ -108,6 +108,7 @@ private:
 
 	void BindToPawn();
 	void DrawReticle(const ANVPlayerCharacter& Player);
+	void DrawScope(const ANVPlayerCharacter& Player);
 	void DrawHealth(const ANVPlayerCharacter& Player);
 	void DrawAmmo(const ANVPlayerCharacter& Player);
 	void DrawObjectives();

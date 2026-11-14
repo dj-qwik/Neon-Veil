@@ -128,7 +128,11 @@ private:
 	void FireShot();
 	void FinishReload();
 	void ApplyRecoil(const UNVWeaponData& Data);
-	void PlayFireEffects(const UNVWeaponData& Data, const FVector& TraceEnd, const FHitResult* Hit);
+	void PlayFireEffects(const UNVWeaponData& Data, const FVector& TraceEnd, const FHitResult* Hit, bool bPrimary = true);
+
+	/** Where the muzzle appears on screen, as a world position for world-space effects (tracers). The viewmodel is
+	 *  drawn with the first-person FOV and scale, so its true transform sits further out than it looks. */
+	FVector GetVisualMuzzleLocation(const UNVWeaponData& Data) const;
 	void RefreshWeaponVisual();
 	void BroadcastAmmo();
 	FNVWeaponSlot* CurrentSlotPtr();

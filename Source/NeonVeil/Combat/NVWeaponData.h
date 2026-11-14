@@ -81,6 +81,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Handling", meta = (ClampMin = "1"))
 	float RoundsPerMinute = 400.f;
 
+	/** Pellets per shot (shotguns). Each pellet traces and damages separately. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firing", meta = (ClampMin = "1"))
+	int32 PelletCount = 1;
+
+	/** Extra cone for each pellet on top of the normal spread (degrees). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Firing")
+	float PelletSpreadDeg = 0.f;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Handling", meta = (ClampMin = "1"))
 	int32 MagazineSize = 12;
 
@@ -150,6 +158,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Viewmodel")
 	FVector ViewmodelScale = FVector(1.f);
+
+	/** Scoped weapon: once fully aimed, the viewmodel hides and the HUD draws a scope (AdsFOV sets the zoom). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Viewmodel")
+	bool bScopeOverlay = false;
 
 	/** Backward kick of the viewmodel per shot (cm). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Viewmodel")

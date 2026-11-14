@@ -54,9 +54,14 @@ ANVGuardCharacter::ANVGuardCharacter(const FObjectInitializer& ObjectInitializer
 	bUseControllerRotationYaw = false;
 	UCharacterMovementComponent* Move = GetCharacterMovement();
 	Move->bOrientRotationToMovement = true;
-	Move->RotationRate = FRotator(0.f, 240.f, 0.f);
+	Move->RotationRate = FRotator(0.f, 150.f, 0.f);
 	Move->MaxWalkSpeed = WalkSpeed;
 	Move->bUseControllerDesiredRotation = false;
+	// Natural gait: ease into and out of walking and carve corners instead of snapping at path points.
+	Move->GetNavMovementProperties()->bUseAccelerationForPaths = true;
+	Move->MaxAcceleration = 380.f;
+	Move->BrakingDecelerationWalking = 260.f;
+	Move->GroundFriction = 6.f;
 }
 
 void ANVGuardCharacter::OnConstruction(const FTransform& Transform)
@@ -160,5 +165,10 @@ void ANVGuardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	BindAppearance();
-	GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	UCharacterMovementComponent* Move = GetCharacterMovement();
+	Move->MaxWalkSpeed = WalkSpeed;
+	Move->GetNavMovementProperties()->bUseAccelerationForPaths = true;
+	Move->MaxAcceleration = 380.f;
+	Move->BrakingDecelerationWalking = 260.f;
+	Move->RotationRate = FRotator(0.f, 150.f, 0.f);
 }

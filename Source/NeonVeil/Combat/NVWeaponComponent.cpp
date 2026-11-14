@@ -274,56 +274,60 @@ void UNVWeaponComponent::FireShot()
 			AimDir = C->GetControlRotation().Vector();
 		}
 	}
-	const float SpreadRad = FMath::DegreesToRadians(GetCurrentSpreadDeg());
-	const FVector Dir = FMath::VRandCone(AimDir, SpreadRad);
-	const FVector End = Start + Dir * Data->Range;
-
-	FCollisionQueryParams Params(SCENE_QUERY_STAT(NVWeaponTrace), true, GetOwner());
-	Params.bReturnPhysicalMaterial = true;
-	FHitResult Hit;
-	const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params);
-
-	if (bDrawDebugTraces)
+	const int32 Pellets = FMath::Max(1, Data->PelletCount);
+	for (int32 Pellet = 0; Pellet < Pellets; ++Pellet)
 	{
-		DrawDebugLine(GetWorld(), Start, bHit ? Hit.ImpactPoint : End, bHit ? FColor::Red : FColor::Green, false, 1.f);
-	}
+		const float SpreadRad = FMath::DegreesToRadians(GetCurrentSpreadDeg() + (Pellets > 1 ? Data->PelletSpreadDeg : 0.f));
+		const FVector Dir = FMath::VRandCone(AimDir, SpreadRad);
+		const FVector End = Start + Dir * Data->Range;
 
-	if (bHit)
-	{
-		AActor* HitActor = Hit.GetActor();
-		const bool bWeak = Hit.GetComponent() && Hit.GetComponent()->ComponentHasTag(NVWeakPointComponentTag);
-		if (HitActor)
+		FCollisionQueryParams Params(SCENE_QUERY_STAT(NVWeaponTrace), true, GetOwner());
+		Params.bReturnPhysicalMaterial = true;
+		FHitResult Hit;
+		const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params);
+
+		if (bDrawDebugTraces)
 		{
-			if (UNVHealthComponent* Health = HitActor->FindComponentByClass<UNVHealthComponent>())
+			DrawDebugLine(GetWorld(), Start, bHit ? Hit.ImpactPoint : End, bHit ? FColor::Red : FColor::Green, false, 1.f);
+		}
+
+		if (bHit)
+		{
+			AActor* HitActor = Hit.GetActor();
+			const bool bWeak = Hit.GetComponent() && Hit.GetComponent()->ComponentHasTag(NVWeakPointComponentTag);
+			if (HitActor)
 			{
-				const float Dmg = Data->Damage * (bWeak ? Data->WeakPointBonus : 1.f);
-				const float Applied = Health->ApplyDamage(Dmg, GetOwner(), Data->DamageType, bWeak);
-				UE_LOG(LogNeonVeil, Log, TEXT("Hit %s (%s) applied %.1f, hp %.1f shield %.1f"), *HitActor->GetName(), *GetNameSafe(Hit.GetComponent()), Applied, Health->GetHealth(), Health->GetShield());
-				if (Applied > 0.f)
+				if (UNVHealthComponent* Health = HitActor->FindComponentByClass<UNVHealthComponent>())
 				{
-					if (USoundBase* Confirm = Data->HitConfirmSound.LoadSynchronous())
+					const float Dmg = Data->Damage * (bWeak ? Data->WeakPointBonus : 1.f);
+					const float Applied = Health->ApplyDamage(Dmg, GetOwner(), Data->DamageType, bWeak);
+					UE_LOG(LogNeonVeil, Log, TEXT("Hit %s (%s) applied %.1f, hp %.1f shield %.1f"), *HitActor->GetName(), *GetNameSafe(Hit.GetComponent()), Applied, Health->GetHealth(), Health->GetShield());
+					if (Applied > 0.f)
 					{
-						UGameplayStatics::PlaySound2D(this, Confirm, bWeak ? 1.f : 0.6f);
+						if (USoundBase* Confirm = Data->HitConfirmSound.LoadSynchronous())
+						{
+							UGameplayStatics::PlaySound2D(this, Confirm, bWeak ? 1.f : 0.6f);
+						}
+						OnHitConfirmed.Broadcast(HitActor, bWeak);
 					}
-					OnHitConfirmed.Broadcast(HitActor, bWeak);
+				}
+			}
+			if (UPrimitiveComponent* Prim = Hit.GetComponent())
+			{
+				if (Prim->IsSimulatingPhysics())
+				{
+					Prim->AddImpulseAtLocation(Dir * Data->ImpactImpulse, Hit.ImpactPoint);
 				}
 			}
 		}
-		if (UPrimitiveComponent* Prim = Hit.GetComponent())
+
+		if (!bHit || !Hit.GetActor() || !Hit.GetActor()->FindComponentByClass<UNVHealthComponent>())
 		{
-			if (Prim->IsSimulatingPhysics())
-			{
-				Prim->AddImpulseAtLocation(Dir * Data->ImpactImpulse, Hit.ImpactPoint);
-			}
+			UE_LOG(LogNeonVeil, Verbose, TEXT("Shot hit %s"), bHit ? *GetNameSafe(Hit.GetActor()) : TEXT("nothing"));
 		}
-	}
 
-	if (!bHit || !Hit.GetActor() || !Hit.GetActor()->FindComponentByClass<UNVHealthComponent>())
-	{
-		UE_LOG(LogNeonVeil, Verbose, TEXT("Shot hit %s"), bHit ? *GetNameSafe(Hit.GetActor()) : TEXT("nothing"));
+		PlayFireEffects(*Data, bHit ? Hit.ImpactPoint : End, bHit ? &Hit : nullptr, Pellet == 0);
 	}
-
-	PlayFireEffects(*Data, bHit ? Hit.ImpactPoint : End, bHit ? &Hit : nullptr);
 	ApplyRecoil(*Data);
 	BloomDeg = FMath::Min(Data->MaxBloomDeg, BloomDeg + Data->SpreadPerShotDeg);
 
@@ -363,7 +367,36 @@ void UNVWeaponComponent::ApplyRecoil(const UNVWeaponData& Data)
 	}
 }
 
-void UNVWeaponComponent::PlayFireEffects(const UNVWeaponData& Data, const FVector& TraceEnd, const FHitResult* Hit)
+FVector UNVWeaponComponent::GetVisualMuzzleLocation(const UNVWeaponData& Data) const
+{
+	USceneComponent* MuzzleParent = WeaponMesh && WeaponMesh->GetSkeletalMeshAsset() ? static_cast<USceneComponent*>(WeaponMesh) : static_cast<USceneComponent*>(WeaponStaticMesh);
+	if (!Camera)
+	{
+		return FVector::ZeroVector;
+	}
+	FVector Muzzle = Camera->GetComponentLocation() + Camera->GetForwardVector() * 60.f;
+	if (MuzzleParent && MuzzleParent->DoesSocketExist(Data.MuzzleSocket))
+	{
+		Muzzle = MuzzleParent->GetSocketLocation(Data.MuzzleSocket);
+	}
+	else if (MuzzleParent && !Data.MuzzleOffset.IsNearlyZero())
+	{
+		Muzzle = MuzzleParent->GetComponentTransform().TransformPosition(Data.MuzzleOffset);
+	}
+	// Camera space -> scaled by the first-person scale, lateral offsets re-projected from the first-person FOV to
+	// the world FOV, so a world-space effect lands exactly on the drawn muzzle.
+	const FTransform CamT = Camera->GetComponentTransform();
+	FVector Local = CamT.InverseTransformPosition(Muzzle);
+	const float FPScale = Camera->bEnableFirstPersonScale ? Camera->FirstPersonScale : 1.f;
+	const float FPFov = Camera->bEnableFirstPersonFieldOfView ? Camera->FirstPersonFieldOfView : Camera->FieldOfView;
+	const float K = FMath::Tan(FMath::DegreesToRadians(Camera->FieldOfView * 0.5f)) / FMath::Tan(FMath::DegreesToRadians(FPFov * 0.5f));
+	Local *= FPScale;
+	Local.Y *= K;
+	Local.Z *= K;
+	return CamT.TransformPosition(Local);
+}
+
+void UNVWeaponComponent::PlayFireEffects(const UNVWeaponData& Data, const FVector& TraceEnd, const FHitResult* Hit, bool bPrimary)
 {
 	USceneComponent* MuzzleParent = WeaponMesh && WeaponMesh->GetSkeletalMeshAsset() ? static_cast<USceneComponent*>(WeaponMesh) : static_cast<USceneComponent*>(WeaponStaticMesh);
 	const bool bHasSocket = MuzzleParent && MuzzleParent->DoesSocketExist(Data.MuzzleSocket);
@@ -378,18 +411,28 @@ void UNVWeaponComponent::PlayFireEffects(const UNVWeaponData& Data, const FVecto
 		MuzzleLoc = MuzzleParent->GetComponentTransform().TransformPosition(Data.MuzzleOffset);
 	}
 
-	if (UNiagaraSystem* Flash = Data.MuzzleFlash.LoadSynchronous())
+	UNiagaraSystem* Flash = bPrimary ? Data.MuzzleFlash.LoadSynchronous() : nullptr;
+	if (Flash)
 	{
+		UNiagaraComponent* FlashComp = nullptr;
 		if (bHasSocket)
 		{
-			UNiagaraFunctionLibrary::SpawnSystemAttached(Flash, MuzzleParent, Data.MuzzleSocket, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true);
+			FlashComp = UNiagaraFunctionLibrary::SpawnSystemAttached(Flash, MuzzleParent, Data.MuzzleSocket, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true);
 		}
 		else if (bHasOffset)
 		{
-			UNiagaraFunctionLibrary::SpawnSystemAttached(Flash, MuzzleParent, NAME_None, Data.MuzzleOffset, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, true);
+			FlashComp = UNiagaraFunctionLibrary::SpawnSystemAttached(Flash, MuzzleParent, NAME_None, Data.MuzzleOffset, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, true);
+		}
+		if (FlashComp)
+		{
+			// Drawn like the gun (first-person FOV and scale) so the flash sits on the visible muzzle.
+			FlashComp->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
+			FlashComp->MarkRenderStateDirty();
 		}
 	}
-	if (WeaponMesh && WeaponMesh->GetSkeletalMeshAsset())
+	// Tracers are world effects: start them where the muzzle is drawn.
+	MuzzleLoc = GetVisualMuzzleLocation(Data);
+	if (bPrimary && WeaponMesh && WeaponMesh->GetSkeletalMeshAsset())
 	{
 		if (UAnimationAsset* FireAnim = Data.WeaponFireAnim.LoadSynchronous())
 		{
@@ -403,6 +446,17 @@ void UNVWeaponComponent::PlayFireEffects(const UNVWeaponData& Data, const FVecto
 		{
 			TracerComp->SetVectorParameter(TEXT("BeamEnd"), TraceEnd);
 		}
+	}
+	if (!bPrimary)
+	{
+		if (Hit)
+		{
+			if (UNiagaraSystem* Impact = Data.ImpactEffect.LoadSynchronous())
+			{
+				UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, Impact, Hit->ImpactPoint, Hit->ImpactNormal.Rotation());
+			}
+		}
+		return;
 	}
 	if (UNiagaraSystem* Casing = Data.CasingEject.LoadSynchronous())
 	{

@@ -62,6 +62,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "NeonVeil")
 	bool IsSprinting() const { return bSprinting; }
 
+	/** Scoped weapon fully aimed: the viewmodel is hidden and the HUD draws the scope. */
+	bool IsScopedIn() const { return bScopedIn; }
+
 	UFUNCTION(BlueprintPure, Category = "NeonVeil")
 	bool IsSliding() const { return SlideTimeLeft > 0.f; }
 
@@ -331,6 +334,8 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UNVWeaponData> ArmsWeapon;
+
+	bool bScopedIn = false;
 
 	FTimerHandle ArmsReturnTimer;
 
