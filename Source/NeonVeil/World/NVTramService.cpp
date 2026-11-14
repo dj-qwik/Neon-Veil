@@ -2,6 +2,7 @@
 
 #include "Components/AudioComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -59,6 +60,11 @@ void ANVTramService::BeginPlay()
 				L.Comp = SM;
 				L.ClosedRel = SM->GetRelativeLocation();
 				L.Sign = Name.Contains(TEXT("Left")) ? 1.f : -1.f;
+				// leaves on the far side of the car are the same meshes turned 180 degrees: their "left" is our right
+				if (FMath::Cos(FMath::DegreesToRadians(SM->GetRelativeRotation().Yaw)) < 0.f)
+				{
+					L.Sign = -L.Sign;
+				}
 				if (bFlipDoorDirection)
 				{
 					L.Sign = -L.Sign;
@@ -92,6 +98,16 @@ void ANVTramService::SetDoorAlpha(float Alpha)
 			C->SetRelativeLocation(L.ClosedRel + FVector(L.Sign * DoorSlide * S, 0.f, 0.f));
 		}
 	}
+}
+
+void ANVTramService::CarryRider()
+{
+	APawn* P = Rider.Get();
+	if (!P || !Tram)
+	{
+		return;
+	}
+	P->SetActorLocation(Tram->GetActorTransform().TransformPosition(RiderLocal), false, nullptr, ETeleportType::TeleportPhysics);
 }
 
 void ANVTramService::PlayAtTram(USoundBase* Sound) const
@@ -163,6 +179,18 @@ void ANVTramService::Tick(float DeltaSeconds)
 		if (AboardTime >= BoardDelay)
 		{
 			Rider = P;
+			// From here the rider rides the car rigidly: no walking, no depenetration against the closing doors or the
+			// moving shell (which used to pop the player out through the side as the car pulled away).
+			if (ACharacter* C = Cast<ACharacter>(P))
+			{
+				RiderLocal = Tram->GetActorTransform().InverseTransformPosition(C->GetActorLocation());
+				RiderLocal.Y = FMath::Clamp(RiderLocal.Y, -150.f, 150.f);   // well inside the door line
+				C->GetCharacterMovement()->StopMovementImmediately();
+				C->GetCharacterMovement()->DisableMovement();
+				C->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
+				C->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Ignore);
+				CarryRider();
+			}
 			PlayAtTram(DoorSound);
 			Phase = EPhase::Closing;
 			PhaseTime = 0.f;
@@ -170,15 +198,12 @@ void ANVTramService::Tick(float DeltaSeconds)
 		break;
 	}
 	case EPhase::Closing:
+		CarryRider();
 		SetDoorAlpha(1.f - PhaseTime / DoorTime);
 		if (PhaseTime >= DoorTime + 0.8f)
 		{
 			Phase = EPhase::Departing;
 			PhaseTime = 0.f;
-			if (ACharacter* C = Cast<ACharacter>(Rider.Get()))
-			{
-				C->GetCharacterMovement()->AddTickPrerequisiteActor(this);
-			}
 			if (RunSound)
 			{
 				RunAudio->SetSound(RunSound);
@@ -192,6 +217,7 @@ void ANVTramService::Tick(float DeltaSeconds)
 	{
 		const float A = FMath::Clamp(PhaseTime / DepartTime, 0.f, 1.f);
 		SetOffset(-DepartDistance * A * A); // ease-in: pulls away slowly, then builds speed
+		CarryRider();
 		RunAudio->SetWorldLocation(Tram->GetActorLocation());
 		if (!bBoardedSent && PhaseTime >= BoardedEventDelay)
 		{
@@ -203,10 +229,6 @@ void ANVTramService::Tick(float DeltaSeconds)
 		}
 		if (A >= 1.f)
 		{
-			if (ACharacter* C = Cast<ACharacter>(Rider.Get()))
-			{
-				C->GetCharacterMovement()->RemoveTickPrerequisiteActor(this);
-			}
 			Phase = EPhase::Gone;
 			SetActorTickEnabled(false);
 		}

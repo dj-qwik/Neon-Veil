@@ -92,6 +92,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
 	TArray<TObjectPtr<UMaterialInterface>> GarmentMaterials;
 
+	/** Garment scale around the body (crowd garments assume hidden-under-cloth body faces; ours show the full body). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
+	FVector GarmentFit = FVector(1.02f, 1.02f, 1.0f);
+
 	static constexpr int32 MaxGarments = 4;
 
 	/** Hide the base body (it keeps animating) when the outfit is a full suit that covers it. */

@@ -23,7 +23,10 @@ if args[0] == "near" and pawn:
             out.append("near %s" % a.get_actor_label())
             break
 if args[0] == "ev":
-    obj = unreal.SubsystemBlueprintLibrary.get_game_instance_subsystem(w, unreal.NVObjectiveSubsystem)
+    obj = None
+    for o_ in unreal.ObjectIterator(unreal.NVObjectiveSubsystem):
+        if o_.get_current_mission():
+            obj = o_
     for t in args[1:]:
         tg = unreal.GameplayTag(); tg.import_text('(TagName="%s")' % t)
         out.append("event %s -> %s" % (t, obj.send_event(tg)))

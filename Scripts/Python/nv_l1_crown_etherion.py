@@ -156,6 +156,44 @@ if LIGHTSTRIP and "D" in ROOMS:
         x = x0 + 300 + k * 600
         fit(f"D_EtherStrip_{k}", LIGHTSTRIP, (x - 113, -11, cb - 34), (x + 113, 11, cb - 31), 0.0, False)
 
+# ---- skybridge (space A, x 0..3500, glazed both sides): Etherion floor and ceiling, panelled pilasters in place of
+#      the old titanium ribs, low kick panels along the glass, Etherion light strips instead of the old corridor strips
+A_FLOOR, A_ROOF = bounds("A_Floor"), bounds("A_Roof")
+if A_FLOOR and A_ROOF:
+    (x0, y0, _), (x1, y1, ftop) = A_FLOOR
+    cbot = A_ROOF[0][2]
+    gy = 295.0                                   # inner face of the glazing
+    nx = max(1, round((x1 - x0) / TW))
+    dx = (x1 - x0) / nx
+    for i in range(nx):
+        ax = x0 + i * dx
+        fit(f"A_EtherFloor_{i}", FLOORS[i % len(FLOORS)], (ax, -gy, ftop - 10), (ax + dx, gy, ftop + 2), 0.0, False)
+        fit(f"A_EtherCeil_{i}", CEILS[i % len(CEILS)], (ax, -gy, cbot - 30), (ax + dx, gy, cbot + 4), 0.0, False)
+    rib_x = sorted({round(a.get_actor_location().x) for a in EAS.get_all_level_actors() if a.get_actor_label().startswith("A_Rib_")})
+    for k, x in enumerate(rib_x):
+        for s, side in ((-1, "L"), (1, "R")):
+            d0, d1 = sorted((s * gy, s * (gy - DEPTH * 2)))
+            yaw = 0.0 if (-s * WALL_FRONT) > 0 else 180.0
+            fit(f"A_EtherPilaster_{side}{k}", WALLS[k % len(WALLS)], (x - 32, d0, ftop), (x + 32, d1, cbot - 30), yaw)
+    for k in range(len(rib_x) - 1):
+        xa, xb = rib_x[k] + 32, rib_x[k + 1] - 32
+        for s, side in ((-1, "L"), (1, "R")):
+            d0, d1 = sorted((s * gy, s * (gy - DEPTH)))
+            yaw = 0.0 if (-s * WALL_FRONT) > 0 else 180.0
+            fit(f"A_EtherKick_{side}{k}", WALLS[(k + 1) % len(WALLS)], (xa, d0, ftop), (xb, d1, ftop + 70), yaw)
+    if LIGHTSTRIP:
+        for k, x in enumerate(range(int(x0) + 475, int(x1) - 200, 450)):
+            fit(f"A_EtherStrip_{k}", LIGHTSTRIP, (x - 113, -11, cbot - 34), (x + 113, 11, cbot - 31), 0.0, False)
+    # retire the old dressing (ribs keep their collision, just stop drawing)
+    hidden = 0
+    for a in EAS.get_all_level_actors():
+        lab = a.get_actor_label()
+        if lab.startswith(("A_Rib_", "A_Baseboard", "A_CeilStrip")) and isinstance(a, unreal.StaticMeshActor):
+            a.static_mesh_component.set_visibility(False)
+            a.set_actor_hidden_in_game(True) if not lab.startswith("A_Rib_") else None
+            hidden += 1
+    log("skybridge restyled; old pieces hidden:", hidden)
+
 log("ether actors:", count[0])
 LES.save_current_level()
 open(unreal.Paths.project_saved_dir() + "NV_l1_crown_etherion.txt", "w").write("\n".join(OUT))

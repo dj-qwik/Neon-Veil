@@ -180,6 +180,11 @@ void ANVTramRide::BeginPlay()
 				Leaf.Comp = SM;
 				Leaf.ClosedRel = SM->GetRelativeLocation();
 				Leaf.Sign = Name.Contains(TEXT("Left")) ? 1.f : -1.f;
+				// leaves on the far side of the car are the same meshes turned 180 degrees: their "left" is our right
+				if (FMath::Cos(FMath::DegreesToRadians(SM->GetRelativeRotation().Yaw)) < 0.f)
+				{
+					Leaf.Sign = -Leaf.Sign;
+				}
 				if (bFlipDoorDirection)
 				{
 					Leaf.Sign = -Leaf.Sign;

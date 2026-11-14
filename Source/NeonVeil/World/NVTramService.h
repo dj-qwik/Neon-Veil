@@ -108,6 +108,9 @@ private:
 	TArray<FDoorLeaf> Leaves;
 	FVector TramHome;
 	TWeakObjectPtr<APawn> Rider;
+	/** Rider position in tram space, frozen when the doors close: the rider is carried rigidly from then on. */
+	FVector RiderLocal = FVector::ZeroVector;
+	void CarryRider();
 	EPhase Phase = EPhase::Away;
 	float PhaseTime = 0.f;
 	float AboardTime = 0.f;

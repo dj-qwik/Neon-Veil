@@ -24,4 +24,8 @@ namespace NVTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_PlatformReached, "NV.Event.M00P.PlatformReached", "Prologue: reached the Crown Line boarding point");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_TramBoarded, "NV.Event.M00P.TramBoarded", "Prologue: boarded the tram (ends the prologue)");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_TutorialDone, "NV.Event.M00P.TutorialDone", "Prologue: a movement tutorial step was completed");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_PassCollected, "NV.Event.M00P.PassCollected", "Prologue: picked up the crew pass in the north service corridor");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_PassRegistered, "NV.Event.M00P.PassRegistered", "Prologue: registered the pass at the east wing security desk");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_PlatformPowered, "NV.Event.M00P.PlatformPowered", "Prologue: restored Platform One power from the Platform Two control room");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_GearCollected, "NV.Event.M00P.GearCollected", "Prologue: collected gear from the Platform One crew room");
 }

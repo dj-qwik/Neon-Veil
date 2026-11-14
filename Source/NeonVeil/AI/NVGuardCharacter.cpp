@@ -218,7 +218,7 @@ void ANVGuardCharacter::ApplyGarments(USkeletalMeshComponent* Host)
 		}
 		// Crowd garments are fitted to bodies with hidden-under-cloth faces; ours show the full body, so
 		// loosen the fit a touch to stop skin poking through.
-		G->SetRelativeTransform(FTransform(FQuat::Identity, FVector::ZeroVector, FVector(1.04f, 1.04f, 1.01f)));
+		G->SetRelativeTransform(FTransform(FQuat::Identity, FVector::ZeroVector, GarmentFit));
 		G->SetLeaderPoseComponent(Leader, true);
 		G->SetEnableSimulation(bSimulateGarments);
 		G->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
