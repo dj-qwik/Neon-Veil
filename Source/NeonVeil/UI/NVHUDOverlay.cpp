@@ -17,6 +17,7 @@
 #include "Engine/World.h"
 #include "Widgets/SNullWidget.h"
 #include "Widgets/SBoxPanel.h"
+#include "Widgets/SOverlay.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Layout/SConstraintCanvas.h"
 #include "Widgets/Text/STextBlock.h"
@@ -174,7 +175,8 @@ namespace
 			SLATE_ARGUMENT(int32, Index)
 		SLATE_END_ARGS()
 
-		static constexpr float Box = 62.f;
+		static constexpr float Box = 60.f;
+		static constexpr float SlotW = 92.f;
 
 		void Construct(const FArguments& InArgs)
 		{
@@ -182,19 +184,43 @@ namespace
 			Index = InArgs._Index;
 			ChildSlot
 			[
-				SNew(SVerticalBox)
-				+ SVerticalBox::Slot().AutoHeight()
+				SNew(SBox).WidthOverride(SlotW)
 				[
-					SNew(SBox).WidthOverride(Box).HeightOverride(Box).HAlign(HAlign_Center).VAlign(VAlign_Center)
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center)
 					[
-						NVUI::MakeText(TAttribute<FText>::CreateSP(this, &SNVCyberSlot::GetLabel), NVUI::EFont::BodyBold, 19.f,
-							TAttribute<FSlateColor>::CreateSP(this, &SNVCyberSlot::GetLabelColor), 40)
+						SNew(SBox).WidthOverride(Box).HeightOverride(Box)
+						[
+							SNew(SOverlay)
+							+ SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Center)
+							[
+								SNew(SNVIcon).Size(34.f)
+								.Icon_Lambda([this]() { const UNVAbilityData* D = Data(); return D ? NVUI::IconForAbility(D->AbilityTag) : NVUI::EIcon::Implant; })
+								.Color_Lambda([this]() { return GetIconColor(); })
+							]
+							+ SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Center)
+							[
+								NVUI::MakeText(TAttribute<FText>::CreateSP(this, &SNVCyberSlot::GetCooldown), NVUI::EFont::BodyBold, 22.f, FSlateColor(NVUI::Text))
+							]
+						]
 					]
-				]
-				+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0.f, 5.f, 0.f, 0.f)
-				[
-					NVUI::MakeText(TAttribute<FText>::CreateSP(this, &SNVCyberSlot::GetUnder), NVUI::EFont::Mono, 11.f,
-						TAttribute<FSlateColor>::CreateSP(this, &SNVCyberSlot::GetUnderColor), 60)
+					+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0.f, 6.f, 0.f, 0.f)
+					[
+						SNew(STextBlock)
+						.Text_Lambda([this]() { const UNVAbilityData* D = Data(); return D ? D->DisplayName.ToUpper() : FText::GetEmpty(); })
+						.Font(NVUI::Font(NVUI::EFont::Mono, 10.f, 40))
+						.ColorAndOpacity(TAttribute<FSlateColor>::CreateSP(this, &SNVCyberSlot::GetUnderColor))
+						.WrapTextAt(SlotW)
+						.Justification(ETextJustify::Center)
+						.ShadowOffset(FVector2D(1.f, 1.f))
+						.ShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, 0.7f))
+					]
+					+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0.f, 5.f, 0.f, 0.f)
+					[
+						SNew(SNVKeyCap).Size(10.f)
+						.Key_Lambda([this]() { return GetUnder(); })
+						.Color_Lambda([this]() { const FNVAbilityRuntime* R = Runtime(); return R && R->bDisabled ? NVUI::Warning : NVUI::WithAlpha(NVUI::Accent, 0.9f); })
+					]
 				]
 			];
 		}
@@ -207,7 +233,9 @@ namespace
 			const FNVAbilityRuntime* R = Runtime();
 			const FLinearColor Tint = Style.GetColorAndOpacityTint();
 			const FVector2f B(Box, Box);
-			NVUI::FPainter P(G, Tint);
+			// the box is centred at the top of the (wider) slot
+			const FGeometry BoxG = G.MakeChild(FVector2f(Box, Box), FSlateLayoutTransform(FVector2f((G.GetLocalSize().X - Box) * 0.5f, 0.f)));
+			NVUI::FPainter P(BoxG, Tint);
 			P.PolyV(NVUI::ChamferPoints(FVector2f::ZeroVector, B, 10.f, false), FLinearColor(0.03f, 0.06f, 0.075f, 0.72f), FLinearColor(0.01f, 0.02f, 0.03f, 0.8f));
 			FLinearColor Edge = NVUI::WithAlpha(NVUI::Accent, 0.45f);
 			if (R && R->bDisabled)
@@ -237,7 +265,7 @@ namespace
 				Edge = NVUI::WithAlpha(NVUI::Accent, 0.75f);
 			}
 			P.Flush(Out, LayerId);
-			NVUI::Lines(Out, LayerId + 1, G, NVUI::ChamferPoints(FVector2f(0.5f, 0.5f), B - FVector2f(1.f, 1.f), 10.f, true), Edge * Tint, 1.f);
+			NVUI::Lines(Out, LayerId + 1, BoxG, NVUI::ChamferPoints(FVector2f(0.5f, 0.5f), B - FVector2f(1.f, 1.f), 10.f, true), Edge * Tint, 1.f);
 			return SCompoundWidget::OnPaint(Args, G, Culling, Out, LayerId + 2, Style, bParentEnabled);
 		}
 
@@ -253,27 +281,27 @@ namespace
 			const ANVPlayerCharacter* P = HUD.IsValid() ? HUD->GetHUDPawn() : nullptr;
 			return P && P->GetAbilities() ? P->GetAbilities()->GetRuntime(Index) : nullptr;
 		}
-		FText GetLabel() const
-		{
-			const UNVAbilityData* D = Data();
-			return D ? D->ShortLabel : FText::GetEmpty();
-		}
-		FSlateColor GetLabelColor() const
+		FLinearColor GetIconColor() const
 		{
 			const FNVAbilityRuntime* R = Runtime();
 			if (!R)
 			{
-				return FSlateColor(NVUI::TextDim);
+				return NVUI::TextDim;
 			}
 			if (R->bDisabled)
 			{
-				return FSlateColor(NVUI::WithAlpha(NVUI::Warning, 0.8f));
+				return NVUI::WithAlpha(NVUI::Warning, 0.8f);
 			}
 			if (R->ActiveTimeLeft > 0.f)
 			{
-				return FSlateColor(FLinearColor::White);
+				return FLinearColor::White;
 			}
-			return FSlateColor(R->CooldownLeft > 0.f ? NVUI::WithAlpha(NVUI::Text, 0.45f) : NVUI::Text);
+			return R->CooldownLeft > 0.f ? NVUI::WithAlpha(NVUI::Accent, 0.3f) : NVUI::Accent;
+		}
+		FText GetCooldown() const
+		{
+			const FNVAbilityRuntime* R = Runtime();
+			return R && !R->bDisabled && R->CooldownLeft > 0.f ? FText::AsNumber(FMath::CeilToInt(R->CooldownLeft)) : FText::GetEmpty();
 		}
 		FText GetUnder() const
 		{
@@ -282,10 +310,6 @@ namespace
 			if (R && R->bDisabled)
 			{
 				return LOCTEXT("SlotOffline", "OFFLINE");
-			}
-			if (R && R->CooldownLeft > 0.f)
-			{
-				return FText::FromString(FString::Printf(TEXT("%.0fs"), FMath::CeilToFloat(R->CooldownLeft)));
 			}
 			return HUD.IsValid() && Index < 3 ? HUD->KeyCap(Actions[Index]) : FText::GetEmpty();
 		}

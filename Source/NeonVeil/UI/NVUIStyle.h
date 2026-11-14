@@ -93,6 +93,20 @@ namespace NVUI
 	NEONVEIL_API void Lines(FSlateWindowElementList& Out, int32 Layer, const FGeometry& G, const TArray<FVector2f>& Points,
 	                        const FLinearColor& C, float Thickness = 1.f);
 
+	/** Line-art icons drawn in code (cyberware, statuses). */
+	enum class EIcon : uint8
+	{
+		None,
+		Cloak,   // optical disruption: eye, struck through with a broken line
+		Shield,  // kinetic shield: shield with an inner layer
+		Drone,   // drone uplink: quadcopter with signal arcs
+		Implant, // generic cyberware chip
+	};
+
+	/** Draws Icon centred on Center within a Size x Size square. Colour already includes any tint. */
+	NEONVEIL_API void PaintIcon(FSlateWindowElementList& Out, int32 Layer, const FGeometry& G, const FVector2f& Center, float Size,
+	                            EIcon Icon, const FLinearColor& Color);
+
 	/** Chamfered rectangle outline points (top-left and bottom-right corners cut by Cut). Closed. */
 	NEONVEIL_API TArray<FVector2f> ChamferPoints(const FVector2f& Pos, const FVector2f& Size, float Cut, bool bClosed = true);
 }

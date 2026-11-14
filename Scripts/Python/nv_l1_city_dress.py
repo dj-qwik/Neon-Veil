@@ -399,7 +399,7 @@ if MODE == "prologue":
     moon.set_actor_label("Moon"); moon.set_folder_path(FOLDER); moon.tags = [TAG]
     ml = moon.light_component
     ml.set_editor_property("intensity", 0.6)
-    ml.set_editor_property("light_color", unreal.Color(150, 175, 255, 255))
+    ml.set_editor_property("light_color", unreal.Color(r=150, g=175, b=255, a=255))  # keywords: positional order is BGRA
     ml.set_editor_property("volumetric_scattering_intensity", 0.4)
     def ppv(label, c, size, prio, bias):
         p = EAS.spawn_actor_from_class(unreal.PostProcessVolume, V(*c), R())

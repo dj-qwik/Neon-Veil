@@ -16,6 +16,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
+#include "InputAction.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
@@ -333,9 +334,37 @@ void ANVPlayerCharacter::HandleWeaponFired()
 	}
 }
 
+void ANVPlayerCharacter::EnsureViewInput()
+{
+	// Fallbacks: the Blueprint defaults have lost these before, and the IMC asset may not carry their keys.
+	if (!HolsterAction)
+	{
+		HolsterAction = LoadObject<UInputAction>(nullptr, TEXT("/Game/NeonVeil/Input/Actions/IA_NV_Holster.IA_NV_Holster"));
+	}
+	if (!ToggleViewAction)
+	{
+		ToggleViewAction = LoadObject<UInputAction>(nullptr, TEXT("/Game/NeonVeil/Input/Actions/IA_NV_ToggleView.IA_NV_ToggleView"));
+	}
+	if (!RuntimeViewContext)
+	{
+		RuntimeViewContext = NewObject<UInputMappingContext>(this, TEXT("IMC_NV_ViewRuntime"));
+		if (HolsterAction)
+		{
+			RuntimeViewContext->MapKey(HolsterAction, EKeys::H);
+			RuntimeViewContext->MapKey(HolsterAction, EKeys::Gamepad_DPad_Down);
+		}
+		if (ToggleViewAction)
+		{
+			RuntimeViewContext->MapKey(ToggleViewAction, EKeys::B);
+			RuntimeViewContext->MapKey(ToggleViewAction, EKeys::Gamepad_Special_Left);
+		}
+	}
+}
+
 void ANVPlayerCharacter::PawnClientRestart()
 {
 	Super::PawnClientRestart();
+	EnsureViewInput();
 
 	if (const APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
@@ -348,6 +377,10 @@ void ANVPlayerCharacter::PawnClientRestart()
 				{
 					Subsystem->AddMappingContext(Context, Priority--);
 				}
+			}
+			if (RuntimeViewContext)
+			{
+				Subsystem->AddMappingContext(RuntimeViewContext, MappingContexts.Num() + 1);
 			}
 		}
 	}
@@ -401,6 +434,7 @@ void ANVPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	BindIf(NextWeaponAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::NextWeapon);
 	BindIf(PrevWeaponAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::PrevWeapon);
 	BindIf(MeleeAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::MeleePressed);
+	EnsureViewInput();
 	BindIf(HolsterAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::HolsterPressed);
 	BindIf(ToggleViewAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::ToggleViewPressed);
 	BindIf(Ability1Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability1Pressed);
@@ -960,6 +994,40 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 		const FVector LeftShoulder(0.f, -20.f, -6.f - 18.f * Recover);
 		BatonMesh->SetRelativeLocation(LeftShoulder + SweepRot.RotateVector(FVector(36.f, 0.f, -8.f)));
 		BatonMesh->SetRelativeRotation(SweepRot + FRotator(-75.f, 0.f, 0.f));
+	}
+
+	// Near-plane clearance: aimed down the sights, the stock can come closer to the eye than the near clip plane and get
+	// cut open. Measure the weapon's rearmost point in camera space (as rendered, after the first-person scale) and
+	// push the viewmodel straight forward until it clears; moving along the view axis keeps the sights lined up.
+	{
+		const UPrimitiveComponent* Gun = nullptr;
+		if (WeaponMesh && WeaponMesh->GetSkeletalMeshAsset() && WeaponMesh->IsVisible())
+		{
+			Gun = WeaponMesh;
+		}
+		else if (WeaponStaticMesh && WeaponStaticMesh->GetStaticMesh() && WeaponStaticMesh->IsVisible())
+		{
+			Gun = WeaponStaticMesh;
+		}
+		float Target = 0.f;
+		if (Gun && !bThirdPerson)
+		{
+			const FBox Local = Gun->CalcBounds(FTransform::Identity).GetBox();
+			const FTransform GunT = Gun->GetComponentTransform();
+			const FTransform CamT = FirstPersonCamera->GetComponentTransform();
+			float MinDepth = TNumericLimits<float>::Max();
+			for (int32 i = 0; i < 8; ++i)
+			{
+				const FVector Corner((i & 1) ? Local.Max.X : Local.Min.X, (i & 2) ? Local.Max.Y : Local.Min.Y, (i & 4) ? Local.Max.Z : Local.Min.Z);
+				MinDepth = FMath::Min(MinDepth, static_cast<float>(CamT.InverseTransformPosition(GunT.TransformPosition(Corner)).X));
+			}
+			const float FPScale = FirstPersonCamera->bEnableFirstPersonScale ? FMath::Max(FirstPersonCamera->FirstPersonScale, 0.05f) : 1.f;
+			const float Desired = ViewmodelNearClearance / FPScale;
+			// MinDepth already includes the current push, so this converges on exactly the push needed.
+			Target = FMath::Clamp(NearClearPush + (Desired - MinDepth), 0.f, 40.f) * Ads;
+		}
+		NearClearPush = FMath::FInterpTo(NearClearPush, Target, DeltaSeconds, 18.f);
+		Offset.X += NearClearPush;
 	}
 
 	ViewmodelRoot->SetRelativeLocation(FMath::VInterpTo(ViewmodelRoot->GetRelativeLocation(), Offset, DeltaSeconds, 25.f));

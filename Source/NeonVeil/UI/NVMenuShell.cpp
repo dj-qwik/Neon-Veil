@@ -349,6 +349,10 @@ namespace
 						SNew(SHorizontalBox)
 						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.f, 0.f, 16.f, 0.f)
 						[
+							SNew(SNVIcon).Size(38.f).Icon(NVUI::IconForAbility(D->AbilityTag))
+						]
+						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.f, 0.f, 16.f, 0.f)
+						[
 							SNew(SNVKeyCap).Key_Lambda([HUD, Action]() { return HUD.IsValid() ? HUD->KeyCap(Action) : FText::GetEmpty(); })
 						]
 						+ SHorizontalBox::Slot().FillWidth(1.f).VAlign(VAlign_Center)

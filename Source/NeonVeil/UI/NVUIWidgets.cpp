@@ -4,6 +4,7 @@
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Layout/SBox.h"
 #include "Rendering/DrawElements.h"
+#include "Core/NVGameplayTags.h"
 
 
 namespace
@@ -483,4 +484,31 @@ int32 SNVTab::OnPaint(const FPaintArgs& Args, const FGeometry& G, const FSlateRe
 	}
 	P.Flush(Out, LayerId);
 	return SCompoundWidget::OnPaint(Args, G, Culling, Out, LayerId + 1, Style, bParentEnabled);
+}
+
+// ================================================================ SNVIcon
+
+int32 SNVIcon::OnPaint(const FPaintArgs& Args, const FGeometry& G, const FSlateRect& Culling, FSlateWindowElementList& Out,
+                       int32 LayerId, const FWidgetStyle& Style, bool bParentEnabled) const
+{
+	const FVector2f S(G.GetLocalSize());
+	NVUI::PaintIcon(Out, LayerId, G, S * 0.5f, FMath::Min(S.X, S.Y), Icon.Get(), Color.Get() * Style.GetColorAndOpacityTint());
+	return LayerId + 1;
+}
+
+NVUI::EIcon NVUI::IconForAbility(const FGameplayTag& AbilityTag)
+{
+	if (AbilityTag == NVTags::Ability_OpticalDisruption)
+	{
+		return EIcon::Cloak;
+	}
+	if (AbilityTag == NVTags::Ability_KineticShield)
+	{
+		return EIcon::Shield;
+	}
+	if (AbilityTag == NVTags::Ability_DroneUplink)
+	{
+		return EIcon::Drone;
+	}
+	return EIcon::Implant;
 }

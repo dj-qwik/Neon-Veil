@@ -662,7 +662,7 @@ LES.save_current_level()
 open(unreal.Paths.project_saved_dir() + "NV_l1_build_prologue.txt", "w").write("\n".join(OUT))
 
 # station walkthrough v2 (every room on the route), X-ray arch orientation/partitions, ambient citizens
-for _s in ("nv_station_route.py", "nv_xray_fix.py", "nv_npcs.py"):
+for _s in ("nv_hub_facade_night.py", "nv_station_route.py", "nv_xray_fix.py", "nv_npcs.py"):
     try:
         runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), _s), run_name="__main__")
         OUT.append(f"{_s}: ok")

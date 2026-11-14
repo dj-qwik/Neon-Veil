@@ -321,6 +321,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Viewmodel")
 	float ViewmodelBobAmount = 0.5f;
 
+	/** Rendered distance (cm) the nearest part of an aimed weapon keeps from the eye; the near clip plane is 5 cm. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel", meta = (ClampMin = "0"))
+	float ViewmodelNearClearance = 14.f;
+
 private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -410,4 +414,10 @@ private:
 	float BobPhase = 0.f;
 	FVector2D LookDeltaThisFrame = FVector2D::ZeroVector;
 	FVector2D SmoothedSway = FVector2D::ZeroVector;
+	/** Forward push (cm) that keeps the weapon's rear clear of the camera near plane while aiming. */
+	float NearClearPush = 0.f;
+	/** Runtime mapping for holster / view toggle, so those keys work even if the IMC asset lacks them. */
+	UPROPERTY(Transient)
+	TObjectPtr<UInputMappingContext> RuntimeViewContext;
+	void EnsureViewInput();
 };

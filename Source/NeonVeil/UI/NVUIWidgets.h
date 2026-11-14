@@ -6,6 +6,7 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Styling/SlateColor.h"
 #include "UI/NVUIStyle.h"
+#include "GameplayTagContainer.h"
 
 class STextBlock;
 
@@ -251,8 +252,32 @@ private:
 	FSimpleDelegate OnClicked;
 };
 
+/** A GHOST-OS line icon. */
+class NEONVEIL_API SNVIcon : public SLeafWidget
+{
+public:
+	SLATE_BEGIN_ARGS(SNVIcon) : _Icon(NVUI::EIcon::Implant), _Color(NVUI::Accent), _Size(28.f) {}
+		SLATE_ATTRIBUTE(NVUI::EIcon, Icon)
+		SLATE_ATTRIBUTE(FLinearColor, Color)
+		SLATE_ARGUMENT(float, Size)
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs) { Icon = InArgs._Icon; Color = InArgs._Color; Size = InArgs._Size; }
+	virtual FVector2D ComputeDesiredSize(float) const override { return FVector2D(Size, Size); }
+	virtual int32 OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
+	                      FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const override;
+
+private:
+	TAttribute<NVUI::EIcon> Icon;
+	TAttribute<FLinearColor> Color;
+	float Size = 28.f;
+};
+
 namespace NVUI
 {
+	/** Icon for a cyberware ability tag (NV.Ability.*). */
+	NEONVEIL_API EIcon IconForAbility(const FGameplayTag& AbilityTag);
+
 	/** Shadowed text block in the house style. */
 	NEONVEIL_API TSharedRef<STextBlock> MakeText(const TAttribute<FText>& InText, EFont Face, float Size,
 	                                             const TAttribute<FSlateColor>& Color = FSlateColor(Text), int32 LetterSpacing = 0, bool bWrap = false);

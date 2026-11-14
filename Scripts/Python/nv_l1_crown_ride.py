@@ -81,7 +81,7 @@ for k, lx in enumerate((-650, 0, 650)):
     c.set_editor_property("intensity", 35.0)
     c.set_editor_property("attenuation_radius", 520.0)
     c.set_editor_property("cast_shadows", False)
-    c.set_editor_property("light_color", unreal.Color(200, 235, 255, 255))
+    c.set_editor_property("light_color", unreal.Color(r=200, g=235, b=255, a=255))
     L.attach_to_actor(tram, "", unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD, False)
 
 # ---------------------------------------------------------------- the ride path
