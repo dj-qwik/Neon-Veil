@@ -50,6 +50,12 @@ Status key:
 
 Rubber Flooring, Terrazzo, Brushed Metal, Scratched Metal, Painted Metal, Black Marble Tiles, Roman Polished Marble. Terrazzo and the marbles suit the **M00 Crown/antechamber** floors if we refresh materials. The scratched and painted metals suit the **M01/M02** industrial spaces.
 
+## Ghost-7 (player) body
+
+| Item | Seller | Status | Notes |
+|---|---|---|---|
+| Retro Futuristic Soldier | Red Mallet Studio | **In use (player third-person body)** | Free. Manny-skeleton copy, made compatible with the project Manny so `ABP_Unarmed` drives it. Recoloured by `MI_NV_Ghost7`: matte-black fabric, cyan seam light. Set up by `Scripts/Python/nv_ghost7_look.py`. |
+
 ## Already owned (from earlier milestones)
 
 - **Environments and kits:** Medical Clinic Sci-Fi, Sci-Fi Light Pack, Sci-Fi Lite Sample, Sci FI Hallway, Niagara Examples, Hologram Shader.
