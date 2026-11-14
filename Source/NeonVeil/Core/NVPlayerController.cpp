@@ -5,6 +5,7 @@
 #include "InputCoreTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "UI/NVMenuShell.h"
 
 ANVPlayerController::ANVPlayerController()
 {
@@ -46,7 +47,10 @@ void ANVPlayerController::SetupInputComponent()
 	Bind(EKeys::Enter, &ANVPlayerController::MenuConfirm);
 	Bind(EKeys::SpaceBar, &ANVPlayerController::MenuConfirm);
 	Bind(EKeys::Gamepad_FaceButton_Bottom, &ANVPlayerController::MenuConfirm);
-	Bind(EKeys::LeftMouseButton, &ANVPlayerController::MenuClick);
+	Bind(EKeys::Q, &ANVPlayerController::MenuPrevTab);
+	Bind(EKeys::Gamepad_LeftShoulder, &ANVPlayerController::MenuPrevTab);
+	Bind(EKeys::E, &ANVPlayerController::MenuNextTab);
+	Bind(EKeys::Gamepad_RightShoulder, &ANVPlayerController::MenuNextTab);
 	Bind(EKeys::F10, &ANVPlayerController::QuitToDesktop);
 }
 
@@ -58,6 +62,7 @@ void ANVPlayerController::SetPauseMenuOpen(bool bOpen)
 	}
 	bPauseMenuOpen = bOpen;
 	PauseSelection = 0;
+	MenuTab = 0;
 	SetPause(bOpen);
 	bShowMouseCursor = bOpen;
 	if (bOpen)
@@ -80,7 +85,7 @@ void ANVPlayerController::TogglePauseMenu()
 
 void ANVPlayerController::MenuUp()
 {
-	if (bPauseMenuOpen)
+	if (bPauseMenuOpen && MenuTab == 0)
 	{
 		PauseSelection = (PauseSelection + GetPauseItems().Num() - 1) % GetPauseItems().Num();
 	}
@@ -88,7 +93,7 @@ void ANVPlayerController::MenuUp()
 
 void ANVPlayerController::MenuDown()
 {
-	if (bPauseMenuOpen)
+	if (bPauseMenuOpen && MenuTab == 0)
 	{
 		PauseSelection = (PauseSelection + 1) % GetPauseItems().Num();
 	}
@@ -96,43 +101,39 @@ void ANVPlayerController::MenuDown()
 
 void ANVPlayerController::MenuConfirm()
 {
-	if (bPauseMenuOpen)
+	if (bPauseMenuOpen && MenuTab == 0)
 	{
 		Activate(PauseSelection);
 	}
 }
 
-void ANVPlayerController::PlayerTick(float DeltaTime)
+void ANVPlayerController::MenuPrevTab()
 {
-	Super::PlayerTick(DeltaTime);
-	// Mouse hover selects (rects come from the HUD's last draw).
-	float MX, MY;
-	if (bPauseMenuOpen && GetMousePosition(MX, MY))
+	if (bPauseMenuOpen)
 	{
-		for (int32 i = 0; i < PauseItemRects.Num(); ++i)
-		{
-			if (PauseItemRects[i].IsInside(FVector2D(MX, MY)))
-			{
-				PauseSelection = i;
-			}
-		}
+		SetMenuTab(MenuTab - 1);
 	}
 }
 
-void ANVPlayerController::MenuClick()
+void ANVPlayerController::MenuNextTab()
 {
-	float MX, MY;
-	if (!bPauseMenuOpen || !GetMousePosition(MX, MY))
+	if (bPauseMenuOpen)
 	{
-		return;
+		SetMenuTab(MenuTab + 1);
 	}
-	for (int32 i = 0; i < PauseItemRects.Num(); ++i)
+}
+
+void ANVPlayerController::SetMenuTab(int32 Tab)
+{
+	const int32 N = FMath::Max(1, NVUI::MenuPages().Num());
+	MenuTab = ((Tab % N) + N) % N;
+}
+
+void ANVPlayerController::SetPauseSelection(int32 Index)
+{
+	if (GetPauseItems().IsValidIndex(Index))
 	{
-		if (PauseItemRects[i].IsInside(FVector2D(MX, MY)))
-		{
-			Activate(i);
-			return;
-		}
+		PauseSelection = Index;
 	}
 }
 

@@ -78,6 +78,10 @@ public:
 	UFUNCTION(Exec)
 	void NVLoad();
 
+	/** GHOST-OS showcase: comms cards, a notice, subtitles and a threat; Title=1 adds a title card, Menu=1 opens the menu on that tab+1. */
+	UFUNCTION(Exec)
+	void NVUIDemo(int32 Title = 0, int32 Menu = 0);
+
 	/** Delete the checkpoint and restart the current map fresh. */
 	UFUNCTION(Exec)
 	void NVNewGame();

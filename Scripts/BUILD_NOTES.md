@@ -17,3 +17,15 @@ The citizens (`Scripts/Python/nv_npcs.py`) use the pack's Chaos cloth garments
 (`CA_<Garment>_<f|m>_med_<nrw|ovw>`) on `ANVGuardCharacter::Garments`; they are skinned to the
 visible MetaHuman body by leader pose with simulation off. The pack's `*_CombinedSkelMesh` assets are
 whole-body crowd proxies, not garments: don't use them as outfit parts.
+
+## GHOST-OS UI (Nov 2026)
+
+All screen UI is code-built Slate in `Source/NeonVeil/UI`:
+- `NVUIStyle` palette, fonts (Content/UI/Fonts, OFL: Orbitron, Rajdhani, Share Tech Mono) and the `NVUI::FPainter` shape batcher.
+- `NVUIWidgets` building blocks: SNVFrame, SNVTypeText, SNVMeter, SNVKeyCap, SNVButton, SNVTab, SNVRule, SNVSignal.
+- `NVHUDOverlay` the in-game layer (comms cards, subtitles, notices, title card, objectives, prompt, vitals, cyberware slots, weapon, threat).
+- `NVMenuShell` the pause/system menu with tabs. New systems plug in with `NVUI::RegisterMenuPage({Id, Label, BuildFn})`;
+  reuse an Id (System, Cyberware, Upgrades, Skills, Comms) to replace a placeholder page.
+- Messages: `ANVHUD::PushMessage(FNVCommsMessage)` / `ShowMessage(...)`, or set `bAsComms` on an FNVSubtitleLine.
+- Console: `NVUIDemo [Title=0|1] [MenuTab+1]` fires one of everything.
+Fonts are read from disk, so packaging stages `Content/UI/Fonts` as non-UFS (DefaultGame.ini).

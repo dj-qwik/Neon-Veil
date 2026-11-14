@@ -3,17 +3,20 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "UI/NVSubtitleLine.h"
+#include "UI/NVCommsMessage.h"
 #include "Abilities/NVAbilityComponent.h"
 #include "NVHUD.generated.h"
 
 class ANVPlayerCharacter;
 class UNVHealthComponent;
 class UFont;
+class SNVHUDOverlay;
+class SWidget;
 
 /**
- * Gameplay HUD drawn on the canvas. Layout follows Bible §10:
- * health lower left, ammo lower right, objective top right, prompt center right, restrained reticle.
- * A UMG skin can replace this later without touching gameplay code.
+ * Gameplay HUD. Layout follows Bible §10: health lower left, ammo lower right, objective top right, prompt center right,
+ * restrained reticle. Screen panels, text, comms and the menu are the GHOST-OS Slate layer (SNVHUDOverlay, UI/NVUIStyle);
+ * the canvas underneath only draws the reticle, scope, marks, detection meter, ability tints and the start fade.
  */
 UCLASS()
 class NEONVEIL_API ANVHUD : public AHUD
@@ -25,6 +28,17 @@ public:
 
 	virtual void DrawHUD() override;
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	/** Incoming transmission: a comms card top left, logged in the menu's COMMS tab. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
+	void PushMessage(const FNVCommsMessage& Message);
+
+	/** Shorthand for PushMessage. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
+	void ShowMessage(const FText& Sender, const FText& Body, const FText& Channel, bool bPriority = false);
+
+	const TArray<FNVCommsLogEntry>& GetCommsLog() const { return CommsLog; }
 
 	/** Brief on-screen notice ("Objective complete", "Checkpoint saved"). */
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
@@ -80,7 +94,19 @@ public:
 	/** Prompt label for an action: "[E]" or "Triangle" depending on the last device used. */
 	FString KeyLabel(FName Action) const;
 
+	/** Same without brackets, for key caps: "E", "TRIANGLE". */
+	FText KeyCap(FName Action) const;
+
 	bool IsUsingGamepad() const { return bUsingGamepad; }
+
+	// ---- read by the GHOST-OS layer ----
+	ANVPlayerCharacter* GetHUDPawn() const { return BoundPawn.Get(); }
+	bool IsHUDVisible() const { return bHUDVisible; }
+	/** Instruction text with {Action} tokens replaced by device-aware key labels. */
+	FText GetInstructionDisplay() const;
+	bool GetThreat(FText& OutText) const;
+	/** 1 = black at level start, 0 = faded in. */
+	float GetFadeAlpha() const { return FadeAlpha; }
 
 private:
 	UFUNCTION()
@@ -99,25 +125,19 @@ private:
 	void HandleDamageBlocked(UNVHealthComponent* HealthComp, float BlockedAmount);
 
 	void UpdateInputDevice();
-	void DrawAbilities(const ANVPlayerCharacter& Player);
 	void DrawAbilityOverlays(const ANVPlayerCharacter& Player);
 	void DrawMarks(const ANVPlayerCharacter& Player);
-	void DrawThreat();
+	void DrawDetection();
 	void DrawFadeIn();
-	void DrawPauseMenu();
+	void UpdateSubtitleQueue();
+	void CreateOverlay();
 
 	void BindToPawn();
 	void DrawReticle(const ANVPlayerCharacter& Player);
 	void DrawScope(const ANVPlayerCharacter& Player);
-	void DrawHealth(const ANVPlayerCharacter& Player);
-	void DrawAmmo(const ANVPlayerCharacter& Player);
-	void DrawObjectives();
-	void DrawPrompt(const ANVPlayerCharacter& Player);
-	void DrawMessages();
 	void DrawTextShadowed(const FString& Text, float X, float Y, const FLinearColor& Color, UFont* Font, float Scale = 1.f, bool bRightAlign = false);
 	void MeasureText(const FString& Text, UFont* Font, float Scale, float& OutW, float& OutH) const;
 	struct FSlateFontInfo MakeFont(UFont* Font, float Scale) const;
-	void DrawInstruction(float Y);
 
 	TWeakObjectPtr<ANVPlayerCharacter> BoundPawn;
 	bool bUsingGamepad = false;
@@ -127,15 +147,9 @@ private:
 	float DetectionSetAt = -10.f;
 	float ShieldFlashTime = -10.f;
 	bool bLastHitTakedown = false;
-	float HealthTextTop = 0.f;
 	float HitMarkerTime = -10.f;
 	bool bHitMarkerWeak = false;
 
-	FText NoticeText;
-	float NoticeUntil = -1.f;
-
-	FText SubtitleSpeaker;
-	FText SubtitleLine;
 	float SubtitleUntil = -1.f;
 
 	bool bHUDVisible = true;
@@ -147,10 +161,11 @@ private:
 
 	TArray<FNVSubtitleLine> SubtitleQueue;
 	FText InstructionText;
-	FText TitleText;
-	FText TitleSubText;
-	float TitleUntil = -1.f;
-	float TitleStart = -1.f;
+	float FadeAlpha = 1.f;
+
+	TArray<FNVCommsLogEntry> CommsLog;
+	TSharedPtr<SNVHUDOverlay> Overlay;
+	TSharedPtr<SWidget> OverlayHost;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UFont> SmallFont;

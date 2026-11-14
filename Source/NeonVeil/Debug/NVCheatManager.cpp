@@ -22,6 +22,8 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
+#include "UI/NVHUD.h"
+#include "Core/NVPlayerController.h"
 
 ANVPlayerCharacter* UNVCheatManager::GetNVPlayer() const
 {
@@ -426,4 +428,42 @@ void UNVCheatManager::NVAbilityDisable(int32 Slot, int32 bDisabled)
 	{
 		P->GetAbilities()->SetAbilityDisabled(P->GetAbilities()->Abilities[Slot]->AbilityTag, bDisabled != 0);
 	}
+}
+
+void UNVCheatManager::NVUIDemo(int32 Title, int32 Menu)
+{
+	APlayerController* PC = GetPlayerController();
+	ANVHUD* HUD = PC ? Cast<ANVHUD>(PC->GetHUD()) : nullptr;
+	if (!HUD)
+	{
+		UE_LOG(LogNeonVeil, Warning, TEXT("NVUIDemo: no NVHUD"));
+		return;
+	}
+	HUD->ShowMessage(FText::FromString(TEXT("Handler")), FText::FromString(TEXT("Comms check. You should see this card type itself out, then clear on its own once you've had time to read it.")),
+		FText::FromString(TEXT("Secure")));
+	HUD->ShowMessage(FText::FromString(TEXT("Station PA")), FText::FromString(TEXT("Attention passengers: the next service departs from Platform 2.")),
+		FText::FromString(TEXT("Public")));
+	HUD->ShowMessage(FText::FromString(TEXT("Unknown")), FText::FromString(TEXT("Priority traffic shows in amber.")), FText::FromString(TEXT("Encrypted")), true);
+	HUD->ShowNotice(FText::FromString(TEXT("Objective complete")), 3.f);
+	TArray<FNVSubtitleLine> Lines;
+	FNVSubtitleLine L;
+	L.Speaker = FText::FromString(TEXT("Ghost"));
+	L.Text = FText::FromString(TEXT("Subtitles sit bottom centre on smoked glass and type in fast, so they never lag the voice."));
+	L.Duration = 4.f;
+	Lines.Add(L);
+	HUD->QueueSubtitles(Lines);
+	HUD->ShowThreat(FText::FromString(TEXT("Incoming volley")), 3.f);
+	if (Title)
+	{
+		HUD->ShowTitleCard(FText::FromString(TEXT("Neon Veil")), FText::FromString(TEXT("GHOST-OS interface test")), 5.f);
+	}
+	if (Menu > 0)
+	{
+		if (ANVPlayerController* NVPC = Cast<ANVPlayerController>(PC))
+		{
+			NVPC->SetPauseMenuOpen(true);
+			NVPC->SetMenuTab(Menu - 1);
+		}
+	}
+	UE_LOG(LogNeonVeil, Log, TEXT("NVUIDemo fired"));
 }
