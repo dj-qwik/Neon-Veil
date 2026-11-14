@@ -39,7 +39,48 @@ void UNVWeaponComponent::BeginPlay()
 	Super::BeginPlay();
 	for (UNVWeaponData* W : StartingWeapons)
 	{
-		GiveWeapon(W, CurrentSlot == INDEX_NONE);
+		GiveWeapon(W, CurrentSlot == INDEX_NONE && !bStartHolstered);
+	}
+	if (bStartHolstered && Slots.Num() > 0)
+	{
+		LastArmedSlot = 0;
+		OnWeaponEquipped.Broadcast(nullptr);
+		BroadcastAmmo();
+	}
+}
+
+void UNVWeaponComponent::Holster()
+{
+	if (!Slots.IsValidIndex(CurrentSlot))
+	{
+		return;
+	}
+	StopFire();
+	SetAiming(false);
+	if (bReloading)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ReloadTimer);
+		StopReloadAudio();
+		bReloading = false;
+		OnReloadStateChanged.Broadcast(false);
+	}
+	LastArmedSlot = CurrentSlot;
+	CurrentSlot = INDEX_NONE;
+	BloomDeg = 0.f;
+	RefreshWeaponVisual();
+	OnWeaponEquipped.Broadcast(nullptr);
+	BroadcastAmmo();
+}
+
+void UNVWeaponComponent::ToggleHolster()
+{
+	if (Slots.IsValidIndex(CurrentSlot))
+	{
+		Holster();
+	}
+	else if (Slots.Num() > 0)
+	{
+		EquipSlot(Slots.IsValidIndex(LastArmedSlot) ? LastArmedSlot : 0);
 	}
 }
 
@@ -127,12 +168,22 @@ bool UNVWeaponComponent::EquipSlot(int32 SlotIndex)
 
 void UNVWeaponComponent::CycleWeapon(int32 Direction)
 {
-	if (Slots.Num() < 2)
+	if (Slots.Num() < 1)
 	{
 		return;
 	}
-	const int32 Next = (CurrentSlot + (Direction >= 0 ? 1 : -1) + Slots.Num()) % Slots.Num();
-	EquipSlot(Next);
+	// Positions 0..N: 0 is unarmed, 1..N the weapon slots.
+	const int32 N = Slots.Num() + 1;
+	const int32 Pos = Slots.IsValidIndex(CurrentSlot) ? CurrentSlot + 1 : 0;
+	const int32 Next = (Pos + (Direction >= 0 ? 1 : -1) + N) % N;
+	if (Next == 0)
+	{
+		Holster();
+	}
+	else
+	{
+		EquipSlot(Next - 1);
+	}
 }
 
 void UNVWeaponComponent::RestoreSlots(const TArray<FNVWeaponSlot>& InSlots, int32 InCurrentSlot)

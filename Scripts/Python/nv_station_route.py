@@ -169,6 +169,12 @@ p2.get_editor_property("volume").set_box_extent(V(400, 380, 150))
 sp(p2, "required_active_objective", "M00P-O06")
 sp(p2, "lines_on_complete", [line("Station PA", "Platform Two is closed for maintenance. Authorised personnel only.", 4.2)])
 
+# slide shutter: the crouched/sliding capsule is 116 cm tall, the old 115 cm gap stopped it dead
+sh = find("Shutter_Slide")
+if sh:
+    l = sh.get_actor_location()
+    sh.set_actor_location(V(l.x, l.y, 140 + 150), False, False)
+
 # ------------------------------------------------------------------ signs
 def sign(label, text, loc, yaw, size=30.0, color=(0.35, 0.95, 1.0)):
     a = spawn(unreal.TextRenderActor, label, loc, R(y=yaw))

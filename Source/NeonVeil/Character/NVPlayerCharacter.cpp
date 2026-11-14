@@ -22,6 +22,7 @@
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
+#include "GameFramework/SpringArmComponent.h"
 
 ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -91,6 +92,32 @@ ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -96.f));
 	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	CameraBoom->SetupAttachment(GetCapsuleComponent());
+	CameraBoom->SetRelativeLocation(FVector(0.f, 0.f, 55.f));
+	CameraBoom->TargetArmLength = 230.f;
+	CameraBoom->SocketOffset = FVector(0.f, 55.f, 15.f);       // over the right shoulder
+	CameraBoom->bUsePawnControlRotation = true;
+	CameraBoom->bDoCollisionTest = true;
+	CameraBoom->ProbeSize = 14.f;
+	CameraBoom->bEnableCameraLag = true;
+	CameraBoom->CameraLagSpeed = 18.f;
+
+	ThirdPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
+	ThirdPersonCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	ThirdPersonCamera->bUsePawnControlRotation = false;
+	ThirdPersonCamera->SetFieldOfView(BaseFOV);
+	ThirdPersonCamera->SetAutoActivate(false);
+
+	ThirdPersonWeapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ThirdPersonWeapon"));
+	ThirdPersonWeapon->SetupAttachment(GetMesh(), ThirdPersonWeaponSocket);
+	ThirdPersonWeapon->SetCollisionProfileName(TEXT("NoCollision"));
+	ThirdPersonWeapon->SetVisibility(false);
+	ThirdPersonWeaponStatic = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ThirdPersonWeaponStatic"));
+	ThirdPersonWeaponStatic->SetupAttachment(GetMesh(), ThirdPersonWeaponSocket);
+	ThirdPersonWeaponStatic->SetCollisionProfileName(TEXT("NoCollision"));
+	ThirdPersonWeaponStatic->SetVisibility(false);
+
 	Health = CreateDefaultSubobject<UNVHealthComponent>(TEXT("Health"));
 	Weapons = CreateDefaultSubobject<UNVWeaponComponent>(TEXT("Weapons"));
 	Interaction = CreateDefaultSubobject<UNVInteractionComponent>(TEXT("Interaction"));
@@ -134,11 +161,74 @@ void ANVPlayerCharacter::BeginPlay()
 	Weapons->OnReloadStateChanged.AddDynamic(this, &ANVPlayerCharacter::HandleReloadState);
 	HandleWeaponEquipped(Weapons->GetCurrentWeapon());
 	UpdateMoveSpeed();
+	ThirdPersonCamera->Deactivate();
+	SetThirdPerson(bStartThirdPerson);
+}
+
+void ANVPlayerCharacter::SetThirdPerson(bool bNewThirdPerson)
+{
+	bThirdPerson = bNewThirdPerson;
+	FirstPersonCamera->SetActive(!bThirdPerson);
+	ThirdPersonCamera->SetActive(bThirdPerson);
+	// the full body: hidden from the owner in first person (shadow only), drawn in third person
+	GetMesh()->SetOwnerNoSee(!bThirdPerson);
+	GetMesh()->FirstPersonPrimitiveType = bThirdPerson ? EFirstPersonPrimitiveType::None : EFirstPersonPrimitiveType::WorldSpaceRepresentation;
+	GetMesh()->MarkRenderStateDirty();
+	// aim and safety traces come from whichever camera is drawing
+	Weapons->Initialize(bThirdPerson ? ThirdPersonCamera : FirstPersonCamera, WeaponMesh, WeaponStaticMesh);
+	ApplyViewmodelVisibility(bScopedIn);
+	RefreshThirdPersonWeapon();
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->SetViewTarget(this);
+	}
+}
+
+void ANVPlayerCharacter::ToggleViewPressed()
+{
+	if (!bInputLocked)
+	{
+		SetThirdPerson(!bThirdPerson);
+	}
+}
+
+void ANVPlayerCharacter::HolsterPressed()
+{
+	if (!bInputLocked && !bVaulting)
+	{
+		Weapons->ToggleHolster();
+	}
+}
+
+void ANVPlayerCharacter::ApplyViewmodelVisibility(bool bScoped)
+{
+	const bool bHide = bScoped || bThirdPerson;
+	bViewmodelHidden = bHide;
+	WeaponMesh->SetHiddenInGame(bHide);
+	WeaponStaticMesh->SetHiddenInGame(bHide);
+	FirstPersonMesh->SetHiddenInGame(bHide);
+}
+
+void ANVPlayerCharacter::RefreshThirdPersonWeapon()
+{
+	const UNVWeaponData* W = Weapons ? Weapons->GetCurrentWeapon() : nullptr;
+	USkeletalMesh* Skel = W ? W->WeaponMesh.LoadSynchronous() : nullptr;
+	UStaticMesh* Stat = (W && !Skel) ? W->WeaponStaticMesh.LoadSynchronous() : nullptr;
+	ThirdPersonWeapon->SetSkeletalMesh(Skel);
+	ThirdPersonWeaponStatic->SetStaticMesh(Stat);
+	for (USceneComponent* C : { static_cast<USceneComponent*>(ThirdPersonWeapon), static_cast<USceneComponent*>(ThirdPersonWeaponStatic) })
+	{
+		C->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, ThirdPersonWeaponSocket);
+		C->SetRelativeTransform(ThirdPersonWeaponOffset);
+	}
+	ThirdPersonWeapon->SetVisibility(bThirdPerson && Skel != nullptr);
+	ThirdPersonWeaponStatic->SetVisibility(bThirdPerson && Stat != nullptr);
 }
 
 void ANVPlayerCharacter::HandleWeaponEquipped(UNVWeaponData* Weapon)
 {
 	GetWorldTimerManager().ClearTimer(ArmsReturnTimer);
+	RefreshThirdPersonWeapon();
 	UAnimationAsset* Idle = (ArmsMeshAsset && Weapon) ? Weapon->ArmsIdleAnim.LoadSynchronous() : nullptr;
 	if (!Idle)
 	{
@@ -311,6 +401,8 @@ void ANVPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	BindIf(NextWeaponAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::NextWeapon);
 	BindIf(PrevWeaponAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::PrevWeapon);
 	BindIf(MeleeAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::MeleePressed);
+	BindIf(HolsterAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::HolsterPressed);
+	BindIf(ToggleViewAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::ToggleViewPressed);
 	BindIf(Ability1Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability1Pressed);
 	BindIf(Ability2Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability2Pressed);
 	BindIf(Ability3Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability3Pressed);
@@ -772,6 +864,7 @@ void ANVPlayerCharacter::UpdateCamera(float DeltaSeconds)
 		FOV = FMath::Lerp(FOV, W->AdsFOV, A * A * (3.f - 2.f * A)); // smoothstep: eases in and out
 	}
 	FirstPersonCamera->SetFieldOfView(FOV);
+	ThirdPersonCamera->SetFieldOfView(FOV);
 }
 
 void ANVPlayerCharacter::SetDebugMoveInput(FVector2D Input, bool bSprint)
@@ -878,8 +971,6 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 	if (bScoped != bScopedIn)
 	{
 		bScopedIn = bScoped;
-		WeaponMesh->SetHiddenInGame(bScoped);
-		WeaponStaticMesh->SetHiddenInGame(bScoped);
-		FirstPersonMesh->SetHiddenInGame(bScoped);
+		ApplyViewmodelVisibility(bScoped);
 	}
 }

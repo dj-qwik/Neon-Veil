@@ -65,6 +65,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Weapon")
 	void CycleWeapon(int32 Direction);
 
+	/** Put the weapon away (unarmed) or draw the last one again. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Weapon")
+	void ToggleHolster();
+
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Weapon")
+	void Holster();
+
+	UFUNCTION(BlueprintPure, Category = "NeonVeil|Weapon")
+	bool IsHolstered() const { return !Slots.IsValidIndex(CurrentSlot); }
+
+	/** Begin play with the weapon put away (walk around unarmed until the player draws). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil|Weapon")
+	bool bStartHolstered = true;
+
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Weapon")
 	void GiveWeapon(UNVWeaponData* Weapon, bool bEquip);
 
@@ -126,6 +140,7 @@ protected:
 
 private:
 	void FireShot();
+	int32 LastArmedSlot = 0;
 	void FinishReload();
 	void ApplyRecoil(const UNVWeaponData& Data);
 	void PlayFireEffects(const UNVWeaponData& Data, const FVector& TraceEnd, const FHitResult* Hit, bool bPrimary = true);

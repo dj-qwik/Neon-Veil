@@ -6,6 +6,7 @@
 #include "NVPlayerCharacter.generated.h"
 
 class UCameraComponent;
+class USpringArmComponent;
 class USkeletalMeshComponent;
 class UStaticMeshComponent;
 class UInputMappingContext;
@@ -61,6 +62,13 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "NeonVeil")
 	bool IsSprinting() const { return bSprinting; }
+
+	/** Switch between the first-person view and an over-the-shoulder third-person view. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil")
+	void SetThirdPerson(bool bNewThirdPerson);
+
+	UFUNCTION(BlueprintPure, Category = "NeonVeil")
+	bool IsThirdPerson() const { return bThirdPerson; }
 
 	/** Scoped weapon fully aimed: the viewmodel is hidden and the HUD draws the scope. */
 	bool IsScopedIn() const { return bScopedIn; }
@@ -122,6 +130,29 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> WeaponStaticMesh;
+
+	/** Third-person view: over-the-shoulder boom and camera (inactive in first person). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<USpringArmComponent> CameraBoom;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UCameraComponent> ThirdPersonCamera;
+
+	/** The current weapon in Ghost's right hand, seen only in third person. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<USkeletalMeshComponent> ThirdPersonWeapon;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UStaticMeshComponent> ThirdPersonWeaponStatic;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Third Person")
+	FName ThirdPersonWeaponSocket = TEXT("hand_r");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Third Person")
+	FTransform ThirdPersonWeaponOffset = FTransform(FRotator(0.f, 90.f, 0.f), FVector(-2.f, 4.f, 0.f));
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Third Person")
+	bool bStartThirdPerson = false;
 
 	/** Shock baton viewmodel, shown only during a swing. Placeholder cylinder until M5 art. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -185,6 +216,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> MeleeAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> HolsterAction;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
+	TObjectPtr<UInputAction> ToggleViewAction;
 
 	/** Ability slots 0..2 (optical disruption, kinetic shield, drone uplink). */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
@@ -302,6 +339,12 @@ private:
 	void InteractPressed();
 	void InteractReleased();
 	void NextWeapon();
+	void HolsterPressed();
+	void ToggleViewPressed();
+	void RefreshThirdPersonWeapon();
+	void ApplyViewmodelVisibility(bool bScoped);
+	bool bThirdPerson = false;
+	bool bViewmodelHidden = false;
 	void PrevWeapon();
 	void MeleePressed();
 	void Ability1Pressed();

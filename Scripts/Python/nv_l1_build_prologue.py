@@ -604,7 +604,7 @@ sign("S_Plat1b", "CROWN LINE  ·  BOARD HERE  >>", (3100, -300, 330), 0, 26)
 
 # ------------------------------------------------------------------ platform: slide shutter, vault crates, boarding
 FPL = "P_Platform"
-box("Shutter_Slide", (4200, -615, 115 + 150), (40, 830, 300), M_DOOR, FPL)            # 115 cm gap underneath
+box("Shutter_Slide", (4200, -615, 140 + 150), (40, 830, 300), M_DOOR, FPL)            # 140 cm gap: the slide capsule is 116 cm tall
 sm(f"{TS}/Meshes/SM_Box_B", "Vault_Crate_A", (2950, -450, 0), R(y=0), None, FPL)
 sm(f"{TS}/Meshes/SM_Box_B", "Vault_Crate_B", (2950, -840, 0), R(y=0), None, FPL)
 def tut(label, action, text, center, ext, notice, objective="M00P-O04"):
@@ -659,4 +659,13 @@ except Exception as _e:
 _sys.argv = _argv
 json.dump(sorted(set(SPAWNED)), open(MANIFEST, "w"))
 LES.save_current_level()
+open(unreal.Paths.project_saved_dir() + "NV_l1_build_prologue.txt", "w").write("\n".join(OUT))
+
+# station walkthrough v2 (every room on the route), X-ray arch orientation/partitions, ambient citizens
+for _s in ("nv_station_route.py", "nv_xray_fix.py", "nv_npcs.py"):
+    try:
+        runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), _s), run_name="__main__")
+        OUT.append(f"{_s}: ok")
+    except Exception as _e:
+        OUT.append(f"{_s} FAILED: {_e}")
 open(unreal.Paths.project_saved_dir() + "NV_l1_build_prologue.txt", "w").write("\n".join(OUT))
