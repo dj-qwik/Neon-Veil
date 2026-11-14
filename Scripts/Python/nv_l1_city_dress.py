@@ -286,8 +286,10 @@ if MODE == "prologue":
         for j in range(8):
             box(f"Crosswalk_{k}_{j}", (6300 + j * 230, y, ZS + 1), (120, 600, 1), G["white"])
     # ---- flying traffic over the street and threading the lift view
-    traffic("Sky_Street_A", (7046, -110000, ZS + 4200), 90, 220000, 70, (900, 300), (2500, 4500), (5.0, 1.8, 1.0), 21)
-    traffic("Sky_Street_B", (7046, -110000, ZS + 7600), 90, 220000, 60, (1300, 400), (3500, 6500), (6.0, 2.1, 1.2), 22, False)
+    # lanes run between the NYG tower (north face y -20194) and Veyra Central (y -6564) and dock into skyport
+    # gates on both faces; nv_hub_building.py builds the gates and keeps these numbers in step.
+    traffic("Sky_Street_A", (7046, -20454, ZS + 4200), 90, 14160, 7, (700, 260), (2500, 4500), (5.0, 1.8, 1.0), 21)
+    traffic("Sky_Street_B", (7046, -20454, ZS + 7600), 90, 14160, 6, (700, 320), (3500, 6500), (6.0, 2.1, 1.2), 22, False)
     traffic("Sky_View_A", (16000, -110000, -7000), 90, 220000, 110, (1100, 400), (3500, 6500), (6.0, 2.1, 1.2), 23)
     traffic("Sky_View_B", (24000, -110000, -2500), 90, 220000, 90, (1400, 500), (4500, 8000), (7.5, 2.6, 1.5), 24, False)
     traffic("Sky_View_C", (31000, -110000, 1500), 90, 220000, 80, (1600, 500), (5000, 9000), (8.5, 3.0, 1.7), 25)

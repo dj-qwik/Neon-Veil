@@ -1,18 +1,19 @@
-"""Inspect station BP doors (vars + components). Report: Saved/NV_door_probe.txt"""
 import unreal
 EAS = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-out = []
+O = []
+for m in ["SM_Door_Left", "SM_Door_Right", "SM_Wall_Door_A", "SM_Door_Frame_A"]:
+    a = unreal.load_asset("/Game/SciFiTramStation/Meshes/" + m)
+    if a:
+        b = a.get_bounding_box(); O.append(f"{m} min {b.min} max {b.max}")
 for a in EAS.get_all_level_actors():
-    if a.get_class().get_name().startswith("BP_Door"):
-        l = a.get_actor_location()
-        out.append(f"== {a.get_actor_label()} {a.get_class().get_name()} at ({l.x:.0f},{l.y:.0f},{l.z:.0f}) yaw {a.get_actor_rotation().yaw:.0f} hidden={a.is_hidden_ed()}")
-        cls = a.get_class()
-        for p in ("locked", "is_locked", "b_locked", "open", "auto_open", "door_locked", "Locked", "IsLocked"):
-            try:
-                out.append(f"   {p} = {a.get_editor_property(p)}")
-            except Exception:
-                pass
-        for c in a.get_components_by_class(unreal.PrimitiveComponent):
-            rl = c.get_editor_property("relative_location")
-            out.append(f"   {c.get_name()} {c.get_class().get_name()} rel ({rl.x:.0f},{rl.y:.0f},{rl.z:.0f}) col {c.get_collision_enabled()} prof {c.get_collision_profile_name()}")
-open(unreal.Paths.project_saved_dir() + "NV_door_probe.txt", "w").write("\n".join(out))
+    l = a.get_actor_label()
+    if l.startswith(("Lo_Door", "Up_Door", "Lo_DoorWall", "Up_DoorWall")):
+        o, e = a.get_actor_bounds(False)
+        O.append(f"{l} loc {a.get_actor_location()} rot {a.get_actor_rotation()} bmin {o - e} bmax {o + e}")
+bp = unreal.EditorAssetLibrary.load_blueprint_class("/Game/SciFiTramStation/Blueprints/BP_Door_A")
+if bp:
+    cdo = unreal.get_default_object(bp)
+    O.append("BP_Door_A cdo " + str(cdo))
+    for c in cdo.get_components_by_class(unreal.StaticMeshComponent):
+        O.append(f"  comp {c.get_name()} mesh {c.static_mesh.get_name() if c.static_mesh else None} rel {c.get_editor_property('relative_location')}")
+open(unreal.Paths.project_saved_dir() + "NV_door_probe.txt", "w").write("\n".join(O))
