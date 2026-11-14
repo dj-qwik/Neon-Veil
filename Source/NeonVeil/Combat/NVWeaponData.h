@@ -184,6 +184,28 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	float WeaponReloadAnimRate = 0.f;
 
+	// --- First-person arms (KINEMATION Sci-fi FPS pack). When ArmsIdleAnim is set and the player has an arms mesh,
+	// the weapon is held by the arms (attached to ArmsWeaponBone) instead of floating at the viewmodel root.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Arms")
+	TSoftObjectPtr<UAnimationAsset> ArmsIdleAnim;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Arms")
+	TSoftObjectPtr<UAnimationAsset> ArmsFireAnim;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Arms")
+	TSoftObjectPtr<UAnimationAsset> ArmsReloadAnim;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Arms")
+	TSoftObjectPtr<UAnimationAsset> ArmsDrawAnim;
+
+	/** Arms bone the weapon rides on. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Arms")
+	FName ArmsWeaponBone = TEXT("ik_hand_gun");
+
+	/** Weapon transform relative to ArmsWeaponBone. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Arms")
+	FTransform ArmsWeaponOffset = FTransform::Identity;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	TSoftObjectPtr<UNiagaraSystem> MuzzleFlash;
 

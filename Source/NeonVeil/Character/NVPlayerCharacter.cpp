@@ -1,4 +1,6 @@
 #include "Character/NVPlayerCharacter.h"
+#include "Animation/AnimSequenceBase.h"
+#include "Engine/SkeletalMesh.h"
 #include "Combat/NVHealthComponent.h"
 #include "Combat/NVWeaponComponent.h"
 #include "Combat/NVWeaponData.h"
@@ -39,15 +41,18 @@ ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	FirstPersonCamera->bEnableFirstPersonScale = true;
 	FirstPersonCamera->FirstPersonScale = 0.6f;
 
+	ViewmodelRoot = CreateDefaultSubobject<USceneComponent>(TEXT("ViewmodelRoot"));
+	ViewmodelRoot->SetupAttachment(FirstPersonCamera);
+
+	// Arms ride the viewmodel root so they share its sway, bob, kick and ADS offset with the weapon.
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonMesh"));
-	FirstPersonMesh->SetupAttachment(FirstPersonCamera);
+	FirstPersonMesh->SetupAttachment(ViewmodelRoot);
 	FirstPersonMesh->SetOnlyOwnerSee(true);
 	FirstPersonMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
 	FirstPersonMesh->CastShadow = false;
 	FirstPersonMesh->SetCollisionProfileName(TEXT("NoCollision"));
-
-	ViewmodelRoot = CreateDefaultSubobject<USceneComponent>(TEXT("ViewmodelRoot"));
-	ViewmodelRoot->SetupAttachment(FirstPersonCamera);
+	FirstPersonMesh->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+	FirstPersonMesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
 	WeaponMesh->SetupAttachment(ViewmodelRoot);
@@ -120,7 +125,96 @@ void ANVPlayerCharacter::BeginPlay()
 
 	Weapons->Initialize(FirstPersonCamera, WeaponMesh, WeaponStaticMesh);
 	Weapons->OnWeaponFired.AddDynamic(this, &ANVPlayerCharacter::HandleWeaponFired);
+	if (!ArmsMeshAsset)
+	{
+		// Default arms: the KINEMATION gloves (local-only pack content; stays null if the pack is absent).
+		ArmsMeshAsset = LoadObject<USkeletalMesh>(nullptr, TEXT("/Game/KINEMATION/Sci-fi_FPS_Pack/Gloves/Meshes/SKM_SciFi_Arms.SKM_SciFi_Arms"));
+	}
+	Weapons->OnWeaponEquipped.AddDynamic(this, &ANVPlayerCharacter::HandleWeaponEquipped);
+	Weapons->OnReloadStateChanged.AddDynamic(this, &ANVPlayerCharacter::HandleReloadState);
+	HandleWeaponEquipped(Weapons->GetCurrentWeapon());
 	UpdateMoveSpeed();
+}
+
+void ANVPlayerCharacter::HandleWeaponEquipped(UNVWeaponData* Weapon)
+{
+	GetWorldTimerManager().ClearTimer(ArmsReturnTimer);
+	UAnimationAsset* Idle = (ArmsMeshAsset && Weapon) ? Weapon->ArmsIdleAnim.LoadSynchronous() : nullptr;
+	if (!Idle)
+	{
+		ArmsWeapon = nullptr;
+		FirstPersonMesh->SetVisibility(false);
+		WeaponMesh->AttachToComponent(ViewmodelRoot, FAttachmentTransformRules::KeepRelativeTransform);
+		WeaponMesh->SetRelativeTransform(FTransform::Identity);
+		return;
+	}
+	ArmsWeapon = Weapon;
+	if (FirstPersonMesh->GetSkeletalMeshAsset() != ArmsMeshAsset)
+	{
+		FirstPersonMesh->SetSkeletalMesh(ArmsMeshAsset);
+	}
+	FirstPersonMesh->SetRelativeTransform(ArmsOffset);
+	FirstPersonMesh->SetVisibility(true);
+	WeaponMesh->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules::KeepRelativeTransform, Weapon->ArmsWeaponBone);
+	WeaponMesh->SetRelativeTransform(Weapon->ArmsWeaponOffset);
+	if (UAnimationAsset* Draw = Weapon->ArmsDrawAnim.LoadSynchronous())
+	{
+		PlayArms(Draw, false);
+	}
+	else
+	{
+		PlayArms(Idle, true);
+	}
+}
+
+void ANVPlayerCharacter::HandleReloadState(bool bReloading)
+{
+	if (!ArmsWeapon)
+	{
+		return;
+	}
+	if (bReloading)
+	{
+		if (UAnimationAsset* Reload = ArmsWeapon->ArmsReloadAnim.LoadSynchronous())
+		{
+			const UAnimSequenceBase* Seq = Cast<UAnimSequenceBase>(Reload);
+			const float Len = Seq ? Seq->GetPlayLength() : 0.f;
+			const float Rate = (Len > 0.f && ArmsWeapon->ReloadTime > 0.f) ? Len / ArmsWeapon->ReloadTime : 1.f;
+			PlayArms(Reload, false, Rate);
+		}
+	}
+	else
+	{
+		ReturnArmsToIdle();
+	}
+}
+
+void ANVPlayerCharacter::PlayArms(UAnimationAsset* Anim, bool bLoop, float Rate)
+{
+	if (!Anim)
+	{
+		return;
+	}
+	GetWorldTimerManager().ClearTimer(ArmsReturnTimer);
+	FirstPersonMesh->PlayAnimation(Anim, bLoop);
+	FirstPersonMesh->SetPlayRate(Rate);
+	if (!bLoop)
+	{
+		const UAnimSequenceBase* Seq = Cast<UAnimSequenceBase>(Anim);
+		const float Len = Seq ? Seq->GetPlayLength() / FMath::Max(Rate, 0.01f) : 0.f;
+		if (Len > 0.f)
+		{
+			GetWorldTimerManager().SetTimer(ArmsReturnTimer, this, &ANVPlayerCharacter::ReturnArmsToIdle, Len, false);
+		}
+	}
+}
+
+void ANVPlayerCharacter::ReturnArmsToIdle()
+{
+	if (ArmsWeapon && !Weapons->IsReloading())
+	{
+		PlayArms(ArmsWeapon->ArmsIdleAnim.LoadSynchronous(), true);
+	}
 }
 
 void ANVPlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -142,6 +236,10 @@ void ANVPlayerCharacter::HandleWeaponFired()
 	if (const UNVWeaponData* W = Weapons->GetCurrentWeapon())
 	{
 		ViewmodelKick = W->ViewmodelKickBack * FMath::Lerp(1.f, 0.5f, Weapons->GetAdsAlpha());
+	}
+	if (ArmsWeapon && !Weapons->IsReloading())
+	{
+		PlayArms(ArmsWeapon->ArmsFireAnim.LoadSynchronous(), false);
 	}
 }
 
@@ -742,7 +840,7 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 		Rot.Yaw += 10.f;
 		Offset.Z -= 3.f;
 	}
-	if (Weapons->IsReloading())
+	if (Weapons->IsReloading() && !ArmsWeapon)
 	{
 		Rot.Roll -= 25.f;
 		Offset.Z -= 4.f;

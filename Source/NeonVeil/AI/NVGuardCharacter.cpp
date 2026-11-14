@@ -118,7 +118,12 @@ void ANVGuardCharacter::BindAppearance()
 	USkeletalMeshComponent* Base = GetMesh();
 	if (!Look)
 	{
-		Base->SetVisibility(true, false);
+		const bool bHide = bHideBodyUnderOutfit && OutfitParts.Num() > 0;
+		Base->SetVisibility(!bHide, false);
+		if (bHide)
+		{
+			Base->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		}
 		return;
 	}
 	// The base mesh still drives locomotion; keep its pose updating while hidden.

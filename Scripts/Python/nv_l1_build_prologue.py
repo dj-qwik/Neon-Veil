@@ -459,11 +459,7 @@ for i, (name, loc) in enumerate((("BPP_CHA_Ref_N1", (1500, -9000)), ("BPP_CHE_Re
                                   ("BPP_SFE_Ref_N1", (12600, -9500)), ("BPP_CHH_Ref_A1_N1", (12600, -15500)),
                                   ("BPP_NYG_Ref_N1", (7046, -23000)))):
     bpp(name, f"Skyline_{i}", (loc[0], loc[1], ZS), 0, "P_Skyline")
-for i, (name, loc, yaw) in enumerate((("BPP_CHC_Ref_A1_N1", (13200, -2600), 0), ("BPP_NYG_Ref_N1", (21000, -6500), 90),
-                                      ("BPP_CHB_Ref_A1_N1", (16200, -9800), 0), ("BPP_Bldg_Hero_Tower_CHC_A01_N1", (27000, 1500), 0),
-                                      ("BPP_SFJ_Ref_N1", (12400, 2600), 90), ("BPP_Bldg_Hero_Tower_CHJ_B01_N1", (33000, -12000), 0),
-                                      ("BPP_SFD_Ref_N1", (19500, 5200), 0))):
-    bpp(name, f"LiftView_{i}", (loc[0], loc[1], ZS), yaw, "P_Skyline")
+# (the lift-view skyline is built by nv_l1_city_dress.py: low foreground, modern towers + sci-fi spires, Glass Crown)
 # hub facade above the lobby entrance (hides the station box behind)
 NROWS = int((400 - ZS) / 400) + 1
 for row in range(NROWS):
@@ -501,7 +497,7 @@ ppv.set_editor_property("settings", st)
 # rain + ambience
 rain = spawn(unreal.NVRainField, "Street_Rain", (7046, -11400, ZS + 900), None, FS)
 sp(rain, "extent", V(1600, 5200, 900))
-sp(rain, "count", 4500)
+sp(rain, "count", 2200)
 amb = spawn(unreal.AmbientSound, "Street_RainAmb", (7046, -11000, ZS + 300), None, FS)
 sp(amb.audio_component, "sound", load("/Game/SoulCity/Sound/Cue/AmbientLooping/Rain_Heavy_Ext_Cue"))
 amb2 = spawn(unreal.AmbientSound, "Street_CityAmb", (7046, -13000, ZS + 300), None, FS)
@@ -651,6 +647,16 @@ if EAL.does_asset_exist("/Game/NeonVeil/Audio/VO/M00P/VO_p06_pa_arriving"):
 log("voice lines available:", len(VOICE))
 log("tram found:", bool(tram))
 
+# future-city dressing (street, sky, lift view) - its own script so it can be iterated on its own
+import runpy, sys as _sys
+_argv = list(_sys.argv)
+_sys.argv = ["nv_l1_city_dress.py", "prologue"]
+try:
+    runpy.run_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "nv_l1_city_dress.py"), run_name="__main__")
+    log("city dressing: ok")
+except Exception as _e:
+    log("city dressing FAILED:", _e)
+_sys.argv = _argv
 json.dump(sorted(set(SPAWNED)), open(MANIFEST, "w"))
 LES.save_current_level()
 open(unreal.Paths.project_saved_dir() + "NV_l1_build_prologue.txt", "w").write("\n".join(OUT))

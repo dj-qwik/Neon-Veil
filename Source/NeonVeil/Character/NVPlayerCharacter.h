@@ -16,6 +16,8 @@ class UNVInteractionComponent;
 class UNVAbilityComponent;
 class UNVMeleeComponent;
 class UAnimInstance;
+class UNVWeaponData;
+class UAnimationAsset;
 class USkeletalMesh;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNVOnSprintChanged, bool, bSprinting);
@@ -264,6 +266,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Body")
 	TSubclassOf<UAnimInstance> BodyAnimClass;
 
+	// --- First-person arms (KINEMATION SKM_SciFi_Arms, Manny skeleton). Shown for weapons with ArmsIdleAnim.
+	UPROPERTY(EditDefaultsOnly, Category = "Arms")
+	TObjectPtr<USkeletalMesh> ArmsMeshAsset;
+
+	/** Arms placement under the viewmodel root: turns the Manny +Y forward to +X and puts the eyes on the camera. */
+	UPROPERTY(EditDefaultsOnly, Category = "Arms")
+	FTransform ArmsOffset = FTransform(FRotator(0.f, -90.f, 0.f), FVector(-10.f, 0.3f, -158.f));
+
 	// --- Viewmodel motion
 	UPROPERTY(EditDefaultsOnly, Category = "Viewmodel")
 	float ViewmodelSwayAmount = 0.6f;
@@ -307,6 +317,22 @@ private:
 
 	UFUNCTION()
 	void HandleWeaponFired();
+
+	UFUNCTION()
+	void HandleWeaponEquipped(UNVWeaponData* Weapon);
+
+	UFUNCTION()
+	void HandleReloadState(bool bReloading);
+
+	/** Plays an arms animation; one-shots return to the weapon's idle loop when they end. */
+	void PlayArms(UAnimationAsset* Anim, bool bLoop, float Rate = 1.f);
+	void ReturnArmsToIdle();
+	bool HasArms() const { return ArmsWeapon != nullptr; }
+
+	UPROPERTY(Transient)
+	TObjectPtr<UNVWeaponData> ArmsWeapon;
+
+	FTimerHandle ArmsReturnTimer;
 
 	bool bSprinting = false;
 	bool bSprintHeld = false;

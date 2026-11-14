@@ -74,6 +74,10 @@ public:
 
 	static constexpr int32 MaxOutfitParts = 6;
 
+	/** Hide the base body (it keeps animating) when the outfit is a full suit that covers it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	bool bHideBodyUnderOutfit = false;
+
 	/** Rigid helmet on the head bone (Bible §8 tell: helmet optics). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
 	TObjectPtr<UStaticMesh> HelmetMeshAsset;
