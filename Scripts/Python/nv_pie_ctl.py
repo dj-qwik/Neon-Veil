@@ -9,6 +9,19 @@ if args[0] == "tp" and pawn:
     x, y, z, yaw = (float(v) for v in args[1:5])
     pawn.set_actor_location(unreal.Vector(x, y, z), False, True)
     pc.set_control_rotation(unreal.Rotator(roll=0, pitch=0, yaw=yaw))
+if args[0] == "near" and pawn:
+    # near <labelprefix> [dist]: stand in front of the actor, looking at it; freezes it for inspection
+    d = float(args[2]) if len(args) > 2 else 220.0
+    for a in unreal.GameplayStatics.get_all_actors_of_class(w, unreal.Character):
+        if a.get_actor_label().startswith(args[1]):
+            a.set_editor_property("custom_time_dilation", 0.0)
+            loc, fwd = a.get_actor_location(), a.get_actor_forward_vector()
+            p = loc + fwd * d
+            pawn.set_actor_location(unreal.Vector(p.x, p.y, loc.z + 20), False, True)
+            yaw = unreal.MathLibrary.find_look_at_rotation(p, loc).yaw
+            pc.set_control_rotation(unreal.Rotator(roll=0, pitch=-8, yaw=yaw))
+            out.append("near %s" % a.get_actor_label())
+            break
 if args[0] == "ev":
     obj = unreal.SubsystemBlueprintLibrary.get_game_instance_subsystem(w, unreal.NVObjectiveSubsystem)
     for t in args[1:]:

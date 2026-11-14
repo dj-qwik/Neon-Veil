@@ -11,6 +11,8 @@ class UStaticMesh;
 class UStaticMeshComponent;
 class USkeletalMeshComponent;
 class UChildActorComponent;
+class UChaosClothComponent;
+class UChaosClothAssetBase;
 
 /**
  * Agency guard (Bible §8). In M00 guards are non-hostile ambient security: they patrol, pause and
@@ -72,7 +74,25 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
 	TArray<TObjectPtr<USkeletalMesh>> OutfitParts;
 
+	/** Optional material per outfit piece (same index as OutfitParts), applied to every slot. Crowd-pack meshes ship without materials. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
+	TArray<TObjectPtr<UMaterialInterface>> OutfitMaterials;
+
 	static constexpr int32 MaxOutfitParts = 6;
+
+	/** Garments (Chaos cloth assets, e.g. the MetaHuman crowd wardrobe) skinned to the visible body via leader pose. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
+	TArray<TObjectPtr<UChaosClothAssetBase>> Garments;
+
+	/** Run cloth simulation on the garments (off = skinned only; cheap for ambient crowds). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
+	bool bSimulateGarments = false;
+
+	/** Optional tint material per garment (same index as Garments); empty = the asset's own materials. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Appearance")
+	TArray<TObjectPtr<UMaterialInterface>> GarmentMaterials;
+
+	static constexpr int32 MaxGarments = 4;
 
 	/** Hide the base body (it keeps animating) when the outfit is a full suit that covers it. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
@@ -125,6 +145,11 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TArray<TObjectPtr<USkeletalMeshComponent>> OutfitComponents;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TArray<TObjectPtr<UChaosClothComponent>> GarmentComponents;
+
+	void ApplyGarments(USkeletalMeshComponent* Host);
 
 private:
 	TArray<FVector> WorldPatrol;

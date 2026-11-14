@@ -11,6 +11,9 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "ChaosClothAsset/ClothComponent.h"
+#include "ChaosClothAsset/ClothAssetBase.h"
+#include "Materials/MaterialInterface.h"
 
 ANVGuardCharacter::ANVGuardCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -48,6 +51,17 @@ ANVGuardCharacter::ANVGuardCharacter(const FObjectInitializer& ObjectInitializer
 		OutfitComponents.Add(Part);
 	}
 
+	for (int32 i = 0; i < MaxGarments; ++i)
+	{
+		UChaosClothComponent* G = CreateDefaultSubobject<UChaosClothComponent>(*FString::Printf(TEXT("Garment%d"), i));
+		G->SetupAttachment(GetMesh());
+		G->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		G->SetGenerateOverlapEvents(false);
+		G->SetCanEverAffectNavigation(false);
+		G->bUseBoundsFromLeaderPoseComponent = true;
+		GarmentComponents.Add(G);
+	}
+
 	AIControllerClass = ANVEnemyController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
@@ -82,6 +96,30 @@ void ANVGuardCharacter::OnConstruction(const FTransform& Transform)
 		Part->SetSkeletalMeshAsset(PartMesh);
 		Part->SetVisibility(PartMesh != nullptr);
 		Part->SetLeaderPoseComponent(PartMesh ? GetMesh() : nullptr);
+		Part->EmptyOverrideMaterials();
+		if (PartMesh && OutfitMaterials.IsValidIndex(i) && OutfitMaterials[i])
+		{
+			for (int32 Slot = 0; Slot < Part->GetNumMaterials(); ++Slot)
+			{
+				Part->SetMaterial(Slot, OutfitMaterials[i]);
+			}
+		}
+	}
+
+	for (int32 i = 0; i < GarmentComponents.Num(); ++i)
+	{
+		UChaosClothComponent* G = GarmentComponents[i];
+		UChaosClothAssetBase* A = Garments.IsValidIndex(i) ? Garments[i].Get() : nullptr;
+		G->SetAsset(A);
+		G->SetVisibility(A != nullptr);
+		G->EmptyOverrideMaterials();
+		if (A && GarmentMaterials.IsValidIndex(i) && GarmentMaterials[i])
+		{
+			for (int32 Slot = 0; Slot < G->GetNumMaterials(); ++Slot)
+			{
+				G->SetMaterial(Slot, GarmentMaterials[i]);
+			}
+		}
 	}
 
 	if (Appearance->GetChildActorClass() != AppearanceClass)
@@ -123,6 +161,7 @@ void ANVGuardCharacter::BindAppearance()
 	USkeletalMeshComponent* Base = GetMesh();
 	if (!Look)
 	{
+		ApplyGarments(Base);
 		const bool bHide = bHideBodyUnderOutfit && OutfitParts.Num() > 0;
 		Base->SetVisibility(!bHide, false);
 		if (bHide)
@@ -150,6 +189,7 @@ void ANVGuardCharacter::BindAppearance()
 		Body->SetLeaderPoseComponent(Base, true);
 		Body->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 	}
+	ApplyGarments(Body ? Body : Base);
 	for (USkeletalMeshComponent* S : Skins)
 	{
 		S->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -158,6 +198,30 @@ void ANVGuardCharacter::BindAppearance()
 		{
 			S->SetLeaderPoseComponent(Body, true);
 		}
+	}
+}
+
+void ANVGuardCharacter::ApplyGarments(USkeletalMeshComponent* Host)
+{
+	// Pose always comes from our animated base mesh (leader chains are not supported); placement from the host.
+	USkeletalMeshComponent* Leader = GetMesh();
+	for (UChaosClothComponent* G : GarmentComponents)
+	{
+		if (!G || !G->GetAsset())
+		{
+			continue;
+		}
+		// Ride on the visible body so garments match its shape and placement exactly.
+		if (G->GetAttachParent() != Host)
+		{
+			G->AttachToComponent(Host, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		}
+		// Crowd garments are fitted to bodies with hidden-under-cloth faces; ours show the full body, so
+		// loosen the fit a touch to stop skin poking through.
+		G->SetRelativeTransform(FTransform(FQuat::Identity, FVector::ZeroVector, FVector(1.04f, 1.04f, 1.01f)));
+		G->SetLeaderPoseComponent(Leader, true);
+		G->SetEnableSimulation(bSimulateGarments);
+		G->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 	}
 }
 

@@ -26,7 +26,8 @@ public class NeonVeil : ModuleRules
 			"Niagara",
 			"PhysicsCore",
 			"DeveloperSettings",
-			"RHI"
+			"RHI",
+			"ChaosClothAssetEngine"
 		});
 	}
 }
