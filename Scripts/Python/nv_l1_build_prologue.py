@@ -497,7 +497,7 @@ ppv.set_editor_property("settings", st)
 # rain + ambience
 rain = spawn(unreal.NVRainField, "Street_Rain", (7046, -11400, ZS + 900), None, FS)
 sp(rain, "extent", V(1600, 5200, 900))
-sp(rain, "count", 2200)
+sp(rain, "count", 1100)  # halved for GPU headroom
 amb = spawn(unreal.AmbientSound, "Street_RainAmb", (7046, -11000, ZS + 300), None, FS)
 sp(amb.audio_component, "sound", load("/Game/SoulCity/Sound/Cue/AmbientLooping/Rain_Heavy_Ext_Cue"))
 amb2 = spawn(unreal.AmbientSound, "Street_CityAmb", (7046, -13000, ZS + 300), None, FS)

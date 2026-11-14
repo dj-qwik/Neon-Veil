@@ -48,11 +48,12 @@ for p in EXTRA:
 
 if MODE == "delete":
     for f in safe:
-        ok = EAL.delete_directory("/Game/" + f)
+        # Straight off disk: going through the asset tools loads (and Nanite-builds) every mesh first, which
+        # needed more memory than the machine has. Nothing references these, so the registry just drops them.
         disk = os.path.join(proj, "Content", f)
         if os.path.isdir(disk):
             shutil.rmtree(disk, ignore_errors=True)
-        log("deleted /Game/%s: %s, on disk now %s" % (f, ok, os.path.isdir(disk)))
+        log("deleted /Game/%s on disk -> %s" % (f, "gone" if not os.path.isdir(disk) else "PARTIAL"))
     for p in EXTRA:
         if os.path.isdir(p):
             shutil.rmtree(p, ignore_errors=True)
