@@ -1,6 +1,7 @@
 #include "Core/NVGameMode.h"
 #include "Abilities/NVAbilityComponent.h"
 #include "Core/NVPlayerController.h"
+#include "Core/NVMapPreloadSubsystem.h"
 #include "UI/NVHUD.h"
 #include "Objectives/NVObjectiveSubsystem.h"
 #include "Objectives/NVObjectiveData.h"
@@ -76,6 +77,16 @@ void ANVGameMode::StartPlay()
 
 	Super::StartPlay();
 
+	// a package preloaded by the previous map has been consumed by now; queue the next one if asked
+	if (UNVMapPreloadSubsystem* Pre = UNVMapPreloadSubsystem::Get(this))
+	{
+		Pre->Release();
+		if (bPreloadNextMap && Mission && !Mission->NextMissionMap.IsNull())
+		{
+			Pre->Preload(Mission->NextMissionMap.ToSoftObjectPath().GetLongPackageName());
+		}
+	}
+
 	// Pawn has begun play now: restore health and weapons over the defaults.
 	if (bRestoring)
 	{
@@ -113,7 +124,8 @@ void ANVGameMode::HandleMissionCompleted(FName MissionID)
 		{
 			P->SetGameplayInputLocked(true, true);
 		}
-		if (PC->PlayerCameraManager)
+		// EndFadeTime 0: no fade at all (the prologue tram carries straight on into the next map)
+		if (PC->PlayerCameraManager && EndFadeTime > 0.f)
 		{
 			PC->PlayerCameraManager->StartCameraFade(0.f, 1.f, EndFadeTime, FLinearColor::Black, false, true);
 		}
@@ -122,7 +134,10 @@ void ANVGameMode::HandleMissionCompleted(FName MissionID)
 			HUD->SetInstruction(FText::GetEmpty());
 		}
 	}
-	GetWorldTimerManager().SetTimer(EndCardTimer, this, &ANVGameMode::ShowEndCard, EndFadeTime, false);
+	if (bShowEndCard)
+	{
+		GetWorldTimerManager().SetTimer(EndCardTimer, this, &ANVGameMode::ShowEndCard, EndFadeTime, false);
+	}
 	BP_OnMissionCompleted(MissionID);
 
 	if (Mission && !Mission->NextMissionMap.IsNull())

@@ -1,0 +1,32 @@
+[
+ {
+  "id": "p01_ops_recall",
+  "speaker": "Ops Monitor",
+  "text": "Ghost-7, Directorate Ops. You are recalled to the Glass Crown, effective immediately. Take the Crown Line from Veyra Central. A car is being held for you."
+ },
+ {
+  "id": "p02_ghost_copy",
+  "speaker": "Ghost-7",
+  "text": "Copy. On my way."
+ },
+ {
+  "id": "p03_scan_clear",
+  "speaker": "Security",
+  "text": "Directorate clearance confirmed. Ghost-7. Proceed."
+ },
+ {
+  "id": "p04_pa_welcome",
+  "speaker": "Station PA",
+  "text": "Welcome to Veyra Central. Crown Line service to the Glass Crown departs from Platform One. Platform access is restricted to cleared personnel."
+ },
+ {
+  "id": "p05_ops_gates",
+  "speaker": "Ops Monitor",
+  "text": "Departure confirmed. I've unlocked the platform gates for you. Your car is inbound."
+ },
+ {
+  "id": "p06_pa_arriving",
+  "speaker": "Station PA",
+  "text": "Crown Line service now arriving at Platform One. Please stand clear of the doors."
+ }
+]

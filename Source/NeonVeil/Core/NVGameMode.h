@@ -29,9 +29,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil")
 	float TransitionDelay = 6.f;
 
-	/** Seconds of fade to black after the final objective. */
+	/** Seconds of fade to black after the final objective (0 = no fade). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil")
 	float EndFadeTime = 2.5f;
+
+	/** Off for seamless hand-offs (the prologue tram ride into M00): fade and travel, no end card. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil")
+	bool bShowEndCard = true;
+
+	/** Load the next mission's map in the background during this one (seamless hand-off; not in PIE). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil")
+	bool bPreloadNextMap = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil")
 	FText EndCardTitle;

@@ -17,4 +17,11 @@ namespace NVTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00_HoloTableReviewed, "NV.Event.M00.HoloTableReviewed", "M00-O03 completion");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00_BiometricScanStarted, "NV.Event.M00.BiometricScanStarted", "M00-O04 completion");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00_SurveillanceBypassed, "NV.Event.M00.SurveillanceBypassed", "Simulation: reached the terminal past the surveillance cone");
+
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_EnteredTransitHub, "NV.Event.M00P.EnteredTransitHub", "Prologue: walked into the Crown Line transit hub");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_LiftArrived, "NV.Event.M00P.LiftArrived", "Prologue: lift reached the concourse level");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_DeparturesChecked, "NV.Event.M00P.DeparturesChecked", "Prologue: checked the departure board (opens the platform gates)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_PlatformReached, "NV.Event.M00P.PlatformReached", "Prologue: reached the Crown Line boarding point");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_TramBoarded, "NV.Event.M00P.TramBoarded", "Prologue: boarded the tram (ends the prologue)");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_TutorialDone, "NV.Event.M00P.TutorialDone", "Prologue: a movement tutorial step was completed");
 }

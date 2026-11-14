@@ -153,6 +153,8 @@ FString ANVHUD::KeyLabel(FName Action) const
 		{ TEXT("Ability2"), TEXT("G"), TEXT("D-pad Right"), TEXT("D-pad Right") },
 		{ TEXT("Ability3"), TEXT("T"), TEXT("D-pad Up"), TEXT("D-pad Up") },
 		{ TEXT("Crouch"), TEXT("Ctrl"), TEXT("Circle"), TEXT("B") },
+		{ TEXT("Jump"), TEXT("Space"), TEXT("Cross"), TEXT("A") },
+		{ TEXT("Sprint"), TEXT("Shift"), TEXT("L3"), TEXT("LS") },
 		{ TEXT("Aim"), TEXT("RMB"), TEXT("L2"), TEXT("LT") },
 		{ TEXT("NextWeapon"), TEXT("Mouse wheel"), TEXT("R1"), TEXT("RB") },
 	};
@@ -478,7 +480,7 @@ void ANVHUD::DrawInstruction(float Y)
 	const float S = Canvas->ClipY / 1080.f;
 	FString T = InstructionText.ToString();
 	// Device-aware button tokens, e.g. "{Ability2}" -> "[G]" or "[D-pad Right]".
-	static const TCHAR* Tokens[] = { TEXT("Interact"), TEXT("Melee"), TEXT("Ability1"), TEXT("Ability2"), TEXT("Ability3"), TEXT("Crouch"), TEXT("Aim"), TEXT("NextWeapon") };
+	static const TCHAR* Tokens[] = { TEXT("Interact"), TEXT("Melee"), TEXT("Ability1"), TEXT("Ability2"), TEXT("Ability3"), TEXT("Crouch"), TEXT("Aim"), TEXT("NextWeapon"), TEXT("Jump"), TEXT("Sprint") };
 	for (const TCHAR* Tok : Tokens)
 	{
 		T.ReplaceInline(*FString::Printf(TEXT("{%s}"), Tok), *KeyLabel(Tok), ESearchCase::CaseSensitive);
