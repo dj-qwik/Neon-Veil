@@ -34,6 +34,18 @@ public:
 	UFUNCTION(Exec)
 	void NVEquip(int32 Slot);
 
+	/** Third-person grip of the current weapon relative to hand_r (cm/deg) and the left-hand point (weapon space). */
+	UFUNCTION(Exec)
+	void NVGrip(float X, float Y, float Z, float Pitch, float Yaw, float Roll, float LX = 0.f, float LY = 0.f, float LZ = 0.f);
+
+	/** Writes the body animation sets, grip and hand positions to Saved/NV_body.txt. */
+	UFUNCTION(Exec)
+	void NVBodyInfo();
+
+	/** Play a body one-shot directly: 1 fire, 2 reload, 3 equip, 4 melee. */
+	UFUNCTION(Exec)
+	void NVBodyAction(int32 Kind, float Duration = 0.f);
+
 	/** Teleport Distance cm from an actor and face it. ApproachYaw >= 0 places you so you face along that world yaw; -1 = from your current side. */
 	UFUNCTION(Exec)
 	void NVGoTo(const FString& Name, float Distance = 200.f, float ApproachYaw = -1.f);

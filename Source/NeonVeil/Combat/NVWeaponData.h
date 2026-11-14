@@ -31,6 +31,14 @@ struct FNVTimedSound
 	float Volume = 1.f;
 };
 
+/** Which third-person animation set Ghost's body uses while this weapon is drawn. */
+UENUM(BlueprintType)
+enum class ENVWeaponHold : uint8
+{
+	Rifle,
+	Pistol
+};
+
 UENUM(BlueprintType)
 enum class ENVFireMode : uint8
 {
@@ -295,4 +303,17 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
 	TSubclassOf<UCameraShakeBase> FireCameraShake;
+
+	// --- Third-person body (Ghost seen from behind, NPC view)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Third Person")
+	ENVWeaponHold HoldType = ENVWeaponHold::Rifle;
+
+	/** Weapon transform relative to the right hand bone in third person. Identity = the character's default grip. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Third Person")
+	FTransform ThirdPersonGrip = FTransform::Identity;
+
+	/** Where Ghost's left hand holds the weapon (weapon mesh space, cm). Zero = estimate from the mesh bounds
+	 *  (rifles) or no left-hand IK (pistols, which the animation already holds two-handed). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Third Person")
+	FVector ThirdPersonLeftHand = FVector::ZeroVector;
 };

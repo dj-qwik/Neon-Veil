@@ -1,4 +1,6 @@
 #include "Character/NVPlayerCharacter.h"
+#include "Character/NVBodyAnimInstance.h"
+#include "Materials/MaterialInterface.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Engine/SkeletalMesh.h"
 #include "Combat/NVHealthComponent.h"
@@ -160,6 +162,8 @@ void ANVPlayerCharacter::BeginPlay()
 	}
 	Weapons->OnWeaponEquipped.AddDynamic(this, &ANVPlayerCharacter::HandleWeaponEquipped);
 	Weapons->OnReloadStateChanged.AddDynamic(this, &ANVPlayerCharacter::HandleReloadState);
+	Melee->OnSwing.AddDynamic(this, &ANVPlayerCharacter::HandleMeleeSwing);
+	ApplyBodyAnimClass();
 	HandleWeaponEquipped(Weapons->GetCurrentWeapon());
 	UpdateMoveSpeed();
 	ThirdPersonCamera->Deactivate();
@@ -217,19 +221,57 @@ void ANVPlayerCharacter::RefreshThirdPersonWeapon()
 	UStaticMesh* Stat = (W && !Skel) ? W->WeaponStaticMesh.LoadSynchronous() : nullptr;
 	ThirdPersonWeapon->SetSkeletalMesh(Skel);
 	ThirdPersonWeaponStatic->SetStaticMesh(Stat);
+	FTransform Grip = (W && !W->ThirdPersonGrip.Equals(FTransform::Identity)) ? W->ThirdPersonGrip : ThirdPersonWeaponOffset;
+	if (DebugGripOverride.IsSet())
+	{
+		Grip = DebugGripOverride.GetValue();
+	}
 	for (USceneComponent* C : { static_cast<USceneComponent*>(ThirdPersonWeapon), static_cast<USceneComponent*>(ThirdPersonWeaponStatic) })
 	{
 		C->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, ThirdPersonWeaponSocket);
-		C->SetRelativeTransform(ThirdPersonWeaponOffset);
+		C->SetRelativeTransform(Grip);
 	}
 	ThirdPersonWeapon->SetVisibility(bThirdPerson && Skel != nullptr);
 	ThirdPersonWeaponStatic->SetVisibility(bThirdPerson && Stat != nullptr);
+
+	if (UNVBodyAnimInstance* Body = GetBodyAnim())
+	{
+		Body->SetHold(W != nullptr, W ? W->HoldType : ENVWeaponHold::Rifle);
+		FVector Left = W ? W->ThirdPersonLeftHand : FVector::ZeroVector;
+		if (W && Left.IsNearlyZero() && W->HoldType == ENVWeaponHold::Rifle)
+		{
+			// Estimate a foregrip: along the longest axis of the mesh, ahead of the grip.
+			FBox Box(ForceInit);
+			if (Skel) { Box = Skel->GetBounds().GetBox(); }
+			else if (Stat) { Box = Stat->GetBoundingBox(); }
+			if (Box.IsValid)
+			{
+				const FVector Ext = Box.GetExtent();
+				const FVector Ctr = Box.GetCenter();
+				const int32 Axis = (Ext.X >= Ext.Y && Ext.X >= Ext.Z) ? 0 : (Ext.Y >= Ext.Z ? 1 : 2);
+				FVector P = Ctr;
+				// Muzzle end: the side of the long axis away from the grip (the mesh origin sits at/near the grip).
+				const float Sign = (Ctr[Axis] >= 0.f) ? 1.f : -1.f;
+				P[Axis] = Ctr[Axis] + Sign * Ext[Axis] * (DefaultForegripFraction * 2.f - 1.f);
+				Left = P;
+			}
+		}
+		if (DebugLeftOverride.IsSet())
+		{
+			Left = DebugLeftOverride.GetValue();
+		}
+		Body->SetWeaponGrip(Grip, Left);
+	}
 }
 
 void ANVPlayerCharacter::HandleWeaponEquipped(UNVWeaponData* Weapon)
 {
 	GetWorldTimerManager().ClearTimer(ArmsReturnTimer);
 	RefreshThirdPersonWeapon();
+	if (UNVBodyAnimInstance* Body = GetBodyAnim(); Body && Weapon)
+	{
+		Body->PlayAction(UNVBodyAnimInstance::EAction::Equip);
+	}
 	UAnimationAsset* Idle = (ArmsMeshAsset && Weapon) ? Weapon->ArmsIdleAnim.LoadSynchronous() : nullptr;
 	if (!Idle)
 	{
@@ -260,6 +302,11 @@ void ANVPlayerCharacter::HandleWeaponEquipped(UNVWeaponData* Weapon)
 
 void ANVPlayerCharacter::HandleReloadState(bool bReloading)
 {
+	if (UNVBodyAnimInstance* Body = GetBodyAnim(); Body && bReloading)
+	{
+		const UNVWeaponData* W = Weapons->GetCurrentWeapon();
+		Body->PlayAction(UNVBodyAnimInstance::EAction::Reload, W ? W->ReloadTime : 0.f);
+	}
 	if (!ArmsWeapon)
 	{
 		return;
@@ -315,15 +362,87 @@ void ANVPlayerCharacter::OnConstruction(const FTransform& Transform)
 	{
 		GetMesh()->SetSkeletalMesh(BodyMeshAsset);
 	}
-	if (BodyAnimClass)
+	ApplyBodyAnimClass();
+}
+
+void ANVPlayerCharacter::ApplyBodyAnimClass()
+{
+	if (!BodyMaterial)
 	{
-		GetMesh()->SetAnimInstanceClass(BodyAnimClass);
+		BodyMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/NeonVeil/Characters/Ghost7/MI_NV_Ghost7.MI_NV_Ghost7"));
 	}
+	if (BodyMaterial && GetMesh()->GetSkeletalMeshAsset())
+	{
+		for (int32 i = 0; i < GetMesh()->GetNumMaterials(); ++i)
+		{
+			GetMesh()->SetMaterial(i, BodyMaterial);
+		}
+	}
+	UClass* Want = bNativeBodyAnim ? UNVBodyAnimInstance::StaticClass() : BodyAnimClass.Get();
+	if (Want && GetMesh()->GetAnimClass() != Want)
+	{
+		GetMesh()->SetAnimInstanceClass(Want);
+	}
+}
+
+UNVBodyAnimInstance* ANVPlayerCharacter::GetBodyAnim() const
+{
+	return GetMesh() ? Cast<UNVBodyAnimInstance>(GetMesh()->GetAnimInstance()) : nullptr;
+}
+
+void ANVPlayerCharacter::HandleMeleeSwing()
+{
+	if (UNVBodyAnimInstance* Body = GetBodyAnim())
+	{
+		Body->PlayAction(UNVBodyAnimInstance::EAction::Attack);
+	}
+}
+
+void ANVPlayerCharacter::DebugSetGrip(const FTransform& Grip, const FVector& LeftHand)
+{
+	DebugGripOverride = Grip;
+	DebugLeftOverride = LeftHand;
+	RefreshThirdPersonWeapon();
+}
+
+FString ANVPlayerCharacter::DebugDescribeBody() const
+{
+	FString Out;
+	if (const UNVBodyAnimInstance* Body = GetBodyAnim())
+	{
+		Out += Body->DescribeSets();
+	}
+	else
+	{
+		Out += FString::Printf(TEXT("body anim: %s"), GetMesh()->GetAnimInstance() ? *GetMesh()->GetAnimInstance()->GetClass()->GetName() : TEXT("none"));
+	}
+	const USceneComponent* Wc = ThirdPersonWeapon->GetSkeletalMeshAsset() ? static_cast<const USceneComponent*>(ThirdPersonWeapon) : static_cast<const USceneComponent*>(ThirdPersonWeaponStatic);
+	Out += FString::Printf(TEXT("\ngrip rel: %s"), *Wc->GetRelativeTransform().ToString());
+	const FTransform HandR = GetMesh()->GetSocketTransform(TEXT("hand_r"));
+	const FTransform HandL = GetMesh()->GetSocketTransform(TEXT("hand_l"));
+	Out += FString::Printf(TEXT("\nhand_r %s  hand_l %s  dist %.1f"), *HandR.GetLocation().ToString(), *HandL.GetLocation().ToString(), FVector::Dist(HandR.GetLocation(), HandL.GetLocation()));
+	// First-person arms reference: how the KINEMATION rig holds this weapon (same Manny hand bones).
+	if (FirstPersonMesh && FirstPersonMesh->GetSkeletalMeshAsset() && ArmsWeapon)
+	{
+		const USceneComponent* Fw = WeaponMesh->GetSkeletalMeshAsset() ? static_cast<const USceneComponent*>(WeaponMesh) : static_cast<const USceneComponent*>(WeaponStaticMesh);
+		const FTransform W = Fw->GetComponentTransform();
+		const FTransform R = FirstPersonMesh->GetSocketTransform(TEXT("hand_r"));
+		const FTransform L = FirstPersonMesh->GetSocketTransform(TEXT("hand_l"));
+		FTransform Rel = W.GetRelativeTransform(R);
+		Out += FString::Printf(TEXT("\nFP %s: grip loc %s rot %s scale %s | left (weapon space) %s | weapon scale %s"),
+			*ArmsWeapon->GetName(), *Rel.GetLocation().ToString(), *Rel.Rotator().ToString(), *Rel.GetScale3D().ToString(),
+			*W.InverseTransformPosition(L.GetLocation()).ToString(), *W.GetScale3D().ToString());
+	}
+	return Out;
 }
 
 void ANVPlayerCharacter::HandleWeaponFired()
 {
 	Abilities->NotifyAttacked();
+	if (UNVBodyAnimInstance* Body = GetBodyAnim())
+	{
+		Body->PlayAction(UNVBodyAnimInstance::EAction::Fire);
+	}
 	if (const UNVWeaponData* W = Weapons->GetCurrentWeapon())
 	{
 		ViewmodelKick = W->ViewmodelKickBack * FMath::Lerp(1.f, 0.5f, Weapons->GetAdsAlpha());

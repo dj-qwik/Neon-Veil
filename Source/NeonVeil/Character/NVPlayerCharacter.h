@@ -306,6 +306,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Body")
 	TSubclassOf<UAnimInstance> BodyAnimClass;
 
+	/** Material for every slot of the body mesh (Ghost-7 look). Empty = /Game/NeonVeil/Characters/Ghost7/MI_NV_Ghost7 if present. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Body")
+	TObjectPtr<class UMaterialInterface> BodyMaterial;
+
+	/** Drive the body with the native gun-aware animation (UNVBodyAnimInstance) instead of BodyAnimClass. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Body")
+	bool bNativeBodyAnim = true;
+
+	/** Rifle left-hand hold point in weapon space when the weapon data doesn't give one; X = along the barrel. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Body")
+	float DefaultForegripFraction = 0.62f;
+
 	// --- First-person arms (KINEMATION SKM_SciFi_Arms, Manny skeleton). Shown for weapons with ArmsIdleAnim.
 	UPROPERTY(EditDefaultsOnly, Category = "Arms")
 	TObjectPtr<USkeletalMesh> ArmsMeshAsset;
@@ -346,6 +358,18 @@ private:
 	void HolsterPressed();
 	void ToggleViewPressed();
 	void RefreshThirdPersonWeapon();
+	class UNVBodyAnimInstance* GetBodyAnim() const;
+	void ApplyBodyAnimClass();
+
+	UFUNCTION()
+	void HandleMeleeSwing();
+public:
+	/** QA: live-tune the third-person grip of the current weapon (relative to hand_r) and the left-hand point. */
+	void DebugSetGrip(const FTransform& Grip, const FVector& LeftHand);
+	FString DebugDescribeBody() const;
+private:
+	TOptional<FTransform> DebugGripOverride;
+	TOptional<FVector> DebugLeftOverride;
 	void ApplyViewmodelVisibility(bool bScoped);
 	bool bThirdPerson = false;
 	bool bViewmodelHidden = false;

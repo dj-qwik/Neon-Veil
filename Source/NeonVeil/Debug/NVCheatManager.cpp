@@ -1,4 +1,8 @@
 #include "Debug/NVCheatManager.h"
+#include "Misc/FileHelper.h"
+#include "Character/NVBodyAnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Misc/Paths.h"
 #include "AI/NVGuardCharacter.h"
 #include "AI/NVEnemyController.h"
 #include "Abilities/NVAbilityComponent.h"
@@ -137,6 +141,33 @@ void UNVCheatManager::NVAim(int32 bOn)
 	if (ANVPlayerCharacter* P = GetNVPlayer())
 	{
 		P->GetWeapons()->SetAiming(bOn != 0);
+	}
+}
+
+void UNVCheatManager::NVGrip(float X, float Y, float Z, float Pitch, float Yaw, float Roll, float LX, float LY, float LZ)
+{
+	if (ANVPlayerCharacter* P = GetNVPlayer())
+	{
+		P->DebugSetGrip(FTransform(FRotator(Pitch, Yaw, Roll), FVector(X, Y, Z)), FVector(LX, LY, LZ));
+	}
+}
+
+void UNVCheatManager::NVBodyInfo()
+{
+	if (ANVPlayerCharacter* P = GetNVPlayer())
+	{
+		FFileHelper::SaveStringToFile(P->DebugDescribeBody(), *(FPaths::ProjectSavedDir() / TEXT("NV_body.txt")));
+	}
+}
+
+void UNVCheatManager::NVBodyAction(int32 Kind, float Duration)
+{
+	if (ANVPlayerCharacter* P = GetNVPlayer())
+	{
+		if (UNVBodyAnimInstance* B = Cast<UNVBodyAnimInstance>(P->GetMesh()->GetAnimInstance()))
+		{
+			B->PlayAction(static_cast<UNVBodyAnimInstance::EAction>(FMath::Clamp(Kind, 0, 4)), Duration);
+		}
 	}
 }
 

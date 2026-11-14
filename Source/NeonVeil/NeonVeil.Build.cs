@@ -27,7 +27,8 @@ public class NeonVeil : ModuleRules
 			"PhysicsCore",
 			"DeveloperSettings",
 			"RHI",
-			"ChaosClothAssetEngine"
+			"ChaosClothAssetEngine",
+			"AnimationCore"
 		});
 	}
 }
