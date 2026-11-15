@@ -146,6 +146,8 @@ for lab, ow in (("G_Gate_South", "M00P-O05"), ("G_Gate_North", "")):
     g = find(lab)
     if g:
         sp(g, "open_when_complete", ow)
+# the power "terminal" is a wall breaker box (nv_breaker_panel.py)
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "nv_breaker_panel.py")).read(), {"__name__": "nv_breaker_panel"})
 # full-width, full-height stair gates + side blockers (nv_stair_gates.py)
 import os
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "nv_stair_gates.py")).read(), {"__name__": "nv_stair_gates"})

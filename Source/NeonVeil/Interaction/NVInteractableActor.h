@@ -37,6 +37,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "NeonVeil|Interaction")
 	bool HasBeenUsed() const { return UseCount > 0; }
 
+	FName GetRequiredActiveObjective() const { return RequiredActiveObjective; }
+	const FGameplayTag& GetCompletionEventTag() const { return CompletionEventTag; }
+
 	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Interaction")
 	FNVOnInteracted OnInteracted;
 

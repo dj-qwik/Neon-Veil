@@ -357,6 +357,8 @@ private:
 	void NextWeapon();
 	void HolsterPressed();
 	void ToggleViewPressed();
+	void NavGuidePressed();
+	void NavGuidePadPressed();
 	void RefreshThirdPersonWeapon();
 	class UNVBodyAnimInstance* GetBodyAnim() const;
 	void ApplyBodyAnimClass();
@@ -443,5 +445,15 @@ private:
 	/** Runtime mapping for holster / view toggle, so those keys work even if the IMC asset lacks them. */
 	UPROPERTY(Transient)
 	TObjectPtr<UInputMappingContext> RuntimeViewContext;
+
+	/** Wayfinding arrow (L3 / G): made at runtime, shown on demand. */
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> NavGuideAction;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> NavGuidePadAction;
+
+	UPROPERTY(Transient)
+	TObjectPtr<class ANVNavArrow> NavArrow;
 	void EnsureViewInput();
 };

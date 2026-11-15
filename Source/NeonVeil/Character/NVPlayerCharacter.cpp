@@ -25,6 +25,8 @@
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
+#include "UI/NVNavArrow.h"
+
 #include "GameFramework/SpringArmComponent.h"
 
 ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -202,6 +204,34 @@ void ANVPlayerCharacter::HolsterPressed()
 	if (!bInputLocked && !bVaulting)
 	{
 		Weapons->ToggleHolster();
+	}
+}
+
+void ANVPlayerCharacter::NavGuidePressed()
+{
+	if (bInputLocked)
+	{
+		return;
+	}
+	if (!NavArrow)
+	{
+		FActorSpawnParameters P;
+		P.Owner = this;
+		P.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		NavArrow = GetWorld()->SpawnActor<ANVNavArrow>(ANVNavArrow::StaticClass(), GetActorTransform(), P);
+	}
+	if (NavArrow)
+	{
+		NavArrow->Show(this);
+	}
+}
+
+void ANVPlayerCharacter::NavGuidePadPressed()
+{
+	// L3 doubles as sprint: standing still it's the wayfinding arrow
+	if (GetVelocity().Size2D() < 60.f && LastMoveInput.Size() < 0.3f)
+	{
+		NavGuidePressed();
 	}
 }
 
@@ -478,6 +508,19 @@ void ANVPlayerCharacter::EnsureViewInput()
 			RuntimeViewContext->MapKey(ToggleViewAction, EKeys::Gamepad_Special_Left);
 		}
 	}
+	// wayfinding arrow: N on keyboard; L3 on the pad, which is also sprint, so there it only fires while standing still
+	if (!NavGuideAction)
+	{
+		NavGuideAction = NewObject<UInputAction>(this, TEXT("IA_NV_NavGuideRuntime"));
+		NavGuideAction->ValueType = EInputActionValueType::Boolean;
+		NavGuidePadAction = NewObject<UInputAction>(this, TEXT("IA_NV_NavGuidePadRuntime"));
+		NavGuidePadAction->ValueType = EInputActionValueType::Boolean;
+		if (RuntimeViewContext)
+		{
+			RuntimeViewContext->MapKey(NavGuideAction, EKeys::N);
+			RuntimeViewContext->MapKey(NavGuidePadAction, EKeys::Gamepad_LeftThumbstick);
+		}
+	}
 }
 
 void ANVPlayerCharacter::PawnClientRestart()
@@ -556,6 +599,8 @@ void ANVPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	EnsureViewInput();
 	BindIf(HolsterAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::HolsterPressed);
 	BindIf(ToggleViewAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::ToggleViewPressed);
+	BindIf(NavGuideAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::NavGuidePressed);
+	BindIf(NavGuidePadAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::NavGuidePadPressed);
 	BindIf(Ability1Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability1Pressed);
 	BindIf(Ability2Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability2Pressed);
 	BindIf(Ability3Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability3Pressed);
