@@ -41,7 +41,7 @@ public:
 	float Duration = 3.5f;
 
 	UPROPERTY(EditAnywhere, Category = "Nav Arrow")
-	float MaxOpacity = 0.5f;
+	float MaxOpacity = 0.6f;
 
 	UPROPERTY(EditAnywhere, Category = "Nav Arrow")
 	FLinearColor Color = FLinearColor(0.15f, 1.f, 0.35f, 1.f);
@@ -58,6 +58,9 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UMaterialInstanceDynamic> MID;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInstanceDynamic> MIDRim;
 
 	UPROPERTY()
 	TObjectPtr<class UTexture2D> WhiteTex;
@@ -76,8 +79,7 @@ private:
 	float CurrentScale = 1.f;
 	float CurrentOpacity = 0.f;
 	mutable bool bLoggedDraw = false;
-	bool bSettled = false;
-	FTimerHandle HideTimer;
+
 	float RepathTimer = 0.f;
 	float Yaw = 0.f;
 	float TargetYaw = 0.f;

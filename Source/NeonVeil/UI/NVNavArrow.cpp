@@ -12,7 +12,6 @@
 #include "Objectives/NVObjectiveSubsystem.h"
 #include "UObject/ConstructorHelpers.h"
 #include "TimerManager.h"
-#include "Containers/Ticker.h"
 #include "Camera/PlayerCameraManager.h"
 #include "CanvasItem.h"
 #include "Engine/Texture2D.h"
@@ -29,7 +28,7 @@
 namespace
 {
 	/** The arrow's size; where it settles is worked out from the camera so it lands in the lower part of the view. */
-	constexpr float ArrowScale = 1.6f;
+	constexpr float ArrowScale = 1.0f;
 	TAutoConsoleVariable<float> CVarNavArrowScreenMargin(TEXT("nv.NavArrow.Margin"), 0.22f,
 		TEXT("Where the wayfinding arrow settles: this fraction of the screen height above the bottom edge."));
 }
@@ -44,24 +43,25 @@ ANVNavArrow::ANVNavArrow()
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> Cube(TEXT("/Engine/BasicShapes/Cube.Cube"));
 	static ConstructorHelpers::FObjectFinder<UTexture2D> White(TEXT("/Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture"));
 	WhiteTex = White.Object;
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface> Mat(TEXT("/Game/NeonVeil/UI/Nav/M_NV_NavArrow.M_NV_NavArrow"));
+	// green chevron with a dark rim (SM_/MI_ assets from nv_nav_chevron.py); masked + dithered, not translucent
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> FillMesh(TEXT("/Game/NeonVeil/UI/Nav/SM_NV_NavChevron.SM_NV_NavChevron"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> RimMesh(TEXT("/Game/NeonVeil/UI/Nav/SM_NV_NavChevronOutline.SM_NV_NavChevronOutline"));
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> FillMat(TEXT("/Game/NeonVeil/UI/Nav/MI_NV_NavArrow_Fill.MI_NV_NavArrow_Fill"));
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> RimMat(TEXT("/Game/NeonVeil/UI/Nav/MI_NV_NavArrow_Outline.MI_NV_NavArrow_Outline"));
 
 	SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("Root")));
 	Pivot = CreateDefaultSubobject<USceneComponent>(TEXT("Pivot"));
 	Pivot->SetupAttachment(GetRootComponent());
 
-	auto Part = [&](FName Name, const FVector& Loc, const FRotator& Rot, const FVector& Size)
+	auto Part = [&](FName Name, UStaticMesh* Mesh, UMaterialInterface* Mat)
 	{
 		UStaticMeshComponent* C = CreateDefaultSubobject<UStaticMeshComponent>(Name);
 		C->SetupAttachment(Pivot);
-		C->SetStaticMesh(Cube.Object);
-		if (Mat.Succeeded())
+		C->SetStaticMesh(Mesh ? Mesh : Cube.Object.Get());
+		if (Mat)
 		{
-			C->SetMaterial(0, Mat.Object);
+			C->SetMaterial(0, Mat);
 		}
-		C->SetRelativeLocation(Loc);
-		C->SetRelativeRotation(Rot);
-		C->SetRelativeScale3D(Size / 100.f);
 		C->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		C->SetGenerateOverlapEvents(false);
 		C->SetCastShadow(false);
@@ -70,11 +70,13 @@ ANVNavArrow::ANVNavArrow()
 		C->SetAffectDynamicIndirectLighting(false);
 		C->bReceivesDecals = false;
 		C->SetVisibility(false);
+		// a little extra room for occlusion tests on a paper-thin mesh
+		C->SetBoundsScale(4.f);
 		return C;
 	};
-	// a flat arrow along +X: 70 cm shaft, diamond head (tip ~115 cm out)
-	Shaft = Part(TEXT("Shaft"), FVector(42.f, 0.f, 0.f), FRotator::ZeroRotator, FVector(70.f, 12.f, 1.5f));
-	Head = Part(TEXT("Head"), FVector(88.f, 0.f, 0.f), FRotator(0.f, 45.f, 0.f), FVector(28.f, 28.f, 1.5f));
+	// Shaft = the dark rim, Head = the green fill (names kept from the first version)
+	Shaft = Part(TEXT("Shaft"), RimMesh.Object, RimMat.Object);
+	Head = Part(TEXT("Head"), FillMesh.Object, FillMat.Object);
 }
 
 bool ANVNavArrow::FindObjectiveGoal(const UObject* WorldContext, const FVector& From, FVector& OutGoal)
@@ -160,20 +162,13 @@ bool ANVNavArrow::Show(APawn* ForPawn)
 	Pawn = ForPawn;
 	if (!MID)
 	{
-		MID = Shaft->CreateDynamicMaterialInstance(0);
-		if (MID)
-		{
-			Head->SetMaterial(0, MID);
-			MID->SetVectorParameterValue(TEXT("Color"), Color);
-		}
+		MID = Head->CreateDynamicMaterialInstance(0);
+		MIDRim = Shaft->CreateDynamicMaterialInstance(0);
 	}
 	const float Now = GetWorld()->GetTimeSeconds();
 	const bool bWasShowing = bShowing && (Now - ShowTime) < Duration;
 	ShowTime = bWasShowing ? Now - FMath::Min(Now - ShowTime, 0.3f) : Now;
 	bShowing = true;
-	bSettled = false;
-	GetWorldTimerManager().ClearTimer(HideTimer);
-	SetActorTickEnabled(true);
 	bLoggedMid = false;
 	bLoggedDraw = false;
 	LastOpacity = -1.f;
@@ -272,80 +267,43 @@ void ANVNavArrow::Place(float DeltaSeconds)
 		FCollisionQueryParams WQ(SCENE_QUERY_STAT(NVNavArrowWall), false, P);
 		WQ.AddIgnoredActor(this);
 		const FVector WStart = Feet + FVector(0.f, 0.f, 40.f);
-		if (GetWorld()->LineTraceSingleByChannel(WallHit, WStart, WStart + ViewFwd * (AheadDistance + 100.f), ECC_Visibility, WQ))
+		// static geometry only: a pedestrian crossing in front must not yank the arrow back under your feet
+		if (GetWorld()->LineTraceSingleByObjectType(WallHit, WStart, WStart + ViewFwd * (AheadDistance + 100.f), FCollisionObjectQueryParams(ECC_WorldStatic), WQ))
 		{
 			AheadDistance = FMath::Max(90.f, WallHit.Distance - 100.f);
 		}
 	}
 	const float Out = FMath::InterpEaseOut(0.f, 1.f, FMath::Clamp(Age / 0.4f, 0.f, 1.f), 2.f);
 	FVector Anchor = Feet + ViewFwd * FMath::Lerp(0.f, AheadDistance, Out);
-	// hover just above the rendered floor: the wet street's displaced surface sits several cm above its collision
-	// and swallowed an arrow lying on the collision plane. Follows the floor height (slopes, steps, platforms).
+	// hover a little above the floor: the wet street's rendered surface (rain ripples / displacement) rises well
+	// above its collision and swallowed an arrow lying lower. Follows the floor height (slopes, steps, platforms).
 	{
 		FHitResult Hit;
 		FCollisionQueryParams Q(SCENE_QUERY_STAT(NVNavArrowFloor), false, P);
 		Q.AddIgnoredActor(this);
 		const FVector Start(Anchor.X, Anchor.Y, Feet.Z + 80.f);
 		const FVector End(Anchor.X, Anchor.Y, Feet.Z - 200.f);
-		const float FloorZ = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Q) ? Hit.ImpactPoint.Z : Feet.Z - 4.f;
-		Anchor.Z = FloorZ + 12.f;
+		const float FloorZ = GetWorld()->LineTraceSingleByObjectType(Hit, Start, End, FCollisionObjectQueryParams(ECC_WorldStatic), Q) ? Hit.ImpactPoint.Z : Feet.Z - 4.f;
+		Anchor.Z = FloorZ + 14.f;
 	}
 	Yaw = FMath::FixedTurn(Yaw, TargetYaw, 360.f * DeltaSeconds);
-	// only push changes: re-sending identical transforms / material values every frame made the translucent
-	// arrow drop out of the frame on this setup (it rendered fine whenever it was left alone)
+	// only push changes (no point re-sending an identical transform/material every frame)
 	const FRotator Rot(0.f, Yaw, 0.f);
-	bool bMoved = false;
 	if (!GetActorLocation().Equals(Anchor, 0.5f) || !GetActorRotation().Equals(Rot, 0.5f))
 	{
 		SetActorLocationAndRotation(Anchor, Rot);
-		bMoved = true;
 	}
 	const float S = FMath::Lerp(0.4f, 1.f, Out) * ArrowScale;
-	const FVector PivotLoc(-60.f * S, 0.f, 0.f);
+	const FVector PivotLoc(0.f, 0.f, 0.f);
 	if (!Pivot->GetRelativeLocation().Equals(PivotLoc, 0.1f))
 	{
 		Pivot->SetRelativeLocation(PivotLoc);
+	}
+	if (!FMath::IsNearlyEqual(Pivot->GetRelativeScale3D().X, S, 0.005f))
+	{
 		Pivot->SetRelativeScale3D(FVector(S, S, 1.f));
-		bMoved = true;
 	}
 	CurrentScale = S;
-	// Once it has slid out it stays put (a compass needle dropped in front of you) and stops ticking: on this
-	// project a translucent primitive that kept being re-placed after coming to rest stopped drawing; a settled,
-	// untouched one with a fresh render state draws reliably. The timer below hides it.
-	if (Out >= 1.f && !bMoved && !bSettled)
-	{
-		bSettled = true;
-		if (MID)
-		{
-			MID->SetScalarParameterValue(TEXT("Opacity"), MaxOpacity);
-		}
-		SetActorTickEnabled(false);
-		// rebuild its render state from outside the world tick (a toggle made from the console/editor, i.e.
-		// outside the world tick, is what reliably brought it back)
-		TWeakObjectPtr<ANVNavArrow> WeakThis(this);
-		FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([WeakThis](float)
-		{
-			if (ANVNavArrow* A = WeakThis.Get())
-			{
-				if (A->bShowing)
-				{
-					A->Shaft->SetVisibility(false);
-					A->Head->SetVisibility(false);
-					A->Shaft->SetVisibility(true);
-					A->Head->SetVisibility(true);
-				}
-			}
-			return false; // once
-		}), 0.05f);
-		GetWorldTimerManager().SetTimer(HideTimer, FTimerDelegate::CreateWeakLambda(this, [this]()
-		{
-			bShowing = false;
-			Shaft->SetVisibility(false);
-			Head->SetVisibility(false);
-			SetActorTickEnabled(true);
-			UE_LOG(LogTemp, Log, TEXT("NavArrow: hidden (timer)"));
-		}), FMath::Max(0.1f, Duration - Age), false);
-	}
 	const float FadeIn = FMath::Clamp(Age / 0.2f, 0.f, 1.f);
 	const float FadeOut = FMath::Clamp((Duration - Age) / 1.f, 0.f, 1.f);
 	const float Opacity = MaxOpacity * FadeIn * FadeOut;
@@ -354,6 +312,10 @@ void ANVNavArrow::Place(float DeltaSeconds)
 	{
 		LastOpacity = Opacity;
 		MID->SetScalarParameterValue(TEXT("Opacity"), Opacity);
+		if (MIDRim)
+		{
+			MIDRim->SetScalarParameterValue(TEXT("Opacity"), Opacity * 0.9f);
+		}
 	}
 }
 
@@ -373,7 +335,7 @@ void ANVNavArrow::Tick(float DeltaSeconds)
 		UE_LOG(LogTemp, Log, TEXT("NavArrow: hidden after %.2f s"), Age);
 		return;
 	}
-	if (!bLoggedMid && Age > 1.f)
+	if (!bLoggedMid && Age > 2.f)
 	{
 		bLoggedMid = true;
 		UE_LOG(LogTemp, Log, TEXT("NavArrow: at %s yaw %.0f (target %.0f), dt %.3f"), *GetActorLocation().ToString(), Yaw, TargetYaw, DeltaSeconds);
