@@ -9,41 +9,60 @@ MEL = unreal.MaterialEditingLibrary
 AT = unreal.AssetToolsHelpers.get_asset_tools()
 AR = unreal.AssetRegistryHelpers.get_asset_registry()
 D = "/Game/NeonVeil/Characters/NPC"
-MASTER = D + "/M_NV_BodyMasked2"
+MASTER = D + "/M_NV_BodyMasked4"
+# M_NV_BodyMasked2 never compiled: its mask samplers were Linear Color but the pack's body masks are sRGB, and the
+# parameters had no default textures. A material that fails to compile renders as the engine's grey default material
+# with no opacity mask, so every citizen's body showed through their clothes as flat grey patches and grey hands.
+# v4: Color samplers for the masks, real default textures on every parameter, linear masks copied to sRGB, and the
+# masks multiplied (white = visible) instead of inverted (v3 clipped the hands).
 VT_COLOR = unreal.MaterialSamplerType.SAMPLERTYPE_VIRTUAL_COLOR
 VT_NORMAL = unreal.MaterialSamplerType.SAMPLERTYPE_VIRTUAL_NORMAL
+
+WHITE = None
+def white():
+    global WHITE
+    if WHITE is None:
+        WHITE = unreal.load_asset("/Engine/EngineResources/WhiteSquareTexture")
+    return WHITE
+
+def srgb_copy(t):
+    """Masks are sampled as Color (sRGB). The odd linear one (jeans) gets an sRGB copy in our folder."""
+    if t is None or t.get_editor_property("srgb"):
+        return t
+    path = f"{D}/Masks/{t.get_name()}_sRGB"
+    if not EAL.does_asset_exist(path):
+        EAL.duplicate_asset(t.get_path_name(), path)
+        c = unreal.load_asset(path)
+        c.set_editor_property("srgb", True)
+        EAL.save_loaded_asset(c)
+    return unreal.load_asset(path)
 
 def master():
     if EAL.does_asset_exist(MASTER):
         return unreal.load_asset(MASTER)
-    m = AT.create_asset("M_NV_BodyMasked2", D, unreal.Material, unreal.MaterialFactoryNew())
+    m = AT.create_asset("M_NV_BodyMasked4", D, unreal.Material, unreal.MaterialFactoryNew())
     m.set_editor_property("blend_mode", unreal.BlendMode.BLEND_MASKED)
     m.set_editor_property("two_sided", False)
     m.set_editor_property("used_with_skeletal_mesh", True)
-    def tp(name, x, y, sampler):
+    def tp(name, x, y, sampler, default):
         e = MEL.create_material_expression(m, unreal.MaterialExpressionTextureSampleParameter2D, x, y)
         e.set_editor_property("parameter_name", name)
+        e.set_editor_property("texture", default)
         e.set_editor_property("sampler_type", sampler)
         return e
-    bc = tp("BodyBC", -900, -300, VT_COLOR)
-    nm = tp("BodyN", -900, 0, VT_NORMAL)
-    masks = [tp(n, -900, 300 + k * 260, unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR) for k, n in enumerate(("MaskTop", "MaskBottom", "MaskShoes"))]
-    # masks use different channels per garment: anything non-black in any channel hides the body there
-    add1 = MEL.create_material_expression(m, unreal.MaterialExpressionAdd, -600, 400)
-    MEL.connect_material_expressions(masks[0], "RGB", add1, "A")
-    MEL.connect_material_expressions(masks[1], "RGB", add1, "B")
-    add2 = MEL.create_material_expression(m, unreal.MaterialExpressionAdd, -480, 500)
-    MEL.connect_material_expressions(add1, "", add2, "A")
-    MEL.connect_material_expressions(masks[2], "RGB", add2, "B")
-    one3 = MEL.create_material_expression(m, unreal.MaterialExpressionConstant3Vector, -480, 650)
-    one3.set_editor_property("constant", unreal.LinearColor(1, 1, 1, 1))
-    dot = MEL.create_material_expression(m, unreal.MaterialExpressionDotProduct, -360, 520)
-    MEL.connect_material_expressions(add2, "", dot, "A")
-    MEL.connect_material_expressions(one3, "", dot, "B")
-    sat = MEL.create_material_expression(m, unreal.MaterialExpressionSaturate, -260, 520)
-    MEL.connect_material_expressions(dot, "", sat, "")
-    inv = MEL.create_material_expression(m, unreal.MaterialExpressionOneMinus, -160, 520)
-    MEL.connect_material_expressions(sat, "", inv, "")
+    ref = "/MetaHumanCrowdContent/Characters/Assembled/AverageFemale_Head01/Body/Baked/"
+    bc = tp("BodyBC", -900, -300, VT_COLOR, unreal.load_asset(ref + "T_Body_BC_VT"))
+    nm = tp("BodyN", -900, 0, VT_NORMAL, unreal.load_asset(ref + "T_Body_N_VT"))
+    masks = [tp(n, -900, 300 + k * 260, unreal.MaterialSamplerType.SAMPLERTYPE_COLOR, white()) for k, n in enumerate(("MaskTop", "MaskBottom", "MaskShoes"))]
+    # The pack's body masks are WHITE where the body stays visible and black under the garment, so the body's opacity
+    # is the product of the worn garments' masks (an unused slot gets white).
+    mul1 = MEL.create_material_expression(m, unreal.MaterialExpressionMultiply, -600, 400)
+    MEL.connect_material_expressions(masks[0], "R", mul1, "A")
+    MEL.connect_material_expressions(masks[1], "R", mul1, "B")
+    mul2 = MEL.create_material_expression(m, unreal.MaterialExpressionMultiply, -480, 500)
+    MEL.connect_material_expressions(mul1, "", mul2, "A")
+    MEL.connect_material_expressions(masks[2], "R", mul2, "B")
+    inv = mul2
     rough = MEL.create_material_expression(m, unreal.MaterialExpressionScalarParameter, -450, 150)
     rough.set_editor_property("parameter_name", "Roughness"); rough.set_editor_property("default_value", 0.55)
     MEL.connect_material_property(bc, "RGB", unreal.MaterialProperty.MP_BASE_COLOR)
@@ -54,22 +73,14 @@ def master():
     EAL.save_loaded_asset(m)
     return m
 
-BLACK = None
-def black():
-    global BLACK
-    if BLACK is None:
-        BLACK = unreal.load_asset("/Engine/EngineResources/Black")
-    return BLACK
-
-def body_mask_for(garment):
-    """The body-mask texture shipped next to a garment (cloth asset)."""
+def body_mask_for(garment, sex="f"):
+    """The body-mask texture shipped next to a garment (cloth asset); the wearer's sex first where the pack has both."""
     root = garment.get_path_name().split("/ClothAssets/")[0]
     root = root.rsplit("/", 1)[0]                  # OA_x/<Name> -> OA_x
     f = unreal.ARFilter(package_paths=[root], recursive_paths=True, class_paths=[unreal.TopLevelAssetPath("/Script/Engine", "Texture2D")])
-    for ad in AR.get_assets(f):
-        if "bodymask" in str(ad.asset_name).lower():
-            return unreal.load_asset(str(ad.package_name))
-    return None
+    found = [str(ad.package_name) for ad in AR.get_assets(f) if "bodymask" in str(ad.asset_name).lower()]
+    found.sort(key=lambda n: 0 if n.rsplit("/", 1)[-1].lower().startswith(sex + "_") else 1)
+    return srgb_copy(unreal.load_asset(found[0])) if found else None
 
 def body_material(label, body_mesh, garments):
     """MIC for this citizen: the body's own baked textures + the worn garments' body masks."""
@@ -85,9 +96,10 @@ def body_material(label, body_mesh, garments):
     if texs.get("Normal Baked VT"):
         MEL.set_material_instance_texture_parameter_value(mi, "BodyN", texs["Normal Baked VT"])
     slots = ["MaskTop", "MaskBottom", "MaskShoes"]
+    sex = "f" if "female" in body_mesh.get_name().lower() else "m"
     for slot, g in zip(slots, list(garments) + [None] * 3):
-        t = body_mask_for(g) if g else None
-        MEL.set_material_instance_texture_parameter_value(mi, slot, t or black())
+        t = body_mask_for(g, sex) if g else None
+        MEL.set_material_instance_texture_parameter_value(mi, slot, t or white())
     MEL.update_material_instance(mi)
     EAL.save_loaded_asset(mi)
     return mi
