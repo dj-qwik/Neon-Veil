@@ -17,8 +17,8 @@ namespace
 	const TCHAR* PresenterPath = TEXT("/Game/NeonVeil/UI/Holo/M_NV_HoloUI.M_NV_HoloUI");
 	const TCHAR* IdlePath = TEXT("/Game/Characters/Mannequins/Anims/Unarmed/MM_Idle.MM_Idle");
 	const FVector RigLocation(0.f, 0.f, -250000.f);
-	constexpr int32 TargetW = 690;   // 1.5x the widget box
-	constexpr int32 TargetH = 810;
+	constexpr int32 TargetW = 920;   // 2x the widget box
+	constexpr int32 TargetH = 1080;
 }
 
 ANVHoloRig::ANVHoloRig()

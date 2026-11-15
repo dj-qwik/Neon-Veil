@@ -519,14 +519,14 @@ namespace
 					return FSlateColor(!R || R->bDisabled ? NVUI::Warning : (R->CooldownLeft > 0.f ? NVUI::TextDim : NVUI::Accent));
 				};
 				const FName Action = Actions[i];
-				List->AddSlot().AutoHeight().Padding(0.f, 0.f, 0.f, 8.f)
+				List->AddSlot().AutoHeight().Padding(0.f, 0.f, 0.f, 12.f)
 				[
-					SNew(SNVFrame).Cut(10.f).Padding(FMargin(14.f, 10.f)).Delay(0.05f * i).Trims(false)
+					SNew(SNVFrame).Cut(12.f).Padding(FMargin(18.f, 18.f)).Delay(0.05f * i).Trims(false)
 					[
 						SNew(SHorizontalBox)
 						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.f, 0.f, 16.f, 0.f)
 						[
-							SNew(SNVIcon).Size(38.f).Icon(NVUI::IconForAbility(D->AbilityTag))
+							SNew(SNVIcon).Size(50.f).Icon(NVUI::IconForAbility(D->AbilityTag))
 						]
 						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0.f, 0.f, 16.f, 0.f)
 						[
@@ -537,16 +537,16 @@ namespace
 							SNew(SVerticalBox)
 							+ SVerticalBox::Slot().AutoHeight()
 							[
-								NVUI::MakeText(D->DisplayName.ToUpper(), NVUI::EFont::BodyBold, 20.f, FSlateColor(NVUI::Text), 40)
+								NVUI::MakeText(D->DisplayName.ToUpper(), NVUI::EFont::BodyBold, 25.f, FSlateColor(NVUI::Text), 40)
 							]
 							+ SVerticalBox::Slot().AutoHeight()
 							[
-								NVUI::MakeText(TAttribute<FText>::CreateLambda(Status), NVUI::EFont::Mono, 11.f, TAttribute<FSlateColor>::CreateLambda(StatusColor), 100)
+								NVUI::MakeText(TAttribute<FText>::CreateLambda(Status), NVUI::EFont::Mono, 13.f, TAttribute<FSlateColor>::CreateLambda(StatusColor), 100)
 							]
 						]
 						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
 						[
-							NVUI::MakeText(FText::Format(LOCTEXT("SlotN", "SLOT {0}"), FText::AsNumber(i + 1)), NVUI::EFont::Mono, 11.f, FSlateColor(NVUI::TextDim), 100)
+							NVUI::MakeText(FText::Format(LOCTEXT("SlotN", "SLOT {0}"), FText::AsNumber(i + 1)), NVUI::EFont::Mono, 13.f, FSlateColor(NVUI::TextDim), 100)
 						]
 					]
 				];
@@ -561,20 +561,20 @@ namespace
 		static const TCHAR* BodySlots[] = { TEXT("NEURAL"), TEXT("OCULAR"), TEXT("DERMAL"), TEXT("SKELETAL"), TEXT("ARMS"), TEXT("LEGS") };
 		for (int32 i = 0; i < static_cast<int32>(UE_ARRAY_COUNT(BodySlots)); ++i)
 		{
-			Slots->AddSlot().AutoHeight()
+			Slots->AddSlot().AutoHeight().Padding(0.f, 5.f)
 			[
 				SNew(SNVButton)
 				.Index(FText::FromString(FString::Printf(TEXT("%02d"), i + 1)))
 				.Text(FText::FromString(BodySlots[i]))
 				.Detail(LOCTEXT("SlotOpen", "SLOT OPEN // NO IMPLANT"))
-				.Size(17.f)
+				.Size(21.f)
 			];
 		}
 
 		return SNew(SHorizontalBox)
 			+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Top).Padding(0.f, 0.f, 48.f, 0.f)
 			[
-				SNew(SBox).WidthOverride(560.f)
+				SNew(SBox).WidthOverride(620.f)
 				[
 					SNew(SVerticalBox)
 					+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 0.f, 0.f, 12.f)
@@ -585,7 +585,7 @@ namespace
 					[
 						List
 					]
-					+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 22.f, 0.f, 10.f)
+					+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 30.f, 0.f, 12.f)
 					[
 						NVUI::MakeHeader(LOCTEXT("BodySlots", "Body slots"))
 					]
@@ -599,7 +599,7 @@ namespace
 			[
 				SNew(SNVFrame).Header(LOCTEXT("Diag", "Implant diagnostics")).Padding(FMargin(20.f, 16.f))
 				[
-					SNew(SBox).WidthOverride(460.f).HeightOverride(560.f)
+					SNew(SBox).WidthOverride(620.f).HeightOverride(756.f)
 					[
 						SNew(SNVBodyScan)
 						.Rig(TWeakObjectPtr<ANVHoloRig>(ANVHoloRig::Get(Pawn ? Pawn->GetWorld() : nullptr,

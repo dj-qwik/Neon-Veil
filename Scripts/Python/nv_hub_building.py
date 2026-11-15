@@ -20,6 +20,10 @@ OUT = []
 def log(*a):
     OUT.append(" ".join(str(x) for x in a))
 
+MAP = "/Game/NeonVeil/Maps/M00/L_M00_Prologue"
+if not unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(MAP):
+    LES.load_level(MAP)      # (a run from the editor's startup map once built the hub into Entry)
+
 ZS = -12000.0
 FRONT_Y = -6614.0          # front face of the hub facade panels (actor plane -6564, 50 cm thick); street side is -Y
 X_W, X_E = 3870.0, 10220.0 # facade edges
@@ -209,10 +213,15 @@ H = Z_TOP - ZS
 XS = SHAFT_X0 - 40                         # step in the plan: deep west part / shallow east part
 box("HB_Side_W", (X_W - 20, FRONT_Y + DEPTH / 2, ZS + H / 2), (40, DEPTH, H), DARK)
 box("HB_Side_E", (X_E + 20, FRONT_Y + EAST_DEPTH / 2, ZS + H / 2), (40, EAST_DEPTH, H), DARK)
-box("HB_Back_W", ((X_W + XS) / 2, FRONT_Y + DEPTH, ZS + H / 2), (XS - X_W, 40, H), DARK)
-box("HB_Back_E", ((XS + X_E) / 2, FRONT_Y + EAST_DEPTH, ZS + H / 2), (X_E - XS, 40, H), DARK)
-box("HB_Step", (XS, FRONT_Y + (DEPTH + EAST_DEPTH) / 2, ZS + H / 2), (40, DEPTH - EAST_DEPTH, H), DARK)
-box("HB_Step_Edge", (XS + 24, FRONT_Y + EAST_DEPTH + 6, ZS + H / 2), (8, 8, H), GL_AMBER)
+# The back and step walls run through the transit-hub lobby's footprint (y -4924..-6524), so they start above its
+# ceiling (lobby z ZS..ZS+400): at street level the lobby's own walls close the building. (They used to come down to
+# the street and walled off the lift doors.)
+ZB = ZS + 440
+HB = Z_TOP - ZB
+box("HB_Back_W", ((X_W + XS) / 2, FRONT_Y + DEPTH, ZB + HB / 2), (XS - X_W, 40, HB), DARK)
+box("HB_Back_E", ((XS + X_E) / 2, FRONT_Y + EAST_DEPTH, ZB + HB / 2), (X_E - XS, 40, HB), DARK)
+box("HB_Step", (XS, FRONT_Y + (DEPTH + EAST_DEPTH) / 2, ZB + HB / 2), (40, DEPTH - EAST_DEPTH, HB), DARK)
+box("HB_Step_Edge", (XS + 24, FRONT_Y + EAST_DEPTH + 6, ZB + HB / 2), (8, 8, HB), GL_AMBER)
 box("HB_Roof_W", ((X_W + XS) / 2, FRONT_Y + DEPTH / 2, Z_TOP + 30), (XS - X_W + 40, DEPTH, 60), DARK)
 box("HB_Roof_E", ((XS + X_E) / 2, FRONT_Y + EAST_DEPTH / 2, Z_TOP + 30), (X_E - XS + 40, EAST_DEPTH, 60), DARK)
 box("HB_Parapet", ((X_W + X_E) / 2, FRONT_Y - 60, Z_TOP + 120), (W + 240, 120, 240), DARK)
