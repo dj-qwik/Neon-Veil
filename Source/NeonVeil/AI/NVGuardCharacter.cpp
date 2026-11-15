@@ -234,7 +234,18 @@ void ANVGuardCharacter::ApplyGarments(USkeletalMeshComponent* Host)
 		G->SetRelativeTransform(FTransform(FQuat::Identity, FVector::ZeroVector, GarmentFit));
 		G->SetLeaderPoseComponent(Leader, true);
 		G->SetEnableSimulation(bSimulateGarments);
-		G->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+		// Garments copy the leader's pose; with simulation off they only need to update when seen.
+		G->VisibilityBasedAnimTickOption = bSimulateGarments ? EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones
+			: EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	}
+	// Unused garment slots: no asset, nothing to tick.
+	for (UChaosClothComponent* G : GarmentComponents)
+	{
+		if (G && !G->GetAsset())
+		{
+			static_cast<UActorComponent*>(G)->SetComponentTickEnabled(false);   // protected on UChaosClothComponent
+			G->SetVisibility(false);
+		}
 	}
 }
 
@@ -248,4 +259,15 @@ void ANVGuardCharacter::BeginPlay()
 	Move->MaxAcceleration = 380.f;
 	Move->BrakingDecelerationWalking = 260.f;
 	Move->RotationRate = FRotator(0.f, 150.f, 0.f);
+	if (bNonHostile)
+	{
+		// Ambient citizens: animate at a reduced rate with distance (URO) and only while on screen (they patrol on
+		// their own, so their pose never drives gameplay). Their visible body is the animated mesh.
+		USkeletalMeshComponent* Body = GetMesh();
+		if (Body && Body->IsVisible())
+		{
+			Body->bEnableUpdateRateOptimizations = true;
+			Body->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+		}
+	}
 }

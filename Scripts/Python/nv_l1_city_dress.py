@@ -290,11 +290,11 @@ if MODE == "prologue":
     # gates on both faces; nv_hub_building.py builds the gates and keeps these numbers in step.
     traffic("Sky_Street_A", (7046, -20454, ZS + 4200), 90, 14160, 7, (700, 260), (2500, 4500), (5.0, 1.8, 1.0), 21)
     traffic("Sky_Street_B", (7046, -20454, ZS + 7600), 90, 14160, 6, (700, 320), (3500, 6500), (6.0, 2.1, 1.2), 22, False)
-    traffic("Sky_View_A", (16000, -110000, -7000), 90, 220000, 110, (1100, 400), (3500, 6500), (6.0, 2.1, 1.2), 23)
-    traffic("Sky_View_B", (24000, -110000, -2500), 90, 220000, 90, (1400, 500), (4500, 8000), (7.5, 2.6, 1.5), 24, False)
-    traffic("Sky_View_C", (31000, -110000, 1500), 90, 220000, 80, (1600, 500), (5000, 9000), (8.5, 3.0, 1.7), 25)
-    traffic("Sky_View_D", (9500, -2600, -4500), 0, 160000, 70, (900, 500), (3000, 6000), (6.0, 2.1, 1.2), 26)
-    traffic("Sky_Far_A", (62000, -110000, 6000), 90, 220000, 80, (2000, 600), (6000, 10000), (9.0, 3.2, 1.8), 27, False)
+    traffic("Sky_View_A", (16000, -110000, -7000), 90, 220000, 55, (1100, 400), (3500, 6500), (6.0, 2.1, 1.2), 23)
+    traffic("Sky_View_B", (24000, -110000, -2500), 90, 220000, 45, (1400, 500), (4500, 8000), (7.5, 2.6, 1.5), 24, False)
+    traffic("Sky_View_C", (31000, -110000, 1500), 90, 220000, 40, (1600, 500), (5000, 9000), (8.5, 3.0, 1.7), 25)
+    traffic("Sky_View_D", (9500, -2600, -4500), 0, 160000, 35, (900, 500), (3000, 6000), (6.0, 2.1, 1.2), 26)
+    traffic("Sky_Far_A", (62000, -110000, 6000), 90, 220000, 40, (2000, 600), (6000, 10000), (9.0, 3.2, 1.8), 27, False)
     # ---- the lift view: megatower cluster east of the glass shaft (bases at street level), giant holo ads at the
     #      altitudes you rise through, the Glass Crown on the horizon
     # low foreground right outside the glass: you rise past these roofs in the first seconds and the vista opens
