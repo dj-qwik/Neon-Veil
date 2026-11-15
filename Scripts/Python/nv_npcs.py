@@ -79,6 +79,36 @@ SHOES = ["Shoes/OA_Boots/Boots/meshes", "Shoes/OA_Hightop/Hightop/meshes", "Shoe
          "Shoes/OA_Oxfords/Oxfords/meshes", "Shoes/OA_Loafers/Loafers/meshes", "Shoes/OA_CasualSneakers/CasualSneakers/meshes"]
 
 AR = unreal.AssetRegistryHelpers.get_asset_registry()
+# Hair: the MetaHuman grooms ship hair-card static meshes (CardsMesh_Group0_LODn) built around the bind-pose head in
+# model space. Cheap, and plenty for passers-by: one card mesh rides each citizen's head bone (see groom_head_offset).
+HAIR = "/MetaHumanCharacter/Optional/Grooms/GroomAssets/Hair"
+HAIR_F = ["Hair_M_BobStraight", "Hair_S_LowPonytail", "Hair_L_Straight", "Hair_M_BobCurly", "Hair_S_Pixie",
+          "Hair_M_TwistedBraids", "Hair_S_UpdoBuns", "Hair_M_Layered", "Hair_L_StraightBangs", "Hair_S_BobLayered"]
+HAIR_M = ["Hair_S_BuzzCut", "Hair_S_Casual", "Hair_S_SlickBack", "Hair_S_AfroFade", "Hair_S_CurlyFade",
+          "Hair_S_SideSweptFringe", "Hair_S_Messy", "Hair_S_BrushCut", "Hair_S_Clean", "Hair_S_RecedeMessy"]
+_HEAD_CS = {}
+def groom_head_offset(name):
+    """Hair cards are authored around the groom's own reference head (the binding's source mesh: a female or male
+    groom head). Their offset from the head bone is the inverse of that head bone's component-space reference
+    transform on that mesh; every MetaHuman head shares the bone's frame, so it seats the cards on any citizen."""
+    b = unreal.load_asset(f"/MetaHumanCharacter/Optional/Grooms/Bindings/Hair/{name}_Binding")
+    m = b.get_editor_property("source_skeletal_mesh") if b else None
+    m = m or unreal.load_asset("/MetaHumanCharacter/Optional/Grooms/GroomMesh/SKM_Groom_Head_Legacy01")
+    key = m.get_path_name()
+    if key not in _HEAD_CS:
+        t = EAS.spawn_actor_from_class(unreal.SkeletalMeshActor, V(0, 0, -50000))
+        c = t.skeletal_mesh_component
+        c.set_skinned_asset_and_update(m)
+        _HEAD_CS[key] = c.get_socket_transform("head", unreal.RelativeTransformSpace.RTS_COMPONENT)
+        EAS.destroy_actor(t)
+        log("groom head", m.get_name(), _HEAD_CS[key].translation)
+    return _HEAD_CS[key].inverse()
+def hair_cards(name):
+    for lod in (1, 0, 2):
+        p = f"{HAIR}/{name}/{name}_CardsMesh_Group0_LOD{lod}"
+        if unreal.EditorAssetLibrary.does_asset_exist(p):
+            return unreal.load_asset(p)
+    return None
 import importlib.util as _ilu, os as _os
 _spec = _ilu.spec_from_file_location("nv_npc_bodymat", _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "nv_npc_bodymat.py"))
 BODYMAT = _ilu.module_from_spec(_spec); _spec.loader.exec_module(BODYMAT)
@@ -182,7 +212,17 @@ for i, (label, (x, y, z), route, waits, speed, courier) in enumerate(NPCS):
     g.set_editor_property("garment_fit", V(1.045, 1.045, 1.0))
     g.set_editor_property("hide_body_under_outfit", False)
     g.set_editor_property("battery_mesh_asset", None)
-    g.set_editor_property("helmet_mesh_asset", None)
+    hair, hair_off = None, unreal.Transform()
+    if not courier:
+        female = "Female" in (look.get_name() if look else "")
+        hname = (HAIR_F if female else HAIR_M)[i % 10]
+        hair = hair_cards(hname)
+        if hair:
+            hair_off = groom_head_offset(hname)
+    g.set_editor_property("helmet_mesh_asset", hair)
+    g.set_editor_property("helmet_socket", "head")
+    g.set_editor_property("helmet_offset", hair_off)
+    g.set_editor_property("helmet_in_model_space", False)
     g.set_editor_property("non_hostile", True)
     g.set_editor_property("glance_radius", 380.0)
     g.set_editor_property("patrol_points", [V(px - x, py - y, 0) for (px, py) in route])
@@ -193,6 +233,7 @@ for i, (label, (x, y, z), route, waits, speed, courier) in enumerate(NPCS):
     except Exception as e:
         log("immune fail", label, e)
     g.set_actor_location(g.get_actor_location(), False, False)
+    log(label, "hair", hair.get_name() if hair else None)
     log(label, "look", look.get_name() if look else None, "garments", [x.get_name() for x in garments], [m.get_name() if m else None for m in gmats], "helmet" if parts else "")
 
 NAV = [("NPC_Nav_Street", (7046, -11400, ZS + 200), (3900, 9400, 600)),

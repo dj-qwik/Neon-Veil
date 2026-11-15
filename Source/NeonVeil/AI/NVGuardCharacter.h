@@ -112,6 +112,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
 	FTransform HelmetOffset = FTransform::Identity;
 
+	/**
+	 * The helmet mesh is authored in the body's model space (e.g. MetaHuman hair cards, built around the bind-pose
+	 * head) rather than relative to the bone: it is placed with the inverse of the socket bone's reference pose so it
+	 * sits on the head and then follows it.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	bool bHelmetInModelSpace = false;
+
 	/** Exposed battery pack on the guard's back (Bible §8 tell). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
 	TObjectPtr<UStaticMesh> BatteryMeshAsset;

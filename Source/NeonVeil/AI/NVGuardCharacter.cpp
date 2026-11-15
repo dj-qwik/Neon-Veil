@@ -10,6 +10,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/SkeletalMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "ChaosClothAsset/ClothComponent.h"
 #include "ChaosClothAsset/ClothAssetBase.h"
@@ -132,7 +133,19 @@ void ANVGuardCharacter::OnConstruction(const FTransform& Transform)
 	Helmet->SetStaticMesh(HelmetMeshAsset);
 	Helmet->SetVisibility(HelmetMeshAsset != nullptr);
 	Helmet->AttachToComponent(GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, HelmetSocket);
-	Helmet->SetRelativeTransform(HelmetOffset);
+	FTransform HelmetRel = HelmetOffset;
+	if (bHelmetInModelSpace && GetMesh()->GetSkeletalMeshAsset())
+	{
+		const FReferenceSkeleton& Ref = GetMesh()->GetSkeletalMeshAsset()->GetRefSkeleton();
+		FTransform BoneCS = FTransform::Identity;
+		for (int32 Idx = Ref.FindBoneIndex(HelmetSocket); Idx != INDEX_NONE; Idx = Ref.GetParentIndex(Idx))
+		{
+			BoneCS = BoneCS * Ref.GetRefBonePose()[Idx];
+		}
+		HelmetRel = HelmetOffset * BoneCS.Inverse();
+	}
+	Helmet->SetRelativeTransform(HelmetRel);
+	Helmet->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	BatteryPack->SetStaticMesh(BatteryMeshAsset);
 	BatteryPack->SetVisibility(BatteryMeshAsset != nullptr);
