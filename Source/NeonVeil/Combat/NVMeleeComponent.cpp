@@ -20,16 +20,16 @@ UNVMeleeComponent::UNVMeleeComponent()
 	GunBash.Damage = 22.f;
 	GunBash.Range = 165.f;
 	GunBash.SweepRadius = 28.f;
-	GunBash.WindUp = 0.1f;
-	GunBash.SwingTime = 0.55f;
+	GunBash.WindUp = 0.26f;      // lands with the strike pose of the viewmodel motion
+	GunBash.SwingTime = 0.6f;
 	GunBash.StaggerDuration = 1.2f;
 	GunBash.bCanTakedown = true;
 
 	Fist.Damage = 12.f;
 	Fist.Range = 140.f;
 	Fist.SweepRadius = 24.f;
-	Fist.WindUp = 0.09f;
-	Fist.SwingTime = 0.42f;
+	Fist.WindUp = 0.12f;
+	Fist.SwingTime = 0.45f;
 	Fist.StaggerDuration = 0.5f;
 	Fist.bCanTakedown = false;
 

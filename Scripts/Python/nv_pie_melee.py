@@ -44,6 +44,20 @@ for cmd in sys.argv[-1].split(";"):
         mc.set_editor_property("wind_up", 0.12 * f)
         pawn.set_editor_property("fist_punch_rate", 1.25 / f)
         OUT.append("slow %s" % f)
+    elif a[0] == "motion":   # motion baton|rifle|pistol wp wy wr wx wy wz sp sy sr sx sy sz [windEnd strikeEnd holdEnd]
+        prop = {"baton": "baton_motion", "rifle": "rifle_bash_motion", "pistol": "pistol_bash_motion"}[a[1]]
+        f = [float(x) for x in a[2:]]
+        m = pawn.get_editor_property(prop)
+        m.set_editor_property("wind_rot", unreal.Rotator(pitch=f[0], yaw=f[1], roll=f[2]))
+        m.set_editor_property("wind_offset", unreal.Vector(f[3], f[4], f[5]))
+        m.set_editor_property("strike_rot", unreal.Rotator(pitch=f[6], yaw=f[7], roll=f[8]))
+        m.set_editor_property("strike_offset", unreal.Vector(f[9], f[10], f[11]))
+        if len(f) >= 15:
+            m.set_editor_property("wind_end", f[12]); m.set_editor_property("strike_end", f[13]); m.set_editor_property("hold_end", f[14])
+        pawn.set_editor_property(prop, m)
+        OUT.append("motion %s %s" % (a[1], f))
+    elif a[0] == "prop":   # prop name float
+        pawn.set_editor_property(a[1], float(a[2]))
     elif a[0] == "fistoff":
         pawn.set_editor_property("fist_viewmodel_offset", unreal.Vector(*[float(x) for x in a[1:4]]))
     elif a[0] == "shot":
@@ -52,6 +66,19 @@ for cmd in sys.argv[-1].split(";"):
         OUT.append("shot " + path)
     elif a[0] == "state":
         cw = wc.get_current_weapon()
+        OUT.append("swing alpha %.3f style %s swinging %s" % (mc.get_swing_alpha(), mc.get_swing_style(), mc.is_swinging()))
+        for c in pawn.get_components_by_class(unreal.SceneComponent):
+            if c.get_name() == "ViewmodelRoot":
+                OUT.append("  vmroot %s" % c.get_relative_transform())
+            if c.get_name() == "FirstPersonCamera":
+                camt = c.get_world_transform()
+        for c in pawn.get_components_by_class(unreal.SceneComponent):
+            if c.get_name() in ("WeaponStaticMesh", "WeaponMesh"):
+                t = c.get_world_transform()
+                g = camt.inverse_transform_location(t.translation)
+                tip = camt.inverse_transform_location(t.transform_location(unreal.Vector(0, 0, 40)))
+                fwd = camt.inverse_transform_location(t.transform_location(unreal.Vector(0, 40, 0)))
+                OUT.append("  %s cam-space grip %s | +Z40 %s | +Y40 %s" % (c.get_name(), g, tip, fwd))
         OUT.append("weapon %s slot %d slots %d" % (cw.get_name() if cw else None, wc.get_current_slot_index(), len(wc.get_slots())))
         for c in pawn.get_components_by_class(unreal.PrimitiveComponent):
             if c.get_name() in ("FirstPersonMesh", "WeaponMesh", "WeaponStaticMesh", "BatonMesh"):

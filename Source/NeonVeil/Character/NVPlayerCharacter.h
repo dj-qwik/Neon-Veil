@@ -27,6 +27,37 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FNVOnSprintChanged, bool, bSprinting
  * Ghost-7. First-person movement, camera and input routing; owns health, weapon and interaction.
  * Tuning numbers are starting targets from Bible §7.
  */
+/** One procedural melee move for the first-person viewmodel: a wind-up pose, a strike pose, then recovery. */
+USTRUCT(BlueprintType)
+struct FNVMeleeMotion
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	FRotator WindRot = FRotator::ZeroRotator;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	FVector WindOffset = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	FRotator StrikeRot = FRotator::ZeroRotator;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	FVector StrikeOffset = FVector::ZeroVector;
+
+	/** Swing fraction where the wind-up pose is reached. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float WindEnd = 0.35f;
+
+	/** Swing fraction where the strike pose is reached (the hit lands about here: match the melee WindUp). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float StrikeEnd = 0.5f;
+
+	/** Swing fraction where recovery starts. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float HoldEnd = 0.6f;
+};
+
 UCLASS()
 class NEONVEIL_API ANVPlayerCharacter : public ACharacter
 {
@@ -349,27 +380,31 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel")
 	FVector FistViewmodelOffset = FVector(8.f, 1.f, 12.f);
 
-	// --- Melee viewmodel motion (added to the viewmodel root at the peak of each phase; X forward, Y right, Z up)
+	// --- Melee viewmodel motion (rotations turn the viewmodel about the hand holding the weapon; offsets are in view
+	// space: X forward, Y right, Z up). Tunable here without a rebuild.
+	/** Shock baton: raise it above the head, then chop down and across to the bottom left. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
-	FRotator BatonWindUpRot = FRotator(10.f, 8.f, 8.f);
+	FNVMeleeMotion BatonMotion;
 
+	/** Rifles and SMGs: turn the gun and drive the butt forward into the target. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
-	FVector BatonWindUpOffset = FVector(-2.f, 2.f, 3.f);
+	FNVMeleeMotion RifleBashMotion;
 
+	/** Pistols: raise the gun and smash the grip down, overhead. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
-	FRotator BatonChopRot = FRotator(-20.f, -12.f, -14.f);
+	FNVMeleeMotion PistolBashMotion;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
-	FVector BatonChopOffset = FVector(7.f, -5.f, -3.f);
+	/** Punch: the arms are shown for this fraction of the punch animation (it ends in a weapon pose). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee", meta = (ClampMin = "0.1", ClampMax = "1"))
+	float FistPunchShowFraction = 0.5f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
-	FRotator BashRot = FRotator(6.f, -20.f, -45.f);
+	/** Punch: start this far into the animation (its first frames are the open hand on a foregrip). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee", meta = (ClampMin = "0", ClampMax = "0.9"))
+	float FistPunchStartFraction = 0.12f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
-	FVector BashOffset = FVector(18.f, -9.f, 2.f);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
-	FVector BashBackOffset = FVector(-7.f, 3.f, -2.f);
+	/** While swinging, the arms hide only if an upper arm comes closer to the eye than this (cm). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee", meta = (ClampMin = "0"))
+	float MeleeArmsHideDepth = 10.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel")
 	float FistPunchRate = 1.25f;

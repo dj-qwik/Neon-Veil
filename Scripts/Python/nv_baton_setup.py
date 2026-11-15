@@ -111,8 +111,9 @@ sets = {
     "arms_reload_anim": None,
     "scope_overlay": False,
     "hold_type": unreal.NVWeaponHold.PISTOL,
-    # in the pistol hand (ik_hand_gun, +Y forward): grip in the fist, shaft leaning forward toward the target
-    "arms_weapon_offset": unreal.Transform(V(0.0, 2.0, -11.0), unreal.Rotator(roll=50.0, pitch=-5.0, yaw=0.0), V(1, 1, 1)),
+    # rest pose: hand low on the right, just above the waist; tip pointing forward and out, away from the body
+    "viewmodel_hip_offset": V(12.0, 9.0, 12.0),
+    "arms_weapon_offset": unreal.Transform(V(0.0, 2.0, -11.0), unreal.Rotator(roll=68.0, pitch=15.0, yaw=0.0), V(1, 1, 1)),
 }
 for k, v in sets.items():
     try:

@@ -96,13 +96,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
 	float SweepRadius = 30.f;
 
-	/** Seconds from button press to the hit check. */
+	/** Seconds from button press to the hit check (lands with the overhead chop of the viewmodel). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
-	float WindUp = 0.12f;
+	float WindUp = 0.38f;
 
 	/** Seconds the full swing takes (also the minimum time between strikes). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
-	float SwingTime = 0.6f;
+	float SwingTime = 0.75f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
 	float StaggerDuration = 1.8f;

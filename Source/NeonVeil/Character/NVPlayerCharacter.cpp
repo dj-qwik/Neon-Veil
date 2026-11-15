@@ -145,6 +145,31 @@ ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 
 	bUseControllerRotationYaw = true;
 	CurrentEyeHeight = StandingEyeHeight;
+
+	// Baton: raise it above the head (tip back), then chop down and across toward the bottom left.
+	BatonMotion.WindRot = FRotator(95.f, 15.f, 10.f);
+	BatonMotion.WindOffset = FVector(-4.f, 12.f, 32.f);
+	BatonMotion.StrikeRot = FRotator(-25.f, -35.f, -30.f);
+	BatonMotion.StrikeOffset = FVector(6.f, -27.f, 4.f);
+	BatonMotion.WindEnd = 0.38f;
+	BatonMotion.StrikeEnd = 0.52f;
+	BatonMotion.HoldEnd = 0.62f;
+	// Rifle butt-stroke: turn the gun (muzzle left, stock forward-right), then drive the stock forward into the target.
+	RifleBashMotion.WindRot = FRotator(5.f, -80.f, -20.f);
+	RifleBashMotion.WindOffset = FVector(-6.f, 10.f, 0.f);
+	RifleBashMotion.StrikeRot = FRotator(10.f, -115.f, -20.f);
+	RifleBashMotion.StrikeOffset = FVector(30.f, -32.f, 8.f);
+	RifleBashMotion.WindEnd = 0.3f;
+	RifleBashMotion.StrikeEnd = 0.45f;
+	RifleBashMotion.HoldEnd = 0.55f;
+	// Pistol whip: raise it high tipped back, then smash the grip down and forward.
+	PistolBashMotion.WindRot = FRotator(90.f, 0.f, 5.f);
+	PistolBashMotion.WindOffset = FVector(-6.f, 4.f, 22.f);
+	PistolBashMotion.StrikeRot = FRotator(40.f, -10.f, 0.f);
+	PistolBashMotion.StrikeOffset = FVector(18.f, -6.f, -6.f);
+	PistolBashMotion.WindEnd = 0.3f;
+	PistolBashMotion.StrikeEnd = 0.45f;
+	PistolBashMotion.HoldEnd = 0.55f;
 }
 
 void ANVPlayerCharacter::BeginPlay()
@@ -302,6 +327,10 @@ void ANVPlayerCharacter::HandleWeaponEquipped(UNVWeaponData* Weapon)
 	}
 	UAnimationAsset* Idle = (ArmsMeshAsset && Weapon) ? Weapon->ArmsIdleAnim.LoadSynchronous() : nullptr;
 	bFistArms = false;
+	if (FirstPersonMesh->IsBoneHiddenByName(TEXT("clavicle_r")))
+	{
+		FirstPersonMesh->UnHideBoneByName(TEXT("clavicle_r"));
+	}
 	if (!Idle)
 	{
 		ArmsWeapon = nullptr;
@@ -458,9 +487,19 @@ void ANVPlayerCharacter::ShowFistArms()
 	ViewmodelRoot->SetRelativeRotation(FRotator::ZeroRotator);
 	ViewmodelRoot->SetRelativeScale3D(FVector::OneVector);
 	bFistArms = true;
+	// The punch animation is a left-hand layer over a weapon pose: hide the right arm and cut it before the left
+	// hand returns to the gun grip.
+	FirstPersonMesh->HideBoneByName(TEXT("clavicle_r"), EPhysBodyOp::PBO_None);
 	FirstPersonMesh->SetVisibility(true);
 	UpdateArmsVisibility();
 	PlayArms(Punch, false, FistPunchRate);
+	if (const UAnimSequenceBase* Seq = Cast<UAnimSequenceBase>(Punch))
+	{
+		// skip the opening frames (the hand still open on the gun's foregrip)
+		FirstPersonMesh->SetPosition(Seq->GetPlayLength() * FistPunchStartFraction, false);
+		GetWorldTimerManager().SetTimer(ArmsReturnTimer, this, &ANVPlayerCharacter::ReturnArmsToIdle,
+			FMath::Max(0.05f, Seq->GetPlayLength() * FMath::Max(0.05f, FistPunchShowFraction - FistPunchStartFraction) / FMath::Max(FistPunchRate, 0.01f)), false);
+	}
 }
 
 void ANVPlayerCharacter::DebugSetGrip(const FTransform& Grip, const FVector& LeftHand)
@@ -1204,24 +1243,15 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 	const float Swing = Melee->GetSwingAlpha();
 	if (Swing > 0.f)
 	{
-		const ENVMeleeStyle Style = Melee->GetSwingStyle();
-		if (Style == ENVMeleeStyle::Baton)
-		{
-			// Wind up (0-0.18), chop down and across (0.18-0.45), recover (0.45-1).
-			const float Up = FMath::SmoothStep(0.f, 0.18f, Swing) * (1.f - FMath::SmoothStep(0.18f, 0.32f, Swing));
-			const float Chop = FMath::SmoothStep(0.18f, 0.45f, Swing) * (1.f - FMath::SmoothStep(0.55f, 1.f, Swing));
-			MeleeRot = BatonWindUpRot * Up + BatonChopRot * Chop;
-			MeleeOff = BatonWindUpOffset * Up + BatonChopOffset * Chop;
-		}
-		else
-		{
-			// Butt-stroke / pistol-whip (and the baton's own Melee button press uses the chop above): draw back
-			// (0-0.2), drive forward and across turning the gun on its side (0.2-0.4), then return.
-			const float Back = FMath::SmoothStep(0.f, 0.2f, Swing) * (1.f - FMath::SmoothStep(0.2f, 0.3f, Swing));
-			const float Drive = FMath::SmoothStep(0.2f, 0.4f, Swing) * (1.f - FMath::SmoothStep(0.5f, 1.f, Swing));
-			MeleeRot = BashRot * Drive;
-			MeleeOff = BashBackOffset * Back + BashOffset * Drive;
-		}
+		const FNVMeleeMotion& M = Melee->GetSwingStyle() == ENVMeleeStyle::Baton ? BatonMotion
+			: (W->HoldType == ENVWeaponHold::Pistol ? PistolBashMotion : RifleBashMotion);
+		const float Wind = FMath::SmoothStep(0.f, M.WindEnd, Swing);
+		const float Strike = FMath::SmoothStep(M.WindEnd, M.StrikeEnd, Swing);
+		const float Recover = 1.f - FMath::SmoothStep(M.HoldEnd, 1.f, Swing);
+		const FRotator WindR = M.WindRot * Wind;
+		const FVector WindO = M.WindOffset * Wind;
+		MeleeRot = (WindR + (M.StrikeRot - WindR) * Strike) * Recover;
+		MeleeOff = (WindO + (M.StrikeOffset - WindO) * Strike) * Recover;
 	}
 
 	// Near-plane clearance: aimed down the sights, the stock can come closer to the eye than the near clip plane and get
@@ -1262,7 +1292,7 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 	// (measured on the arm bones, with a little hysteresis); the weapon carries the sight picture on its own.
 	{
 		bool bHideArms = false;
-		if (ArmsWeapon && !bThirdPerson && Ads > 0.35f && FirstPersonMesh->GetSkeletalMeshAsset())
+		if (ArmsWeapon && !bThirdPerson && (Ads > 0.35f || Swing > 0.f) && FirstPersonMesh->GetSkeletalMeshAsset())
 		{
 			const FTransform CamT = FirstPersonCamera->GetComponentTransform();
 			float Nearest = TNumericLimits<float>::Max();
@@ -1274,7 +1304,9 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 					Nearest = FMath::Min(Nearest, static_cast<float>(L.X));
 				}
 			}
-			bHideArms = Nearest < (bArmsAdsHidden ? ArmsAdsHideDepth + 4.f : ArmsAdsHideDepth);
+			// aimed: the sleeve across the sights; swinging: only if an arm actually passes through the camera
+			const float Depth = Ads > 0.35f ? ArmsAdsHideDepth : MeleeArmsHideDepth;
+			bHideArms = Nearest < (bArmsAdsHidden ? Depth + 4.f : Depth);
 		}
 		if (bHideArms != bArmsAdsHidden)
 		{
@@ -1286,8 +1318,18 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 	// Melee motion goes on top of the smoothing so the strike keeps its snap.
 	SmoothedViewmodelLoc = FMath::VInterpTo(SmoothedViewmodelLoc, Offset, DeltaSeconds, 25.f);
 	SmoothedViewmodelRot = FMath::RInterpTo(SmoothedViewmodelRot, Rot, DeltaSeconds, 12.f);
-	ViewmodelRoot->SetRelativeLocation(SmoothedViewmodelLoc + MeleeOff);
-	ViewmodelRoot->SetRelativeRotation(SmoothedViewmodelRot + MeleeRot);
+	// The melee rotation turns the viewmodel about the hand holding the weapon (the weapon's origin), not the root.
+	const FQuat BaseQ = SmoothedViewmodelRot.Quaternion();
+	const FQuat NewQ = BaseQ * MeleeRot.Quaternion();
+	FVector RootLoc = SmoothedViewmodelLoc + MeleeOff;
+	if (!MeleeRot.IsNearlyZero())
+	{
+		const USceneComponent* Held = (WeaponMesh->GetSkeletalMeshAsset() || !WeaponStaticMesh->GetStaticMesh()) ? static_cast<USceneComponent*>(WeaponMesh) : static_cast<USceneComponent*>(WeaponStaticMesh);
+		const FVector Pivot = ViewmodelRoot->GetComponentTransform().InverseTransformPosition(Held->GetComponentLocation()) * W->ViewmodelScale;
+		RootLoc += BaseQ.RotateVector(Pivot) - NewQ.RotateVector(Pivot);
+	}
+	ViewmodelRoot->SetRelativeLocation(RootLoc);
+	ViewmodelRoot->SetRelativeRotation(NewQ.Rotator());
 	ViewmodelRoot->SetRelativeScale3D(W->ViewmodelScale);
 
 	// Scope: once the sights are up, hand over to the HUD's scope view.
