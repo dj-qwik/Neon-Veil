@@ -146,7 +146,7 @@ def traffic(label, start, yaw, length, per_dir, spread, speed, scale, seed, cyan
     a.set_editor_property("vehicle_scale", V(*scale))
     a.set_editor_property("two_way", True)
     a.set_editor_property("seed", seed)
-    a.set_editor_property("vehicle_mesh", CUBE)
+    a.set_editor_property("vehicle_mesh", unreal.load_asset("/Game/NeonVeil/Vehicles/SM_NV_HoverCar") or CUBE)   # nv_hovercar.py
     F = "/Game/NeonVeil/Materials/FX/MI_NV_TrafficCar_"
     a.set_editor_property("forward_material", unreal.load_asset(F + ("Cyan_Fwd" if cyan_fwd else "White_Fwd")))
     a.set_editor_property("reverse_material", unreal.load_asset(F + ("White_Rev" if cyan_fwd else "Cyan_Rev")))
