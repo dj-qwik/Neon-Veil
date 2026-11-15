@@ -434,7 +434,7 @@ sim.set_editor_property("steps", [
          [line("Simulation", "No cover this time. Trust the shield, Ghost-7.")], duration=2.0,
          emitter=emitter, area=a_shield, warmup_seconds=1.2, warning_text=T("Incoming volley - shield now"),
          fail_lines=[line("Simulation", "Shield timing off. Resetting.", 2.5)]),
-    step(K.CLEAR_TARGETS, "Shock baton {Melee}: strike, then strike again while it staggers",
+    step(K.CLEAR_TARGETS, "Close quarters {Melee}: strike, then strike again while it staggers",
          [line("Simulation", "Close-quarters profile. Staggered targets are open to a takedown.")], [t_dummy]),
     step(K.MARK_TARGETS, "Drone uplink {Ability3}: locate 3 concealed profiles in the south enclosure",
          [line("Simulation", "Profiles concealed behind hard cover. Use the uplink.")], t_hidden, min_marks=3),

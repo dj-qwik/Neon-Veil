@@ -65,6 +65,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity")
 	FGameplayTag WeaponTag;
 
+	/** A melee weapon (the shock baton): Fire swings it through the owner's melee component; no ammo, reload or aiming. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Identity")
+	bool bMelee = false;
+
 	// --- Damage
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Damage")
 	float Damage = 20.f;

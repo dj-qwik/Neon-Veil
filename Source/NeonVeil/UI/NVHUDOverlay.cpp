@@ -860,6 +860,7 @@ TSharedRef<SWidget> SNVHUDOverlay::BuildWeapon()
 {
 	auto Weapons = [this]() -> const UNVWeaponComponent* { const ANVPlayerCharacter* P = Pawn(); return P ? P->GetWeapons() : nullptr; };
 	auto Armed = [Weapons]() { const UNVWeaponComponent* W = Weapons(); return W && W->GetCurrentWeapon() != nullptr; };
+	auto Ranged = [Weapons]() { const UNVWeaponComponent* W = Weapons(); return W && W->GetCurrentWeapon() && !W->GetCurrentWeapon()->bMelee; };
 	auto SlotData = [Weapons]() -> const FNVWeaponSlot*
 	{
 		const UNVWeaponComponent* W = Weapons();
@@ -883,7 +884,7 @@ TSharedRef<SWidget> SNVHUDOverlay::BuildWeapon()
 					SNew(SVerticalBox)
 					+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right)
 					[
-						SNew(SHorizontalBox)
+						SNew(SHorizontalBox).Visibility_Lambda([Ranged]() { return Ranged() ? EVisibility::HitTestInvisible : EVisibility::Collapsed; })
 						+ SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Bottom)
 						[
 							NVUI::MakeText(TAttribute<FText>::CreateLambda([SlotData]() { const FNVWeaponSlot* S = SlotData(); return FText::AsNumber(S ? S->AmmoInMag : 0); }),
@@ -900,7 +901,7 @@ TSharedRef<SWidget> SNVHUDOverlay::BuildWeapon()
 					]
 					+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right).Padding(0.f, 0.f, 0.f, 6.f)
 					[
-						SNew(SNVAmmoPips).HUD(WeakHUD)
+						SNew(SNVAmmoPips).HUD(WeakHUD).Visibility_Lambda([Ranged]() { return Ranged() ? EVisibility::HitTestInvisible : EVisibility::Collapsed; })
 					]
 					+ SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Right)
 					[

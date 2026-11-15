@@ -154,7 +154,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Third Person")
 	bool bStartThirdPerson = false;
 
-	/** Shock baton viewmodel, shown only during a swing. Placeholder cylinder until M5 art. */
+	/** Retired: the shock baton is now its own weapon slot (DA_Weapon_Baton). Kept so existing Blueprint data still loads; never shown. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> BatonMesh;
 
@@ -337,6 +337,43 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel", meta = (ClampMin = "0"))
 	float ViewmodelNearClearance = 14.f;
 
+	/** Aimed down the sights, the arms are hidden once an upper arm comes closer to the eye than this (cm, camera space):
+	 *  the rifle poses bring the shoulder/sleeve right across the view. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel", meta = (ClampMin = "0"))
+	float ArmsAdsHideDepth = 32.f;
+
+	/** Unarmed punch (Melee with nothing in hand): arms animation and where the arms sit for it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel")
+	TSoftObjectPtr<UAnimationAsset> FistPunchAnim = TSoftObjectPtr<UAnimationAsset>(FSoftObjectPath(TEXT("/Game/KINEMATION/Sci-fi_FPS_Pack/Animations/Character/UE5/General/A_FP_LeftHand_Punch.A_FP_LeftHand_Punch")));
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel")
+	FVector FistViewmodelOffset = FVector(8.f, 1.f, 12.f);
+
+	// --- Melee viewmodel motion (added to the viewmodel root at the peak of each phase; X forward, Y right, Z up)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
+	FRotator BatonWindUpRot = FRotator(10.f, 8.f, 8.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
+	FVector BatonWindUpOffset = FVector(-2.f, 2.f, 3.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
+	FRotator BatonChopRot = FRotator(-20.f, -12.f, -14.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
+	FVector BatonChopOffset = FVector(7.f, -5.f, -3.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
+	FRotator BashRot = FRotator(6.f, -20.f, -45.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
+	FVector BashOffset = FVector(18.f, -9.f, 2.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel|Melee")
+	FVector BashBackOffset = FVector(-7.f, 3.f, -2.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Viewmodel")
+	float FistPunchRate = 1.25f;
+
 private:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -358,7 +395,8 @@ private:
 	void HolsterPressed();
 	void ToggleViewPressed();
 	void NavGuidePressed();
-	void NavGuidePadPressed();
+	void UpdateArmsVisibility();
+	void ShowFistArms();
 	void RefreshThirdPersonWeapon();
 	class UNVBodyAnimInstance* GetBodyAnim() const;
 	void ApplyBodyAnimClass();
@@ -446,12 +484,21 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UInputMappingContext> RuntimeViewContext;
 
-	/** Wayfinding arrow (L3 / G): made at runtime, shown on demand. */
+	/** Wayfinding arrow (N / tap D-pad Down): made at runtime, shown on demand. */
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> NavGuideAction;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UInputAction> NavGuidePadAction;
+
+	/** Holster on the pad: hold D-pad Down (a tap is the wayfinding arrow). */
+	UPROPERTY(Transient)
+	TObjectPtr<UInputAction> HolsterPadAction;
+
+	bool bArmsAdsHidden = false;
+	FVector SmoothedViewmodelLoc = FVector::ZeroVector;
+	FRotator SmoothedViewmodelRot = FRotator::ZeroRotator;
+	bool bFistArms = false;
 
 	UPROPERTY(Transient)
 	TObjectPtr<class ANVNavArrow> NavArrow;

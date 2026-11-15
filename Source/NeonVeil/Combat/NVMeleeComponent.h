@@ -9,6 +9,45 @@ class UCameraComponent;
 class USoundBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNVOnMeleeSwing);
+
+/** What the strike is made with. The baton is its own weapon slot; the Melee button bashes with whatever is in hand. */
+UENUM(BlueprintType)
+enum class ENVMeleeStyle : uint8
+{
+	Baton,      // shock baton (equipped weapon, Fire)
+	GunBash,    // butt-stroke / pistol-whip with the current gun (Melee button)
+	Fist        // unarmed punch (Melee button, nothing in hand)
+};
+
+/** Tuning for one melee style. */
+USTRUCT(BlueprintType)
+struct FNVMeleeProfile
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float Damage = 20.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float Range = 160.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float SweepRadius = 28.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float WindUp = 0.12f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float SwingTime = 0.55f;
+
+	/** 0 = no stagger. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float StaggerDuration = 1.2f;
+
+	/** A strike on a staggered target finishes it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	bool bCanTakedown = true;
+};
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FNVOnMeleeHit, AActor*, HitActor, bool, bTakedown);
 
 /**
@@ -25,7 +64,11 @@ public:
 	UNVMeleeComponent();
 
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Melee")
-	bool Strike();
+	bool Strike(ENVMeleeStyle Style = ENVMeleeStyle::GunBash);
+
+	/** The style of the swing in progress (or the last one). */
+	UFUNCTION(BlueprintPure, Category = "NeonVeil|Melee")
+	ENVMeleeStyle GetSwingStyle() const { return ActiveStyle; }
 
 	UFUNCTION(BlueprintPure, Category = "NeonVeil|Melee")
 	bool IsSwinging() const;
@@ -40,6 +83,7 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Melee")
 	FNVOnMeleeHit OnMeleeHit;
 
+	// --- Shock baton (the fields below predate the other styles and stay the baton's tuning)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
 	float Damage = 35.f;
 
@@ -63,6 +107,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
 	float StaggerDuration = 1.8f;
 
+	/** Butt-stroke / pistol-whip with the gun in hand. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	FNVMeleeProfile GunBash;
+
+	/** Unarmed punch: quick, light, a short flinch, no takedown. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	FNVMeleeProfile Fist;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
 	FGameplayTag DamageType;
 
@@ -78,6 +130,10 @@ protected:
 private:
 	void ResolveHit();
 
+	FNVMeleeProfile ProfileFor(ENVMeleeStyle Style) const;
+
 	FTimerHandle HitTimer;
 	float SwingStartTime = -100.f;
+	FNVMeleeProfile Active;
+	ENVMeleeStyle ActiveStyle = ENVMeleeStyle::GunBash;
 };

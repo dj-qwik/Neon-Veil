@@ -1,4 +1,5 @@
 #include "Combat/NVWeaponComponent.h"
+#include "Combat/NVMeleeComponent.h"
 #include "Combat/NVFriendly.h"
 #include "Combat/NVWeaponData.h"
 #include "Combat/NVHealthComponent.h"
@@ -226,6 +227,14 @@ void UNVWeaponComponent::StartFire()
 	const UNVWeaponData* Data = GetCurrentWeapon();
 	if (!Data)
 	{
+		return;
+	}
+	if (Data->bMelee)
+	{
+		if (UNVMeleeComponent* Melee = GetOwner()->FindComponentByClass<UNVMeleeComponent>())
+		{
+			Melee->Strike(ENVMeleeStyle::Baton);
+		}
 		return;
 	}
 	const float Interval = 60.f / Data->RoundsPerMinute;
@@ -548,7 +557,7 @@ void UNVWeaponComponent::Reload()
 {
 	UNVWeaponData* Data = GetCurrentWeapon();
 	FNVWeaponSlot* Slot = CurrentSlotPtr();
-	if (!Data || !Slot || bReloading || Slot->AmmoInMag >= Data->MagazineSize || Slot->ReserveAmmo <= 0)
+	if (!Data || !Slot || Data->bMelee || bReloading || Slot->AmmoInMag >= Data->MagazineSize || Slot->ReserveAmmo <= 0)
 	{
 		return;
 	}
@@ -613,8 +622,8 @@ void UNVWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 		return;
 	}
 
-	// ADS blend: linear in time so the transition length matches AdsTime exactly.
-	const float Target = (bWantsAim && !bReloading) ? 1.f : 0.f;
+	// ADS blend: linear in time so the transition length matches AdsTime exactly. Melee weapons don't aim.
+	const float Target = (bWantsAim && !bReloading && !Data->bMelee) ? 1.f : 0.f;
 	AdsAlpha = FMath::FInterpConstantTo(AdsAlpha, Target, DeltaTime, 1.f / Data->AdsTime);
 
 	// Spread recovery
@@ -640,7 +649,7 @@ void UNVWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	}
 
 	// Full-auto
-	if (bTriggerHeld && Data->FireMode == ENVFireMode::FullAuto)
+	if (bTriggerHeld && !Data->bMelee && Data->FireMode == ENVFireMode::FullAuto)
 	{
 		const float Interval = 60.f / Data->RoundsPerMinute;
 		if (GetWorld()->GetTimeSeconds() - LastFireTime >= Interval)

@@ -116,7 +116,7 @@ FText ANVHUD::GetInstructionDisplay() const
 	FString T = InstructionText.ToString();
 	// Device-aware button tokens, e.g. "{Ability2}" -> "[G]" or "[D-pad Right]".
 	static const TCHAR* Tokens[] = { TEXT("Interact"), TEXT("Melee"), TEXT("Ability1"), TEXT("Ability2"), TEXT("Ability3"), TEXT("Crouch"), TEXT("Aim"),
-		TEXT("NextWeapon"), TEXT("Jump"), TEXT("Sprint"), TEXT("Holster"), TEXT("ToggleView") };
+		TEXT("NextWeapon"), TEXT("Jump"), TEXT("Sprint"), TEXT("Holster"), TEXT("ToggleView"), TEXT("NavGuide"), TEXT("Fire") };
 	for (const TCHAR* Tok : Tokens)
 	{
 		T.ReplaceInline(*FString::Printf(TEXT("{%s}"), Tok), *KeyLabel(Tok), ESearchCase::CaseSensitive);
@@ -248,7 +248,9 @@ FString ANVHUD::KeyLabel(FName Action) const
 		{ TEXT("Sprint"), TEXT("Shift"), TEXT("L3"), TEXT("LS") },
 		{ TEXT("Aim"), TEXT("RMB"), TEXT("L2"), TEXT("LT") },
 		{ TEXT("NextWeapon"), TEXT("Mouse wheel"), TEXT("R1"), TEXT("RB") },
-		{ TEXT("Holster"), TEXT("H"), TEXT("D-pad Down"), TEXT("D-pad Down") },
+		{ TEXT("Holster"), TEXT("H"), TEXT("Hold D-pad Down"), TEXT("Hold D-pad Down") },
+		{ TEXT("NavGuide"), TEXT("N"), TEXT("D-pad Down"), TEXT("D-pad Down") },
+		{ TEXT("Fire"), TEXT("LMB"), TEXT("R2"), TEXT("RT") },
 		{ TEXT("ToggleView"), TEXT("B"), TEXT("Share"), TEXT("View") },
 	};
 	for (const FRow& R : Rows)

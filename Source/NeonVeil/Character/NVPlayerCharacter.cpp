@@ -19,6 +19,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "InputTriggers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
@@ -226,14 +227,6 @@ void ANVPlayerCharacter::NavGuidePressed()
 	}
 }
 
-void ANVPlayerCharacter::NavGuidePadPressed()
-{
-	// L3 doubles as sprint: standing still it's the wayfinding arrow
-	if (GetVelocity().Size2D() < 60.f && LastMoveInput.Size() < 0.3f)
-	{
-		NavGuidePressed();
-	}
-}
 
 void ANVPlayerCharacter::ApplyViewmodelVisibility(bool bScoped)
 {
@@ -241,7 +234,12 @@ void ANVPlayerCharacter::ApplyViewmodelVisibility(bool bScoped)
 	bViewmodelHidden = bHide;
 	WeaponMesh->SetHiddenInGame(bHide);
 	WeaponStaticMesh->SetHiddenInGame(bHide);
-	FirstPersonMesh->SetHiddenInGame(bHide);
+	UpdateArmsVisibility();
+}
+
+void ANVPlayerCharacter::UpdateArmsVisibility()
+{
+	FirstPersonMesh->SetHiddenInGame(bViewmodelHidden || bArmsAdsHidden);
 }
 
 void ANVPlayerCharacter::RefreshThirdPersonWeapon()
@@ -303,12 +301,15 @@ void ANVPlayerCharacter::HandleWeaponEquipped(UNVWeaponData* Weapon)
 		Body->PlayAction(UNVBodyAnimInstance::EAction::Equip);
 	}
 	UAnimationAsset* Idle = (ArmsMeshAsset && Weapon) ? Weapon->ArmsIdleAnim.LoadSynchronous() : nullptr;
+	bFistArms = false;
 	if (!Idle)
 	{
 		ArmsWeapon = nullptr;
 		FirstPersonMesh->SetVisibility(false);
 		WeaponMesh->AttachToComponent(ViewmodelRoot, FAttachmentTransformRules::KeepRelativeTransform);
 		WeaponMesh->SetRelativeTransform(FTransform::Identity);
+		WeaponStaticMesh->AttachToComponent(ViewmodelRoot, FAttachmentTransformRules::KeepRelativeTransform);
+		WeaponStaticMesh->SetRelativeTransform(FTransform::Identity);
 		return;
 	}
 	ArmsWeapon = Weapon;
@@ -320,6 +321,8 @@ void ANVPlayerCharacter::HandleWeaponEquipped(UNVWeaponData* Weapon)
 	FirstPersonMesh->SetVisibility(true);
 	WeaponMesh->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules::KeepRelativeTransform, Weapon->ArmsWeaponBone);
 	WeaponMesh->SetRelativeTransform(Weapon->ArmsWeaponOffset);
+	WeaponStaticMesh->AttachToComponent(FirstPersonMesh, FAttachmentTransformRules::KeepRelativeTransform, Weapon->ArmsWeaponBone);
+	WeaponStaticMesh->SetRelativeTransform(Weapon->ArmsWeaponOffset);
 	if (UAnimationAsset* Draw = Weapon->ArmsDrawAnim.LoadSynchronous())
 	{
 		PlayArms(Draw, false);
@@ -379,6 +382,12 @@ void ANVPlayerCharacter::PlayArms(UAnimationAsset* Anim, bool bLoop, float Rate)
 
 void ANVPlayerCharacter::ReturnArmsToIdle()
 {
+	if (bFistArms && !ArmsWeapon)
+	{
+		bFistArms = false;
+		FirstPersonMesh->SetVisibility(false);
+		return;
+	}
 	if (ArmsWeapon && !Weapons->IsReloading())
 	{
 		PlayArms(ArmsWeapon->ArmsIdleAnim.LoadSynchronous(), true);
@@ -426,6 +435,32 @@ void ANVPlayerCharacter::HandleMeleeSwing()
 	{
 		Body->PlayAction(UNVBodyAnimInstance::EAction::Attack);
 	}
+	if (Melee->GetSwingStyle() == ENVMeleeStyle::Fist)
+	{
+		ShowFistArms();
+	}
+}
+
+void ANVPlayerCharacter::ShowFistArms()
+{
+	// Unarmed: bring the arms in just for the punch, then put them away again.
+	UAnimationAsset* Punch = ArmsMeshAsset ? FistPunchAnim.LoadSynchronous() : nullptr;
+	if (!Punch || ArmsWeapon)
+	{
+		return;
+	}
+	if (FirstPersonMesh->GetSkeletalMeshAsset() != ArmsMeshAsset)
+	{
+		FirstPersonMesh->SetSkeletalMesh(ArmsMeshAsset);
+	}
+	FirstPersonMesh->SetRelativeTransform(ArmsOffset);
+	ViewmodelRoot->SetRelativeLocation(FistViewmodelOffset);
+	ViewmodelRoot->SetRelativeRotation(FRotator::ZeroRotator);
+	ViewmodelRoot->SetRelativeScale3D(FVector::OneVector);
+	bFistArms = true;
+	FirstPersonMesh->SetVisibility(true);
+	UpdateArmsVisibility();
+	PlayArms(Punch, false, FistPunchRate);
 }
 
 void ANVPlayerCharacter::DebugSetGrip(const FTransform& Grip, const FVector& LeftHand)
@@ -500,7 +535,6 @@ void ANVPlayerCharacter::EnsureViewInput()
 		if (HolsterAction)
 		{
 			RuntimeViewContext->MapKey(HolsterAction, EKeys::H);
-			RuntimeViewContext->MapKey(HolsterAction, EKeys::Gamepad_DPad_Down);
 		}
 		if (ToggleViewAction)
 		{
@@ -508,17 +542,28 @@ void ANVPlayerCharacter::EnsureViewInput()
 			RuntimeViewContext->MapKey(ToggleViewAction, EKeys::Gamepad_Special_Left);
 		}
 	}
-	// wayfinding arrow: N on keyboard; L3 on the pad, which is also sprint, so there it only fires while standing still
+	// Wayfinding arrow: N on the keyboard, a tap on D-pad Down on the pad. Holding D-pad Down holsters instead.
+	// (L3 stays sprint only.)
 	if (!NavGuideAction)
 	{
 		NavGuideAction = NewObject<UInputAction>(this, TEXT("IA_NV_NavGuideRuntime"));
 		NavGuideAction->ValueType = EInputActionValueType::Boolean;
 		NavGuidePadAction = NewObject<UInputAction>(this, TEXT("IA_NV_NavGuidePadRuntime"));
 		NavGuidePadAction->ValueType = EInputActionValueType::Boolean;
+		HolsterPadAction = NewObject<UInputAction>(this, TEXT("IA_NV_HolsterPadRuntime"));
+		HolsterPadAction->ValueType = EInputActionValueType::Boolean;
 		if (RuntimeViewContext)
 		{
 			RuntimeViewContext->MapKey(NavGuideAction, EKeys::N);
-			RuntimeViewContext->MapKey(NavGuidePadAction, EKeys::Gamepad_LeftThumbstick);
+			FEnhancedActionKeyMapping& Tap = RuntimeViewContext->MapKey(NavGuidePadAction, EKeys::Gamepad_DPad_Down);
+			UInputTriggerTap* TapTrigger = NewObject<UInputTriggerTap>(RuntimeViewContext);
+			TapTrigger->TapReleaseTimeThreshold = 0.35f;
+			Tap.Triggers.Add(TapTrigger);
+			FEnhancedActionKeyMapping& Hold = RuntimeViewContext->MapKey(HolsterPadAction, EKeys::Gamepad_DPad_Down);
+			UInputTriggerHold* HoldTrigger = NewObject<UInputTriggerHold>(RuntimeViewContext);
+			HoldTrigger->HoldTimeThreshold = 0.4f;
+			HoldTrigger->bIsOneShot = true;
+			Hold.Triggers.Add(HoldTrigger);
 		}
 	}
 }
@@ -600,7 +645,8 @@ void ANVPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	BindIf(HolsterAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::HolsterPressed);
 	BindIf(ToggleViewAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::ToggleViewPressed);
 	BindIf(NavGuideAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::NavGuidePressed);
-	BindIf(NavGuidePadAction, ETriggerEvent::Started, this, &ANVPlayerCharacter::NavGuidePadPressed);
+	BindIf(NavGuidePadAction, ETriggerEvent::Triggered, this, &ANVPlayerCharacter::NavGuidePressed);
+	BindIf(HolsterPadAction, ETriggerEvent::Triggered, this, &ANVPlayerCharacter::HolsterPressed);
 	BindIf(Ability1Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability1Pressed);
 	BindIf(Ability2Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability2Pressed);
 	BindIf(Ability3Action, ETriggerEvent::Started, this, &ANVPlayerCharacter::Ability3Pressed);
@@ -614,7 +660,8 @@ void ANVPlayerCharacter::MeleePressed()
 	}
 	SetSprinting(false);
 	Weapons->StopFire();
-	Melee->Strike();
+	const UNVWeaponData* W = Weapons->GetCurrentWeapon();
+	Melee->Strike(!W ? ENVMeleeStyle::Fist : (W->bMelee ? ENVMeleeStyle::Baton : ENVMeleeStyle::GunBash));
 }
 
 void ANVPlayerCharacter::Ability1Pressed() { DebugAbility(0); }
@@ -1097,6 +1144,18 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 	if (!W)
 	{
 		LookDeltaThisFrame = FVector2D::ZeroVector;
+		if (bArmsAdsHidden)
+		{
+			bArmsAdsHidden = false;
+			UpdateArmsVisibility();
+		}
+		if (bFistArms)
+		{
+			// a small forward lunge of the whole arms rig on top of the punch animation
+			const float Swing = Melee->GetSwingAlpha();
+			const float Lunge = FMath::Sin(FMath::Clamp(Swing * 2.2f, 0.f, 1.f) * PI);
+			ViewmodelRoot->SetRelativeLocation(FistViewmodelOffset + FVector(4.f * Lunge, 0.f, 0.f));
+		}
 		return;
 	}
 	const float Ads = Weapons->GetAdsAlpha();
@@ -1138,26 +1197,31 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 		Offset.Z -= 4.f;
 	}
 
-	// Shock baton swing in the OFF hand (left): the gun stays in the right hand, dipping slightly, while the
-	// baton comes in from the left shoulder and sweeps left to right across the view.
+	// Melee motion on the whole viewmodel (arms and weapon together).
+	BatonMesh->SetHiddenInGame(true);
+	FVector MeleeOff = FVector::ZeroVector;
+	FRotator MeleeRot = FRotator::ZeroRotator;
 	const float Swing = Melee->GetSwingAlpha();
-	const bool bSwinging = Swing > 0.f;
-	BatonMesh->SetHiddenInGame(!bSwinging);
-	if (bSwinging)
+	if (Swing > 0.f)
 	{
-		const float Arc = FMath::Sin(Swing * PI);
-		Rot.Roll += 6.f * Arc;
-		Offset.Z -= 4.f * Arc;
-		Offset.Y += 3.f * Arc;
-		// Strike (0-0.4): sweep from the left shoulder to just past centre. Recovery (0.4-1): pull back down-left
-		// and out of view, so the baton never rests beside the gun.
-		const float Strike = FMath::SmoothStep(0.f, 0.4f, Swing);
-		const float Recover = FMath::SmoothStep(0.4f, 1.f, Swing);
-		const float Yaw = FMath::Lerp(-60.f, 12.f, Strike) - 72.f * Recover;
-		const FRotator SweepRot(0.f, Yaw, 0.f);
-		const FVector LeftShoulder(0.f, -20.f, -6.f - 18.f * Recover);
-		BatonMesh->SetRelativeLocation(LeftShoulder + SweepRot.RotateVector(FVector(36.f, 0.f, -8.f)));
-		BatonMesh->SetRelativeRotation(SweepRot + FRotator(-75.f, 0.f, 0.f));
+		const ENVMeleeStyle Style = Melee->GetSwingStyle();
+		if (Style == ENVMeleeStyle::Baton)
+		{
+			// Wind up (0-0.18), chop down and across (0.18-0.45), recover (0.45-1).
+			const float Up = FMath::SmoothStep(0.f, 0.18f, Swing) * (1.f - FMath::SmoothStep(0.18f, 0.32f, Swing));
+			const float Chop = FMath::SmoothStep(0.18f, 0.45f, Swing) * (1.f - FMath::SmoothStep(0.55f, 1.f, Swing));
+			MeleeRot = BatonWindUpRot * Up + BatonChopRot * Chop;
+			MeleeOff = BatonWindUpOffset * Up + BatonChopOffset * Chop;
+		}
+		else
+		{
+			// Butt-stroke / pistol-whip (and the baton's own Melee button press uses the chop above): draw back
+			// (0-0.2), drive forward and across turning the gun on its side (0.2-0.4), then return.
+			const float Back = FMath::SmoothStep(0.f, 0.2f, Swing) * (1.f - FMath::SmoothStep(0.2f, 0.3f, Swing));
+			const float Drive = FMath::SmoothStep(0.2f, 0.4f, Swing) * (1.f - FMath::SmoothStep(0.5f, 1.f, Swing));
+			MeleeRot = BashRot * Drive;
+			MeleeOff = BashBackOffset * Back + BashOffset * Drive;
+		}
 	}
 
 	// Near-plane clearance: aimed down the sights, the stock can come closer to the eye than the near clip plane and get
@@ -1194,8 +1258,36 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 		Offset.X += NearClearPush;
 	}
 
-	ViewmodelRoot->SetRelativeLocation(FMath::VInterpTo(ViewmodelRoot->GetRelativeLocation(), Offset, DeltaSeconds, 25.f));
-	ViewmodelRoot->SetRelativeRotation(FMath::RInterpTo(ViewmodelRoot->GetRelativeRotation(), Rot, DeltaSeconds, 12.f));
+	// Aimed in, the rifle poses swing the upper arm/sleeve across the eye. Hide the arms while that's the case
+	// (measured on the arm bones, with a little hysteresis); the weapon carries the sight picture on its own.
+	{
+		bool bHideArms = false;
+		if (ArmsWeapon && !bThirdPerson && Ads > 0.35f && FirstPersonMesh->GetSkeletalMeshAsset())
+		{
+			const FTransform CamT = FirstPersonCamera->GetComponentTransform();
+			float Nearest = TNumericLimits<float>::Max();
+			for (const FName Bone : { FName(TEXT("upperarm_r")), FName(TEXT("upperarm_l")), FName(TEXT("lowerarm_r")) })
+			{
+				if (FirstPersonMesh->GetBoneIndex(Bone) != INDEX_NONE)
+				{
+					const FVector L = CamT.InverseTransformPosition(FirstPersonMesh->GetSocketLocation(Bone));
+					Nearest = FMath::Min(Nearest, static_cast<float>(L.X));
+				}
+			}
+			bHideArms = Nearest < (bArmsAdsHidden ? ArmsAdsHideDepth + 4.f : ArmsAdsHideDepth);
+		}
+		if (bHideArms != bArmsAdsHidden)
+		{
+			bArmsAdsHidden = bHideArms;
+			UpdateArmsVisibility();
+		}
+	}
+
+	// Melee motion goes on top of the smoothing so the strike keeps its snap.
+	SmoothedViewmodelLoc = FMath::VInterpTo(SmoothedViewmodelLoc, Offset, DeltaSeconds, 25.f);
+	SmoothedViewmodelRot = FMath::RInterpTo(SmoothedViewmodelRot, Rot, DeltaSeconds, 12.f);
+	ViewmodelRoot->SetRelativeLocation(SmoothedViewmodelLoc + MeleeOff);
+	ViewmodelRoot->SetRelativeRotation(SmoothedViewmodelRot + MeleeRot);
 	ViewmodelRoot->SetRelativeScale3D(W->ViewmodelScale);
 
 	// Scope: once the sights are up, hand over to the HUD's scope view.
