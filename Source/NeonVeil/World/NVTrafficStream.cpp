@@ -18,26 +18,105 @@ ANVTrafficStream::ANVTrafficStream()
 	Reverse->SetupAttachment(Root);
 }
 
-void ANVTrafficStream::SetupComponent(UInstancedStaticMeshComponent* C, UMaterialInterface* Mat)
+void ANVTrafficStream::SetupComponent(UInstancedStaticMeshComponent* C, UStaticMesh* Mesh, UMaterialInterface* Mat, UMaterialInterface* Accent)
 {
 	C->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	C->SetCastShadow(false);
 	C->SetAffectDistanceFieldLighting(false);
 	C->SetAffectDynamicIndirectLighting(false);
 	C->SetMobility(EComponentMobility::Movable);
-	C->SetStaticMesh(VehicleMesh);
+	C->SetStaticMesh(Mesh);
+	C->EmptyOverrideMaterials();
 	if (Mat)
 	{
 		C->SetMaterial(0, Mat);
 	}
+	if (Accent && Mesh && AccentSlot < Mesh->GetStaticMaterials().Num())
+	{
+		C->SetMaterial(AccentSlot, Accent);
+	}
+}
+
+FTransform ANVTrafficStream::CarTransform(const FLaneCar& Car, float Sign) const
+{
+	// reverse lanes sit offset across Y so the two directions read as separate ribbons
+	if (Sign > 0.f)
+	{
+		return FTransform(FQuat::Identity, FVector(Car.X, Car.Y, Car.Z), VehicleScale);
+	}
+	const FQuat Q = bTurnReverseCars ? FQuat(FVector::UpVector, PI) : FQuat::Identity;
+	return FTransform(Q, FVector(LaneLength - Car.X, Car.Y + LaneSpread.X * 2.6f, Car.Z), VehicleScale);
 }
 
 void ANVTrafficStream::Build()
 {
-	FRandomStream R(Seed);
-	auto Fill = [&](TArray<FLaneCar>& Cars, int32 Count)
+	// drop every runtime-made lane component (including any copied over by PIE duplication)
+	TArray<UInstancedStaticMeshComponent*> Existing;
+	GetComponents(Existing);
+	for (UInstancedStaticMeshComponent* C : Existing)
 	{
-		Cars.Reset(Count);
+		if (C && C != Forward && C != Reverse)
+		{
+			C->DestroyComponent();
+		}
+	}
+	ExtraComps.Reset();
+	Lanes.Reset();
+
+	TArray<UStaticMesh*> Meshes;
+	Meshes.Add(VehicleMesh);
+	for (UStaticMesh* M : ExtraMeshes)
+	{
+		if (M)
+		{
+			Meshes.Add(M);
+		}
+	}
+	TArray<UMaterialInterface*> Accents;
+	for (UMaterialInterface* M : AccentMaterials)
+	{
+		if (M)
+		{
+			Accents.Add(M);
+		}
+	}
+	if (Accents.Num() == 0)
+	{
+		Accents.Add(nullptr);
+	}
+	const int32 Kinds = Meshes.Num() * Accents.Num();
+
+	// kind 0 uses the saved Forward/Reverse components, the rest are made here
+	for (int32 Dir = 0; Dir < 2; ++Dir)
+	{
+		const float Sign = Dir == 0 ? 1.f : -1.f;
+		for (int32 K = 0; K < Kinds; ++K)
+		{
+			UInstancedStaticMeshComponent* C = nullptr;
+			if (K == 0)
+			{
+				C = Dir == 0 ? Forward.Get() : Reverse.Get();
+			}
+			else
+			{
+				C = NewObject<UInstancedStaticMeshComponent>(this, NAME_None, RF_Transient | RF_TextExportTransient);
+				C->SetupAttachment(GetRootComponent());
+				C->CreationMethod = EComponentCreationMethod::Instance;
+				C->RegisterComponent();
+				ExtraComps.Add(C);
+			}
+			SetupComponent(C, Meshes[K / Accents.Num()], Dir == 0 ? ForwardMaterial.Get() : ReverseMaterial.Get(), Accents[K % Accents.Num()]);
+			C->ClearInstances();
+			FKindLane Lane;
+			Lane.Comp = C;
+			Lane.Sign = Sign;
+			Lanes.Add(MoveTemp(Lane));
+		}
+	}
+
+	FRandomStream R(Seed);
+	auto Fill = [&](int32 Dir, int32 Count)
+	{
 		for (int32 i = 0; i < Count; ++i)
 		{
 			FLaneCar Car;
@@ -47,32 +126,32 @@ void ANVTrafficStream::Build()
 			const int32 SubLane = R.RandRange(0, 3);
 			Car.Y = (SubLane - 1.5f) / 1.5f * LaneSpread.X + R.FRandRange(-0.08f, 0.08f) * LaneSpread.X;
 			Car.Z = R.FRandRange(-1.f, 1.f) * LaneSpread.Y;
-			Cars.Add(Car);
+			const int32 K = Kinds > 1 ? R.RandRange(0, Kinds - 1) : 0;
+			Lanes[Dir * Kinds + K].Cars.Add(Car);
 		}
 	};
-	Fill(ForwardCars, VehiclesPerDirection);
-	Fill(ReverseCars, bTwoWay ? VehiclesPerDirection : 0);
+	Fill(0, VehiclesPerDirection);
+	Fill(1, bTwoWay ? VehiclesPerDirection : 0);
 
-	SetupComponent(Forward, ForwardMaterial);
-	SetupComponent(Reverse, ReverseMaterial);
-	Forward->ClearInstances();
-	Reverse->ClearInstances();
 	if (!VehicleMesh)
 	{
 		return;
 	}
-	TArray<FTransform> F, Rv;
-	for (const FLaneCar& Car : ForwardCars)
+	for (FKindLane& Lane : Lanes)
 	{
-		F.Add(FTransform(FQuat::Identity, FVector(Car.X, Car.Y, Car.Z), VehicleScale));
+		UInstancedStaticMeshComponent* C = Lane.Comp.Get();
+		if (!C || Lane.Cars.Num() == 0)
+		{
+			continue;
+		}
+		TArray<FTransform> Xf;
+		Xf.Reserve(Lane.Cars.Num());
+		for (const FLaneCar& Car : Lane.Cars)
+		{
+			Xf.Add(CarTransform(Car, Lane.Sign));
+		}
+		C->AddInstances(Xf, false);
 	}
-	for (const FLaneCar& Car : ReverseCars)
-	{
-		// reverse lanes sit offset across Y so the two directions read as separate ribbons
-		Rv.Add(FTransform(FQuat::Identity, FVector(LaneLength - Car.X, Car.Y + LaneSpread.X * 2.6f, Car.Z), VehicleScale));
-	}
-	Forward->AddInstances(F, false);
-	Reverse->AddInstances(Rv, false);
 }
 
 void ANVTrafficStream::OnConstruction(const FTransform& Transform)
@@ -87,21 +166,20 @@ void ANVTrafficStream::BeginPlay()
 	Build();
 }
 
-void ANVTrafficStream::UpdateDirection(UInstancedStaticMeshComponent* C, TArray<FLaneCar>& Cars, float Sign, float DeltaSeconds)
+void ANVTrafficStream::UpdateLane(FKindLane& Lane, float DeltaSeconds)
 {
-	if (Cars.Num() == 0 || C->GetInstanceCount() != Cars.Num())
+	UInstancedStaticMeshComponent* C = Lane.Comp.Get();
+	if (!C || Lane.Cars.Num() == 0 || C->GetInstanceCount() != Lane.Cars.Num())
 	{
 		return;
 	}
 	TArray<FTransform> Xf;
-	Xf.SetNumUninitialized(Cars.Num());
-	const float YOffset = Sign > 0.f ? 0.f : LaneSpread.X * 2.6f;
-	for (int32 i = 0; i < Cars.Num(); ++i)
+	Xf.SetNumUninitialized(Lane.Cars.Num());
+	for (int32 i = 0; i < Lane.Cars.Num(); ++i)
 	{
-		FLaneCar& Car = Cars[i];
+		FLaneCar& Car = Lane.Cars[i];
 		Car.X = FMath::Fmod(Car.X + Car.Speed * DeltaSeconds, LaneLength);
-		const float X = Sign > 0.f ? Car.X : LaneLength - Car.X;
-		Xf[i] = FTransform(FQuat::Identity, FVector(X, Car.Y + YOffset, Car.Z), VehicleScale);
+		Xf[i] = CarTransform(Car, Lane.Sign);
 	}
 	C->BatchUpdateInstancesTransforms(0, Xf, false, true, false);
 }
@@ -109,6 +187,8 @@ void ANVTrafficStream::UpdateDirection(UInstancedStaticMeshComponent* C, TArray<
 void ANVTrafficStream::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-	UpdateDirection(Forward, ForwardCars, 1.f, DeltaSeconds);
-	UpdateDirection(Reverse, ReverseCars, -1.f, DeltaSeconds);
+	for (FKindLane& Lane : Lanes)
+	{
+		UpdateLane(Lane, DeltaSeconds);
+	}
 }

@@ -32,6 +32,11 @@ ANVTramRide::ANVTramRide()
 	MusicAudio->bAutoActivate = false;
 	MusicAudio->bAllowSpatialization = false;
 	MusicAudio->bIsMusic = true;
+
+	RainAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("RainAudio"));
+	RainAudio->SetupAttachment(Path);
+	RainAudio->bAutoActivate = false;
+	RainAudio->bAllowSpatialization = false;
 }
 
 float ANVTramRide::GetPathLength() const
@@ -283,6 +288,13 @@ void ANVTramRide::Tick(float DeltaSeconds)
 			RideAudio->SetSound(RideSound);
 			RideAudio->Play();
 		}
+		if (RainSound)
+		{
+			RainAudio->SetSound(RainSound);
+			RainAudio->SetLowPassFilterEnabled(RainLowPassHz > 0.f);
+			RainAudio->SetLowPassFilterFrequency(RainLowPassHz > 0.f ? RainLowPassHz : 20000.f);
+			RainAudio->FadeIn(0.5f, RainVolume);
+		}
 		if (Music)
 		{
 			MusicAudio->SetSound(Music);
@@ -300,9 +312,18 @@ void ANVTramRide::Tick(float DeltaSeconds)
 		const float Speed = (DistanceAt(PhaseTime + 0.05f) - D) / 0.05f;
 		RideAudio->SetVolumeMultiplier(FMath::Clamp(0.25f + 0.75f * Speed / StartSpeed, 0.f, 1.f));
 		RideAudio->SetPitchMultiplier(FMath::Lerp(0.8f, 1.f, FMath::Clamp(Speed / StartSpeed, 0.f, 1.f)));
+		if (RainAudio->IsPlaying())
+		{
+			// the docking bay is under the crown: the rain dies away as the tram pulls in
+			RainAudio->SetVolumeMultiplier(RainVolume * FMath::Clamp((L - D) / RainFadeDistance, 0.f, 1.f));
+		}
 		if (D >= L)
 		{
 			RideAudio->FadeOut(0.6f, 0.f);
+			if (RainAudio->IsPlaying())
+			{
+				RainAudio->FadeOut(0.5f, 0.f);
+			}
 			if (DockSound)
 			{
 				UGameplayStatics::PlaySound2D(this, DockSound);

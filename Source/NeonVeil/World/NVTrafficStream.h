@@ -63,6 +63,21 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Traffic")
 	TObjectPtr<UMaterialInterface> ReverseMaterial;
 
+	/** Further vehicle designs mixed into the lane (VehicleMesh is design 0). Same slot layout as VehicleMesh. */
+	UPROPERTY(EditAnywhere, Category = "Traffic|Variety")
+	TArray<TObjectPtr<UStaticMesh>> ExtraMeshes;
+
+	/** Hover-pad / accent tints: each car gets one of these on AccentSlot (empty = the mesh's own material). */
+	UPROPERTY(EditAnywhere, Category = "Traffic|Variety")
+	TArray<TObjectPtr<UMaterialInterface>> AccentMaterials;
+
+	UPROPERTY(EditAnywhere, Category = "Traffic|Variety", meta = (ClampMin = "0"))
+	int32 AccentSlot = 3;
+
+	/** Reverse-lane cars are turned around so a design with a distinct nose flies nose first. */
+	UPROPERTY(EditAnywhere, Category = "Traffic|Variety")
+	bool bTurnReverseCars = true;
+
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Traffic")
 	TObjectPtr<UInstancedStaticMeshComponent> Forward;
@@ -78,10 +93,21 @@ private:
 		float Y;
 		float Z;
 	};
-	TArray<FLaneCar> ForwardCars;
-	TArray<FLaneCar> ReverseCars;
+	/** One instanced component per (direction, design, accent) with the cars it draws. */
+	struct FKindLane
+	{
+		TWeakObjectPtr<UInstancedStaticMeshComponent> Comp;
+		TArray<FLaneCar> Cars;
+		float Sign = 1.f;
+	};
+	TArray<FKindLane> Lanes;
+
+	/** Runtime-created components for designs/accents beyond the first. */
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UInstancedStaticMeshComponent>> ExtraComps;
 
 	void Build();
-	void SetupComponent(UInstancedStaticMeshComponent* C, UMaterialInterface* Mat);
-	void UpdateDirection(UInstancedStaticMeshComponent* C, TArray<FLaneCar>& Cars, float Sign, float DeltaSeconds);
+	void SetupComponent(UInstancedStaticMeshComponent* C, UStaticMesh* Mesh, UMaterialInterface* Mat, UMaterialInterface* Accent);
+	FTransform CarTransform(const FLaneCar& Car, float Sign) const;
+	void UpdateLane(FKindLane& Lane, float DeltaSeconds);
 };

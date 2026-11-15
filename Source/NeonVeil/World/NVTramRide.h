@@ -95,6 +95,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ride|Audio", meta = (ClampMin = "0"))
 	float MusicFadeOut = 5.f;
 
+	/** Rain on the cabin roof during the ride (2D loop), fading out over RainFadeDistance before the dock. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ride|Audio")
+	TObjectPtr<USoundBase> RainSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ride|Audio", meta = (ClampMin = "0"))
+	float RainVolume = 0.45f;
+
+	/** Low-pass on the rain so it reads as heard from inside the cabin (Hz, 0 = off). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ride|Audio", meta = (ClampMin = "0"))
+	float RainLowPassHz = 2500.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ride|Audio", meta = (ClampMin = "1"))
+	float RainFadeDistance = 5000.f;
+
 	/** Ambient music bed of the destination (auto-activate off): faded in once the doors are open. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ride|Audio")
 	TObjectPtr<AActor> BedAfterDock;
@@ -146,6 +160,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UAudioComponent> MusicAudio;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<UAudioComponent> RainAudio;
 
 private:
 	struct FLeaf
