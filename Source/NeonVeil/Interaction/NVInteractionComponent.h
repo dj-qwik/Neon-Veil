@@ -46,6 +46,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil|Interaction")
 	float TraceRadius = 12.f;
 
+	/** Third person, when the aim misses: usable things within this cone of the view (cosine; 0.82 ~ 35 deg) count. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil|Interaction", meta = (ClampMin = "0", ClampMax = "1"))
+	float ThirdPersonFacingCos = 0.82f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil|Interaction")
 	float TraceInterval = 0.05f;
 

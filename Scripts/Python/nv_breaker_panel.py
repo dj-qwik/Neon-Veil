@@ -10,7 +10,7 @@ AT = unreal.AssetToolsHelpers.get_asset_tools()
 V = unreal.Vector
 OUT = []
 D = "/Game/NeonVeil/Materials/Prologue"
-WALL = (1354.0, -3050.0, 0.0)     # east wall of the control room (wall face x 1356, faces -X)
+WALL = (1323.0, -3050.0, 0.0)     # east wall of the control room: inner wall panel face x 1324 (SM_Wall7), faces -X
 YAW = 180.0
 
 def mi(name, parent, vec, scal):

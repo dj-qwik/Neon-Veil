@@ -1,4 +1,8 @@
 #include "Interaction/NVInteractionComponent.h"
+
+#include "Components/PrimitiveComponent.h"
+#include "Engine/OverlapResult.h"
+#include "Engine/World.h"
 #include "Interaction/NVInteractable.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -52,7 +56,11 @@ void UNVInteractionComponent::UpdateFocus()
 	FVector ViewLoc;
 	FRotator ViewRot;
 	PC->GetPlayerViewPoint(ViewLoc, ViewRot);
-	const FVector End = ViewLoc + ViewRot.Vector() * InteractionRange;
+	// Range is measured from the character, not the camera: in third person the camera sits a few metres behind
+	// Ghost, so add the camera-to-character distance along the view (the trace ignores Ghost himself).
+	const FVector Dir = ViewRot.Vector();
+	const float CameraBehind = FMath::Max(0.f, static_cast<float>(FVector::DotProduct(Pawn->GetPawnViewLocation() - ViewLoc, Dir)));
+	const FVector End = ViewLoc + Dir * (InteractionRange + CameraBehind);
 
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(NVInteract), false, GetOwner());
 	FHitResult Hit;
@@ -63,6 +71,44 @@ void UNVInteractionComponent::UpdateFocus()
 		if (HitActor && HitActor->Implements<UNVInteractable>() && INVInteractable::Execute_CanInteract(HitActor, GetOwner()))
 		{
 			NewFocus = HitActor;
+		}
+	}
+	// Third person: the over-the-shoulder camera puts the crosshair beside Ghost, so a precise aim at a small box on
+	// the wall is fiddly. If the view trace found nothing, take the usable thing in reach that Ghost and the camera
+	// are both roughly facing, with a clear line from Ghost to it.
+	if (!NewFocus && CameraBehind > 50.f)
+	{
+		const FVector Eye = Pawn->GetPawnViewLocation();
+		TArray<FOverlapResult> Overlaps;
+		FCollisionQueryParams OverlapParams(SCENE_QUERY_STAT(NVInteractNear), false, GetOwner());
+		GetWorld()->OverlapMultiByChannel(Overlaps, Eye, FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(InteractionRange), OverlapParams);
+		const FVector Dir2D = Dir.GetSafeNormal2D();
+		float BestScore = -1.f;
+		for (const FOverlapResult& O : Overlaps)
+		{
+			AActor* A = O.GetActor();
+			if (!A || A == NewFocus || !A->Implements<UNVInteractable>() || !INVInteractable::Execute_CanInteract(A, GetOwner()))
+			{
+				continue;
+			}
+			const FVector Target = O.GetComponent() ? O.GetComponent()->Bounds.Origin : A->GetActorLocation();
+			const FVector To = Target - Eye;
+			const float Facing = FVector::DotProduct(To.GetSafeNormal2D(), Dir2D);
+			if (Facing < ThirdPersonFacingCos || To.Size() > InteractionRange)
+			{
+				continue;
+			}
+			FHitResult Block;
+			if (GetWorld()->LineTraceSingleByChannel(Block, Eye, Target, ECC_Visibility, OverlapParams) && Block.GetActor() != A)
+			{
+				continue;
+			}
+			const float Score = Facing - To.Size() / (InteractionRange * 4.f);
+			if (Score > BestScore)
+			{
+				BestScore = Score;
+				NewFocus = A;
+			}
 		}
 	}
 	SetFocus(NewFocus);
