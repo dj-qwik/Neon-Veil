@@ -54,7 +54,7 @@ Rubber Flooring, Terrazzo, Brushed Metal, Scratched Metal, Painted Metal, Black 
 
 | Item | Seller | Status | Notes |
 |---|---|---|---|
-| Retro Futuristic Soldier | Red Mallet Studio | **In use (player third-person body)** | Free. Manny-skeleton copy, made compatible with the project Manny. Recoloured by `MI_NV_Ghost7`: matte-black fabric, charcoal plates, cyan seam light. Set up by `Scripts/Python/nv_ghost7_look.py`. |
+| Retro Futuristic Soldier | Red Mallet Studio | **In use (player body: seen only as Ghost's shadow since third person was dropped)** | Free. Manny-skeleton copy, made compatible with the project Manny. Recoloured by `MI_NV_Ghost7`: matte-black fabric, charcoal plates, cyan seam light. Set up by `Scripts/Python/nv_ghost7_look.py`. |
 | Lyra Starter Game | Epic Games | Library (claimed) | Free. Claimed as a backup source of third-person gun animations; not needed yet, because the project's template Mannequin rifle/pistol sets already cover it. |
 
 **Suit material.** The pack's master shows its plates as near-mirror metal, which turned into noisy Lumen speckle on the wet night street. `nv_ghost7_material.py` makes a local copy, `/Game/RetroFuturisticSoldier/NV/M_NV_Ghost7Soldier`, inside the pack's own folder so it stays gitignored. The copy adds three parameters: `RoughnessMin` (0.5), `MetallicScale` (1.0) and `BaseTint` (0.3). `MI_NV_Ghost7` is parented to that copy. `ANVPlayerCharacter::BodyMaterial` applies it to every slot at runtime.

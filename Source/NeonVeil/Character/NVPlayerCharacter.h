@@ -6,7 +6,6 @@
 #include "NVPlayerCharacter.generated.h"
 
 class UCameraComponent;
-class USpringArmComponent;
 class USkeletalMeshComponent;
 class UStaticMeshComponent;
 class UInputMappingContext;
@@ -94,13 +93,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "NeonVeil")
 	bool IsSprinting() const { return bSprinting; }
 
-	/** Switch between the first-person view and an over-the-shoulder third-person view. */
-	UFUNCTION(BlueprintCallable, Category = "NeonVeil")
-	void SetThirdPerson(bool bNewThirdPerson);
-
-	UFUNCTION(BlueprintPure, Category = "NeonVeil")
-	bool IsThirdPerson() const { return bThirdPerson; }
-
 	/** Scoped weapon fully aimed: the viewmodel is hidden and the HUD draws the scope. */
 	bool IsScopedIn() const { return bScopedIn; }
 
@@ -162,28 +154,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> WeaponStaticMesh;
 
-	/** Third-person view: over-the-shoulder boom and camera (inactive in first person). */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<USpringArmComponent> CameraBoom;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<UCameraComponent> ThirdPersonCamera;
-
-	/** The current weapon in Ghost's right hand, seen only in third person. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<USkeletalMeshComponent> ThirdPersonWeapon;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<UStaticMeshComponent> ThirdPersonWeaponStatic;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Third Person")
-	FName ThirdPersonWeaponSocket = TEXT("hand_r");
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Third Person")
-	FTransform ThirdPersonWeaponOffset = FTransform(FRotator(0.f, 90.f, 0.f), FVector(-2.f, 4.f, 0.f));
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Third Person")
-	bool bStartThirdPerson = false;
+	/** The body is only seen as Ghost's shadow: how its right hand holds a weapon when the weapon data gives no grip. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Body")
+	FTransform BodyWeaponOffset = FTransform(FRotator(0.f, 90.f, 0.f), FVector(-2.f, 4.f, 0.f));
 
 	/** Retired: the shock baton is now its own weapon slot (DA_Weapon_Baton). Kept so existing Blueprint data still loads; never shown. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -250,9 +223,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<UInputAction> HolsterAction;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	TObjectPtr<UInputAction> ToggleViewAction;
 
 	/** Ability slots 0..2 (optical disruption, kinetic shield, drone uplink). */
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
@@ -428,25 +398,23 @@ private:
 	void InteractReleased();
 	void NextWeapon();
 	void HolsterPressed();
-	void ToggleViewPressed();
 	void NavGuidePressed();
 	void UpdateArmsVisibility();
 	void ShowFistArms();
-	void RefreshThirdPersonWeapon();
+	void RefreshBodyHold();
 	class UNVBodyAnimInstance* GetBodyAnim() const;
 	void ApplyBodyAnimClass();
 
 	UFUNCTION()
 	void HandleMeleeSwing();
 public:
-	/** QA: live-tune the third-person grip of the current weapon (relative to hand_r) and the left-hand point. */
+	/** QA: live-tune the body (shadow) grip of the current weapon (relative to hand_r) and the left-hand point. */
 	void DebugSetGrip(const FTransform& Grip, const FVector& LeftHand);
 	FString DebugDescribeBody() const;
 private:
 	TOptional<FTransform> DebugGripOverride;
 	TOptional<FVector> DebugLeftOverride;
 	void ApplyViewmodelVisibility(bool bScoped);
-	bool bThirdPerson = false;
 	bool bViewmodelHidden = false;
 	void PrevWeapon();
 	void MeleePressed();
