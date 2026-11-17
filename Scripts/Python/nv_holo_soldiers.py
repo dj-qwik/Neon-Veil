@@ -27,6 +27,7 @@ MATDIR = "/Game/NeonVeil/Materials/Holo"
 SOLDIER = "/Game/RetroFuturisticSoldier/Meshes/SKM_Soldier_Manny"
 ROBOT = "/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple"
 GUN = "/Game/KINEMATION/Sci-fi_FPS_Pack/Weapons/Gepard/SKM_Gepard"
+GUN_YAW_TRIM = -45.0   # SKM_Gepard ref pose sits ~45 deg off its component axes
 POSE = "/Game/Characters/Mannequins/Anims/Rifle/MF_Rifle_Idle_ADS"
 ROBOT_TARGETS = ("C_Target_Shielded0", "C_Target_Shielded1", "C_Target_Concealed1", "C_Target_Moving1")
 BODY_SCALE = V(0.55, 0.55, 1.5)     # 55 cm wide, 150 cm tall torso/legs hitbox
@@ -226,9 +227,10 @@ def fit():
     sign = 1.0 if getattr(org, axis) >= 0 else -1.0
     local_yaw = {("x", 1.0): 0.0, ("x", -1.0): 180.0, ("y", 1.0): -90.0, ("y", -1.0): 90.0}.get((axis, sign), 0.0)
     log("gun bounds ext", ext, "origin", org, "long axis", axis, sign)
-    world_rot = unreal.MathLibrary.make_rot_from_xz(fwd, V(0, 0, 1))
-    local = unreal.Transform(V(0, 0, 0), unreal.Rotator(roll=0, pitch=0, yaw=local_yaw), V(1, 1, 1))
-    gun_world = local * unreal.Transform(hand.translation + fwd * 3.0 + V(0, 0, -3.0), world_rot, V(1, 1, 1))
+    fwd_yaw = math.degrees(math.atan2(fwd.y, fwd.x))
+    log("fwd", fwd, "fwd yaw", fwd_yaw, "local yaw", local_yaw)
+    gun_world = unreal.Transform(hand.translation + fwd * 3.0 + V(0, 0, -3.0),
+                                 unreal.Rotator(roll=0, pitch=0, yaw=fwd_yaw + local_yaw + GUN_YAW_TRIM), V(1, 1, 1))
     gun_rel = unreal.MathLibrary.make_relative_transform(gun_world, fig.get_world_transform())
     log("weak point rel", wp_rel, "gun rel", gun_rel.translation, gun_rel.rotation.rotator())
     bp = unreal.load_asset(BP_PATH)
@@ -239,10 +241,17 @@ def fit():
     hs["FigureGun"][1].set_editor_property("relative_rotation", gun_rel.rotation.rotator())
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
     EAL.save_loaded_asset(bp)
+    gun_m = unreal.load_asset(f"{MATDIR}/M_NV_OrreryGlow")
+    if not gun_m.get_editor_property("used_with_skeletal_mesh"):
+        gun_m.set_editor_property("used_with_skeletal_mesh", True)
+        MEL.recompile_material(gun_m)
+        EAL.save_loaded_asset(gun_m)
     for a in targets():
         if a.get_actor_label() == "C_Target_Drone":
             continue
         c = {x.get_name(): x for x in a.get_components_by_class(unreal.SceneComponent)}
+        for i in range(c["FigureGun"].get_num_materials()):
+            c["FigureGun"].set_material(i, gun_m)
         c["WeakPoint"].set_editor_property("relative_location", wp_rel)
         c["WeakPoint"].set_editor_property("relative_scale3d", wp_scale)
         c["FigureGun"].set_editor_property("relative_location", gun_rel.translation)
