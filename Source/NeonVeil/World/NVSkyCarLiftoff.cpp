@@ -88,6 +88,19 @@ ANVSkyCarLiftoff::ANVSkyCarLiftoff()
 	Hum->SetupAttachment(CarRoot);
 	Hum->bAutoActivate = false;
 
+	ParkFill = CreateDefaultSubobject<USpotLightComponent>(TEXT("ParkFill"));
+	ParkFill->SetupAttachment(Root);
+	ParkFill->SetRelativeLocation(FVector(0.f, 0.f, 650.f));
+	ParkFill->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
+	ParkFill->SetIntensityUnits(ELightUnits::Lumens);
+	ParkFill->SetIntensity(2600.f);
+	ParkFill->SetAttenuationRadius(1100.f);
+	ParkFill->SetInnerConeAngle(20.f);
+	ParkFill->SetOuterConeAngle(48.f);
+	ParkFill->SetLightColor(FLinearColor(0.7f, 0.8f, 1.f));
+	ParkFill->SetCastShadows(false);
+	ParkFill->SetMobility(EComponentMobility::Movable);
+
 	Blocker = CreateDefaultSubobject<UBoxComponent>(TEXT("Blocker"));
 	Blocker->SetupAttachment(Root);
 	Blocker->SetCollisionProfileName(TEXT("BlockAll"));
@@ -125,7 +138,7 @@ void ANVSkyCarLiftoff::BeginPlay()
 	{
 		L->SetIntensity(0.f);
 	}
-	SetGlow(0.f);
+	SetGlow(ParkedGlow);
 	if (HumSound)
 	{
 		Hum->SetSound(HumSound);
@@ -169,6 +182,12 @@ void ANVSkyCarLiftoff::Say(const TArray<FNVSubtitleLine>& Lines)
 	}
 }
 
+bool ANVSkyCarLiftoff::PlayerPast(const FVector& Plane) const
+{
+	const APawn* P = UGameplayStatics::GetPlayerPawn(this, 0);
+	return P && FVector::DotProduct(P->GetActorLocation() - Plane, ProgressDirection.GetSafeNormal()) > 0.f;
+}
+
 float ANVSkyCarLiftoff::PlayerDistance() const
 {
 	const APawn* P = UGameplayStatics::GetPlayerPawn(this, 0);
@@ -184,7 +203,7 @@ void ANVSkyCarLiftoff::Tick(float Dt)
 {
 	Super::Tick(Dt);
 	PhaseTime += Dt;
-	const FTransform Park(ParkRot, ParkPos);
+	const FTransform Park(ParkRot, ParkPos, CarRoot->GetComponentScale());
 
 	switch (Phase)
 	{
@@ -254,7 +273,7 @@ void ANVSkyCarLiftoff::Tick(float Dt)
 		break;
 	}
 	case EPhase::Parked:
-		if (PlayerDistance() < LightsOnDistance)
+		if (LightsOnPlane.IsNearlyZero() ? PlayerDistance() < LightsOnDistance : PlayerPast(LightsOnPlane))
 		{
 			if (PowerUpSound) { UGameplayStatics::PlaySoundAtLocation(this, PowerUpSound, ParkPos, 1.2f, 1.f, 0.f, Attenuation); }
 			if (Hum && HumSound) { Hum->FadeIn(2.5f, 0.55f); }
@@ -273,9 +292,10 @@ void ANVSkyCarLiftoff::Tick(float Dt)
 		TailL->SetIntensity(TailBase * F); TailR->SetIntensity(TailBase * F);
 		UnderF->SetIntensity(UnderBase * 0.35f * F); UnderR->SetIntensity(UnderBase * 0.35f * F);
 		Cabin->SetIntensity(CabinBase * F);
-		SetGlow(GlowOn * F);
+		SetGlow(FMath::Lerp(ParkedGlow, GlowOn, F));
 		const float PD = PlayerDistance();
-		if (T > MinIdleBeforeLiftoff && (PD < LiftoffDistance || (T > LingerTime && PD < LingerDistance)))
+		const bool bGo = LiftoffPlane.IsNearlyZero() ? PD < LiftoffDistance : (PlayerPast(LiftoffPlane) || PD < LiftoffDistance);
+		if (T > MinIdleBeforeLiftoff && (bGo || (T > LingerTime && PD < LingerDistance)))
 		{
 			if (LiftoffSound) { UGameplayStatics::SpawnSoundAttached(LiftoffSound, CarRoot, NAME_None, FVector::ZeroVector, EAttachLocation::KeepRelativeOffset, false, LiftoffVolume, 1.f, 0.f, Attenuation); }
 			SetPhase(EPhase::Spool);
@@ -308,6 +328,7 @@ void ANVSkyCarLiftoff::Tick(float Dt)
 		const FRotator R(3.5f * FMath::Sin(A * PI), ParkRot.Yaw + 2.f * FMath::Sin(A * PI * 1.3f), 1.8f * FMath::Sin(PhaseTime * 1.7f));
 		PlaceCar(ParkPos + FVector(0.f, 0.f, H), R);
 		UnderF->SetIntensity(UnderBase * (1.f - 0.4f * A)); UnderR->SetIntensity(UnderBase * (1.f - 0.4f * A));
+		ParkFill->SetIntensity(2600.f * (1.f - A));
 		if (!bLiftLineSaid && PhaseTime > LiftoffLineDelay - SpoolTime) { bLiftLineSaid = true; Say(LinesOnLiftoff); }
 		if (A >= 1.f)
 		{

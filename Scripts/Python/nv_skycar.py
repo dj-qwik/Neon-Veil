@@ -21,7 +21,9 @@ MAT_DIR = "/Game/NeonVeil/Materials/Vehicles"
 AUD = "/Game/NeonVeil/Audio/SkyCar"
 MAP = "/Game/NeonVeil/Maps/M00/L_M00_Prologue"
 ZS = -12000.0
-CAR_LOC, CAR_YAW = (7470.0, -7650.0), -90.0          # east kerb outside the hub, nose south toward the approaching player
+CAR_LOC, CAR_YAW = (6430.0, -8180.0), -90.0          # west kerb just north of the second crosswalk, nose south toward the player
+CAR_SCALE = 1.3                                      # 7 m long, 2.2 m tall: a big, expensive machine
+XW1, XW2 = -13400.0, -9000.0                         # crosswalk centre lines (6 m deep)
 FOLDER = "P_Street/SkyCar"
 
 def imp(file, dest, name, **opts):
@@ -147,6 +149,7 @@ try:
     gz = ground(*CAR_LOC)
     car = EAS.spawn_actor_from_class(unreal.NVSkyCarLiftoff, V(CAR_LOC[0], CAR_LOC[1], gz + 4), R(yaw=CAR_YAW))
     car.set_actor_label("SkyCar_Liftoff"); car.set_folder_path(FOLDER)
+    car.get_editor_property("car_root").set_relative_scale3d(V(CAR_SCALE, CAR_SCALE, CAR_SCALE))
     car.get_editor_property("body").set_static_mesh(body)
     cp = car.get_editor_property("canopy"); cp.set_static_mesh(canopy)
     sp = lambda k, v: car.set_editor_property(k, v)
@@ -157,7 +160,14 @@ try:
         fx = unreal.load_asset(p) if EAL.does_asset_exist(p) else fx
     sp("lift_dust_fx", fx); sp("lift_dust_scale", 1.6)
     # merge into the southbound street lane (Sky_Street_A_S: x 6046, z -7800, heading -Y), right over the player's head
-    sp("join_point", V(6046, -11300, -7800)); sp("join_direction", V(0, -1, 0))
+    sp("join_point", V(6046, -11800, -7800)); sp("join_direction", V(0, -1, 0))
+    # lights wake as Ghost clears the first crosswalk; liftoff as he steps onto the second (car is just past it)
+    sp("progress_direction", V(0, 1, 0))
+    sp("lights_on_plane", V(7046, XW1 + 300, ZS)); sp("liftoff_plane", V(7046, XW2 - 300, ZS))
+    sp("lights_on_distance", 100000.0); sp("liftoff_distance", 560.0)
+    sp("min_idle_before_liftoff", 1.0); sp("spool_time", 0.9)
+    sp("blocker_extent", V(480, 300, 380))
+    sp("board_point", V(20, -200, 0)); sp("seat_point", V(20, -20, 50))
     sp("lines_on_lights_on", [line("Ghost-7", "Parked across a tram stop. Somebody's important.", 3.4)])
     sp("lines_on_liftoff", [line("Ghost-7", "That's Veyra. The money floats... the rest of us get the rain.", 4.6)])
 
@@ -165,8 +175,8 @@ try:
     src = next((a for a in EAS.get_all_level_actors() if a.get_actor_label() == "NPC_St_E2"), None)
     if src:
         d = EAS.duplicate_actor(src)
-        start = V(7750, -6820, ZS + 100)
-        d.set_actor_location(start, False, False); d.set_actor_rotation(R(yaw=-120), False)
+        start = V(5650, -7450, ZS + 100)
+        d.set_actor_location(start, False, False); d.set_actor_rotation(R(yaw=-45), False)
         d.set_actor_label("NPC_SkyCarDriver"); d.set_folder_path(FOLDER); d.tags = [unreal.Name("NVNPC")]
         board_local = car.get_editor_property("board_point")
         board = car.get_actor_transform().transform_location(board_local)

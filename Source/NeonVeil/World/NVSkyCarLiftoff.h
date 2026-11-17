@@ -50,6 +50,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<UPointLightComponent> UnderR;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<UPointLightComponent> Cabin;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<UAudioComponent> Hum;
+	/** Soft overhead wash so the parked car reads in the dark before its own lights wake (stays at the kerb). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<USpotLightComponent> ParkFill;
 	/** Stays put at the parking spot: keeps the player from touching / climbing the car. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components") TObjectPtr<UBoxComponent> Blocker;
 
@@ -68,6 +70,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar|Driver") float CanopyCloseTime = 1.6f;
 
 	// --- triggers
+	/** Progress triggers: when set (non-zero), the player crossing the plane through this point (facing
+	 *  ProgressDirection) wakes the car / launches it, instead of the distance tests. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar") FVector ProgressDirection = FVector(0.f, 1.f, 0.f);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar") FVector LightsOnPlane = FVector::ZeroVector;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar") FVector LiftoffPlane = FVector::ZeroVector;
+	/** Strips glow this much while the car sits parked and dark. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar|Look") float ParkedGlow = 0.12f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar") float LightsOnDistance = 2600.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar") float LiftoffDistance = 650.f;
 	/** Seconds the car idles with lights on before it may lift off. */
@@ -116,6 +125,7 @@ private:
 	void SetGlow(float G);
 	void Say(const TArray<FNVSubtitleLine>& Lines);
 	float PlayerDistance() const;
+	bool PlayerPast(const FVector& Plane) const;
 	void PlaceCar(const FVector& Pos, const FRotator& Rot);
 
 	TArray<TObjectPtr<UMaterialInstanceDynamic>> GlowMIDs;
