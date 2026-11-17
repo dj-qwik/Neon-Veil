@@ -83,6 +83,21 @@ try:
     dn = sound("PowerDown", "Power_Down", "SwitchOff", "Switch", "ScifiDoor_SlowShut")
     s.set_editor_property("lights_up_sound", up)
     s.set_editor_property("show_sound", dn)
+    # ElevenLabs hologram flicker one-shots (Art/Audio/Holo), imported non-looping
+    import os
+    src = os.path.join(unreal.Paths.project_dir(), "Art", "Audio", "Holo")
+    def imp(name):
+        f = os.path.join(src, name + ".wav")
+        if not os.path.exists(f):
+            return None
+        t = unreal.AssetImportTask()
+        t.filename = f; t.destination_path = "/Game/NeonVeil/Audio/Holo"; t.destination_name = name
+        t.replace_existing = True; t.automated = True; t.save = True
+        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([t])
+        return unreal.load_asset("/Game/NeonVeil/Audio/Holo/" + name)
+    s.set_editor_property("hologram_off_sound", imp("SW_NV_HoloFlickerOff"))
+    s.set_editor_property("hologram_on_sound", imp("SW_NV_HoloFlickerOn"))
+    log("holo sounds", s.get_editor_property("hologram_off_sound"), s.get_editor_property("hologram_on_sound"))
     log("switch: lights", len(lights), "material actors", len(mats), "holograms", [h.get_actor_label() for h in holos])
     log("sounds", up.get_path_name() if up else None, dn.get_path_name() if dn else None)
     unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()

@@ -62,6 +62,11 @@ void ANVRoomLightSwitch::Toggle()
 	{
 		UGameplayStatics::PlaySound2D(this, S);
 	}
+	if (USoundBase* H = bWorkLights ? HologramOffSound.Get() : HologramOnSound.Get())
+	{
+		const AActor* At = Holograms.Num() > 0 && Holograms[0] ? Holograms[0].Get() : this;
+		UGameplayStatics::PlaySoundAtLocation(this, H, At->GetActorLocation(), HologramSoundVolume);
+	}
 	FlickerTime = 0.f;
 	NextFlicker = 0.f;
 	UpdatePrompts();

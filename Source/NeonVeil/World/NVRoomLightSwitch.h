@@ -61,6 +61,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Switch")
 	TObjectPtr<USoundBase> ShowSound;
 
+	/** Glitchy flicker played at the first hologram as it cuts out / powers back on. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Switch")
+	TObjectPtr<USoundBase> HologramOffSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Switch")
+	TObjectPtr<USoundBase> HologramOnSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Switch")
+	float HologramSoundVolume = 1.2f;
+
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil")
 	void Toggle();
 
