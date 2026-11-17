@@ -7,6 +7,8 @@
 #include "NVTrainingTarget.generated.h"
 
 class UStaticMeshComponent;
+class USkeletalMeshComponent;
+class UAnimSequence;
 class UNVHealthComponent;
 class USoundBase;
 class UNiagaraSystem;
@@ -89,6 +91,49 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target")
 	bool bAllowTakedown = true;
 
+	// ---- Hologram combatant figure (optional skeletal component named "Figure", rifle component named "FigureGun") ----
+
+	/** Pose while standing / paused at a patrol end (faces the lane). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	TObjectPtr<UAnimSequence> FigureIdleAnim;
+
+	/** Loop while walking a patrol leg (faces the direction of travel). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	TObjectPtr<UAnimSequence> FigureWalkAnim;
+
+	/** Ground speed the walk loop was authored at; play rate = patrol speed / this. 0 = measure from root motion (fallback 160). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	float FigureWalkAnimSpeed = 0.f;
+
+	/** Walking figures move at this speed (cm/s) instead of PatrolSpeed. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	float FigureWalkSpeed = 150.f;
+
+	/** Seconds a walking figure stands at each patrol end, facing the lane, before turning back. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	float PatrolEndPause = 1.6f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	float FigureTurnRate = 300.f;
+
+	/** Figure relative yaw that makes the mesh itself face the actor's forward (UE skeletal meshes face +Y: -90). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	float FigureMeshForwardYaw = -90.f;
+
+	/** Rifle relative to the figure's grip socket (hand_r), measured from the idle pose in the editor. Identity = leave the rifle where it is. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	FTransform FigureGunGrip = FTransform::Identity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	FName FigureGunSocket = TEXT("hand_r");
+
+	/** Head weak point follows this bone (offset up by HeadCentreUp). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	FName FigureHeadBone = TEXT("head");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target|Figure")
+	float HeadCentreUp = 9.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target")
 	TObjectPtr<USoundBase> ClearedSound;
 
@@ -128,6 +173,22 @@ private:
 
 	bool NeedsTick() const;
 
+	void SetupFigure();
+	void UpdateFigure(float DeltaSeconds, const FVector& Velocity);
+	void PlayFigureAnim(UAnimSequence* Anim, float Rate);
+
+	UPROPERTY(Transient)
+	TObjectPtr<USkeletalMeshComponent> HoloFigure;
+
+	UPROPERTY(Transient)
+	TObjectPtr<USceneComponent> HoloGun;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAnimSequence> FigureCurrentAnim;
+
+	float FigureFacingYaw = 0.f;     // relative yaw of the figure that faces the lane
+	float FigureYaw = 0.f;           // current relative yaw
+	float PatrolPauseLeft = 0.f;
 	FVector StartLocation;
 	FRotator StartRotation;
 	float StaggerTimeLeft = 0.f;
