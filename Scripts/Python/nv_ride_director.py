@@ -62,7 +62,7 @@ LINES = [
     line(48.4, "Station PA", "Arriving: the Glass Crown. Please stand clear of the doors.", 3.6, True, "Crown Line"),
 ]
 
-def import_wav(name):
+def import_wav(name, loop=True):
     path = f"{AUD}/{name}"
     t = unreal.AssetImportTask()
     t.filename = os.path.join(SRC, name + ".wav")
@@ -73,7 +73,7 @@ def import_wav(name):
     t.save = False
     AT.import_asset_tasks([t])
     w = unreal.load_asset(path)
-    w.set_editor_property("looping", True)
+    w.set_editor_property("looping", loop)
     EAL.save_loaded_asset(w, only_if_is_dirty=False)
     return w
 
@@ -123,6 +123,10 @@ def attenuation():
 
 def main():
     siren, engine = import_wav("SW_NV_PoliceSiren"), import_wav("SW_NV_HoverEngine")
+    # one-shots: siren wind-down (synth, from the siren loop), sub-bass hit (synth), ElevenLabs blast + cook-offs
+    dying, bass = import_wav("SW_NV_SirenDying", False), import_wav("SW_NV_BassHit", False)
+    big = import_wav("SW_NV_BigExplosion", False) if os.path.exists(os.path.join(SRC, "SW_NV_BigExplosion.wav")) else None
+    cook = import_wav("SW_NV_CookOffs", False) if os.path.exists(os.path.join(SRC, "SW_NV_CookOffs.wav")) else None
     att = attenuation()
     ride = next(a for a in EAS.get_all_level_actors() if isinstance(a, unreal.NVTramRide))
     d = next((a for a in EAS.get_all_level_actors() if a.get_actor_label() == "R_RideDirector"), None)
@@ -155,6 +159,12 @@ def main():
     sp("shot_sounds", [s for s in shots if s])
     sp("explosion_sound", unreal.load_asset("/Game/FreeWeaponSFX/Cue/GrenadeLauncher/sfx_wpn_gl_explosion_Cue"))
     sp("attenuation", att)
+    sp("siren_volume", 0.4)
+    sp("siren_dying_sound", dying)
+    sp("bass_hit_sound", bass)
+    sp("big_explosion_sound", big)
+    sp("secondary_explosion_sound", cook)
+    sp("explosion_scale", 7.0)
     log("ride duration %.1f s, path %.0f cm" % (ride.get_ride_duration(), ride.get_path_length()))
     log("director set: %d lines, %d shot sounds" % (len(LINES), len(shots)))
     unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()

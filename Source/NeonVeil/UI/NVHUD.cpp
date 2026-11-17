@@ -93,7 +93,7 @@ void ANVHUD::PushMessage(const FNVCommsMessage& Message)
 	}
 	if (Message.Voice)
 	{
-		UGameplayStatics::PlaySound2D(this, Message.Voice);
+		UGameplayStatics::PlaySound2D(this, Message.Voice, VoiceVolume);
 	}
 }
 
@@ -549,7 +549,7 @@ void ANVHUD::UpdateSubtitleQueue()
 		ShowSubtitle(Line.Speaker, Line.Text, Line.Duration);
 		if (Line.Voice)
 		{
-			UGameplayStatics::PlaySound2D(this, Line.Voice);
+			UGameplayStatics::PlaySound2D(this, Line.Voice, VoiceVolume);
 		}
 	}
 }

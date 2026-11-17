@@ -19,6 +19,9 @@ for l in lines:
     t.automated = True; t.replace_existing = True; t.save = True
     AT.import_asset_tasks([t])
     s = unreal.load_asset(DST + "/VO_" + l["id"])
+    if s and unreal.EditorAssetLibrary.does_asset_exist("/Game/NeonVeil/Audio/Mix/SMX_NV_Voice"):
+        s.set_editor_property("sound_submix_object", unreal.load_asset("/Game/NeonVeil/Audio/Mix/SMX_NV_Voice"))  # limiter bus
+        unreal.EditorAssetLibrary.save_loaded_asset(s, only_if_is_dirty=False)
     if s:
         by_text[l["text"].strip()] = s
         log.append("imported %s %.2fs" % (l["id"], s.get_editor_property("duration")))

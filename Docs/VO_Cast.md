@@ -31,6 +31,7 @@ Daniel voices both Crown News and the Station PA. If those two ever speak back t
   6. Run `nv_vo_hook <set>`.
 - **Radio voices** (CPD and any police or comms chatter) get this after `vo_convert.sh`:
   `highpass=f=380,lowpass=f=3200,acrusher=bits=10:mix=0.25,volume=1.4,alimiter=limit=0.9`
+- **Loudness:** every SoundWave under `Audio/VO` plays through the `SMX_NV_Voice` submix, which has a limiter (`DP_NV_VoiceLimiter`). The HUD boosts voice by `VoiceVolume` (2.2x). `nv_vo_hook` routes new imports to that submix automatically. For older imports, run `nv_vo_submix.py` once.
 - The HUD plays subtitle lines one after another. When lines are timed, space their cues by each take's length plus 0.35 s.
 
 ## Existing flows

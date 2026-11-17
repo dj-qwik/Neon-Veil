@@ -107,6 +107,29 @@ public:
 	TObjectPtr<USoundBase> ExplosionSound;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
 	TObjectPtr<USoundAttenuation> Attenuation;
+	/** Siren loudness (it sits right outside the windows for several seconds). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
+	float SirenVolume = 0.4f;
+	/** Siren pitch at the moment of impact: it winds down / detunes from 1 to this while the car tumbles. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
+	float SirenDyingPitch = 0.42f;
+	/** Pre-rendered wind-down of the siren (pitch sagging + warble over the tumble). Replaces the loop at the hit;
+	 *  without it the live loop is pitched down instead. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
+	TObjectPtr<USoundBase> SirenDyingSound;
+	/** Big layered blast (2D, through the cabin) and the follow-up cook-off explosions. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
+	TObjectPtr<USoundBase> BigExplosionSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
+	TObjectPtr<USoundBase> SecondaryExplosionSound;
+	/** Sub-bass impact on the moment of the explosion. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
+	TObjectPtr<USoundBase> BassHitSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
+	float BassHitVolume = 1.6f;
+	/** Camera trauma at the explosion (0..1.6); the hit on the patrol car gets a small kick too. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|FX")
+	float BlastShake = 1.1f;
 
 private:
 	struct FKey { float T; FVector P; };
@@ -118,6 +141,13 @@ private:
 	void FireShot(const FVector& From, const FVector& To, bool bPolice);
 	void Explode(const FVector& At);
 	void SayLine(const FNVSubtitleLine& Line);
+	void SecondaryBlast(const FVector& At, float Scale, bool bLoud);
+
+	struct FPendingBlast { float Due; FVector At; float Scale; bool bLoud; };
+	TArray<FPendingBlast> PendingBlasts;
+	float NextSparkBurst = 0.f;
+	float ExplodeClock = 0.f;
+	bool bCookOffsPlaying = false;
 
 	UPROPERTY(Transient) TObjectPtr<UStaticMeshComponent> Suspect;
 	UPROPERTY(Transient) TObjectPtr<UStaticMeshComponent> Police;
@@ -128,6 +158,7 @@ private:
 	UPROPERTY(Transient) TObjectPtr<USpotLightComponent> Spot;
 	UPROPERTY(Transient) TObjectPtr<UPointLightComponent> BlastLight;
 	UPROPERTY(Transient) TObjectPtr<UAudioComponent> Siren;
+	UPROPERTY(Transient) TObjectPtr<UAudioComponent> SirenDying;
 	UPROPERTY(Transient) TObjectPtr<UAudioComponent> SuspectEngine;
 	UPROPERTY(Transient) TObjectPtr<UNiagaraComponent> SmokeTrail;
 	UPROPERTY(Transient) TArray<TObjectPtr<UStaticMeshComponent>> Tracers;

@@ -75,6 +75,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
 	float SubtitleScale = 1.f;
 
+	/** Loudness of voiced subtitle / comms lines (settings hook). Music and effects are not affected. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD|Audio", meta = (ClampMin = "0", ClampMax = "4"))
+	float VoiceVolume = 2.2f;
+
 	/** Global HUD text size multiplier (settings hook). Text is rendered at size, so it stays sharp. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD", meta = (ClampMin = "0.75", ClampMax = "2.5"))
 	float TextScale = 1.4f;

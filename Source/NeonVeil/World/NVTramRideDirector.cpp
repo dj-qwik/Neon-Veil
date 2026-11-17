@@ -2,6 +2,7 @@
 
 #include "NeonVeil.h"
 #include "World/NVTramRide.h"
+#include "World/NVBlastShake.h"
 #include "UI/NVHUD.h"
 #include "Components/AudioComponent.h"
 #include "Components/PointLightComponent.h"
@@ -143,7 +144,7 @@ void ANVTramRideDirector::BeginPlay()
 	BlastLight->SetMobility(EComponentMobility::Movable);
 	BlastLight->SetIntensityUnits(ELightUnits::Lumens);
 	BlastLight->SetIntensity(0.f);
-	BlastLight->SetAttenuationRadius(9000.f);
+	BlastLight->SetAttenuationRadius(20000.f);
 	BlastLight->SetLightColor(FLinearColor(1.f, 0.55f, 0.2f));
 	BlastLight->SetCastShadows(false);
 	BlastLight->RegisterComponent();
@@ -251,19 +252,68 @@ void ANVTramRideDirector::Explode(const FVector& At)
 {
 	bExploded = true;
 	if (Police) { Police->SetVisibility(false, true); }
-	if (Siren) { Siren->FadeOut(0.3f, 0.f); }
+	if (Siren) { Siren->Stop(); }
+	if (SirenDying) { SirenDying->Stop(); }
 	if (SmokeTrail) { SmokeTrail->Deactivate(); }
-	if (ExplosionFX) { UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ExplosionFX, At, FRotator::ZeroRotator, FVector(ExplosionScale)); }
-	if (FireFX) { UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FireFX, At, FRotator::ZeroRotator, FVector(ExplosionScale * 0.8f), false); }
-	if (SmokeFX) { UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SmokeFX, At + FVector(0, 0, 200), FRotator::ZeroRotator, FVector(ExplosionScale), false); }
+	const float S = ExplosionScale;
+	if (ExplosionFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ExplosionFX, At, FRotator::ZeroRotator, FVector(S * 2.2f));
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ExplosionFX, At + FVector(0, 0, 350), FRotator(0, 90, 0), FVector(S * 1.6f));
+	}
+	if (SparksFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SparksFX, At, FRotator::ZeroRotator, FVector(S * 2.f));
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SparksFX, At + FVector(0, 0, 300), FRotator(180, 0, 0), FVector(S * 1.5f));
+	}
+	if (FireFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FireFX, At, FRotator::ZeroRotator, FVector(S * 1.4f), false);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FireFX, At + Fwd * 500.f + FVector(0, 0, -150), FRotator::ZeroRotator, FVector(S * 0.9f), false);
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, FireFX, At - Fwd * 450.f + FVector(0, 0, 200), FRotator::ZeroRotator, FVector(S * 0.8f), false);
+	}
+	if (SmokeFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SmokeFX, At + FVector(0, 0, 300), FRotator::ZeroRotator, FVector(S * 1.8f), false);
+	}
+	// the blast itself: located explosion + full-weight 2D layers so it hits you in the cabin
 	if (ExplosionSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, ExplosionSound, At, 1.f, 0.8f, 0.f, Attenuation);
-		UGameplayStatics::PlaySound2D(this, ExplosionSound, 0.35f, 0.6f);   // the low thump through the cabin
+		UGameplayStatics::PlaySoundAtLocation(this, ExplosionSound, At, 1.5f, 0.75f, 0.f, Attenuation);
+		UGameplayStatics::PlaySound2D(this, ExplosionSound, 0.9f, 0.55f);
 	}
+	if (BigExplosionSound) { UGameplayStatics::PlaySound2D(this, BigExplosionSound, 1.6f); }
+	if (BassHitSound) { UGameplayStatics::PlaySound2D(this, BassHitSound, BassHitVolume); }
+	UNVBlastShake::Kick(this, BlastShake, 0.55f);
+	// cook-offs: a chain of follow-up blasts around the wreck
+	PendingBlasts = {
+		{ 0.45f, At + Fwd * 420.f + FVector(0, 0, 260), 0.9f, true },
+		{ 0.95f, At - Fwd * 380.f + FVector(0, 0, -120), 0.7f, false },
+		{ 1.6f, At + FVector(0, 0, 520), 1.1f, true },
+		{ 2.4f, At + Fwd * 700.f + FVector(0, 0, -300), 0.6f, false },
+		{ 3.3f, At - Fwd * 200.f + FVector(0, 0, 150), 0.8f, true } };
 	BlastLight->SetWorldLocation(At);
 	BlastAge = 0.f;
 	UE_LOG(LogNeonVeil, Log, TEXT("%s: patrol car down at %s"), *GetName(), *At.ToString());
+}
+
+void ANVTramRideDirector::SecondaryBlast(const FVector& At, float Scale, bool bLoud)
+{
+	const float S = ExplosionScale * Scale;
+	if (ExplosionFX) { UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ExplosionFX, At, FRotator(0, FMath::FRandRange(0.f, 360.f), 0), FVector(S * 1.3f)); }
+	if (SparksFX) { UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SparksFX, At, FRotator::ZeroRotator, FVector(S)); }
+	if (ExplosionSound) { UGameplayStatics::PlaySoundAtLocation(this, ExplosionSound, At, bLoud ? 1.3f : 0.9f, FMath::FRandRange(0.7f, 0.95f), 0.f, Attenuation); }
+	if (bLoud && SecondaryExplosionSound && !bCookOffsPlaying)
+	{
+		// one long chain of cook-off blasts under all the follow-ups
+		bCookOffsPlaying = true;
+		UGameplayStatics::PlaySound2D(this, SecondaryExplosionSound, 1.1f);
+	}
+	if (bLoud && BassHitSound) { UGameplayStatics::PlaySound2D(this, BassHitSound, BassHitVolume * 0.45f, 1.15f); }
+	UNVBlastShake::Kick(this, bLoud ? 0.45f : 0.25f, 0.9f);
+	// re-flare the blast light
+	BlastLight->SetWorldLocation(At);
+	BlastAge = BlastAge < 0.f ? 0.f : FMath::Min(BlastAge, 0.3f);
 }
 
 void ANVTramRideDirector::SayLine(const FNVSubtitleLine& Line)
@@ -297,9 +347,20 @@ void ANVTramRideDirector::Tick(float Dt)
 	if (BlastAge >= 0.f)
 	{
 		BlastAge += Dt;
-		const float A = BlastAge < 0.08f ? BlastAge / 0.08f : FMath::Exp(-(BlastAge - 0.08f) * 1.6f);
-		BlastLight->SetIntensity(600000.f * A);
-		if (BlastAge > 6.f) { BlastLight->SetIntensity(0.f); BlastAge = -1.f; }
+		const float A = BlastAge < 0.06f ? BlastAge / 0.06f : FMath::Exp(-(BlastAge - 0.06f) * 1.3f);
+		// flicker like a fireball, settling into the burning wreck's glow
+		BlastLight->SetIntensity(2500000.f * A * FMath::FRandRange(0.8f, 1.1f) + (bExploded ? 60000.f : 0.f));
+		if (BlastAge > 12.f) { BlastLight->SetIntensity(0.f); BlastAge = -1.f; }
+	}
+	if (bExploded && PendingBlasts.Num() > 0)
+	{
+		ExplodeClock += Dt;
+		while (PendingBlasts.Num() > 0 && PendingBlasts[0].Due <= ExplodeClock)
+		{
+			const FPendingBlast B = PendingBlasts[0];
+			PendingBlasts.RemoveAt(0);
+			SecondaryBlast(B.At, B.Scale, B.bLoud);
+		}
 	}
 
 	const float C = T - ChaseStart;
@@ -308,7 +369,7 @@ void ANVTramRideDirector::Tick(float Dt)
 	if (!bStarted)
 	{
 		bStarted = true;
-		if (Siren && SirenSound) { Siren->FadeIn(1.5f, 1.f); }
+		if (Siren && SirenSound) { Siren->FadeIn(1.5f, SirenVolume); }
 		if (SuspectEngine && EngineSound) { SuspectEngine->Play(); }
 		UE_LOG(LogNeonVeil, Log, TEXT("%s: pursuit begins at ride %.1f s"), *GetName(), T);
 	}
@@ -330,11 +391,14 @@ void ANVTramRideDirector::Tick(float Dt)
 	// police
 	if (Police && !bExploded)
 	{
-		const bool bFlashA = FMath::Fmod(C, 0.24f) < 0.12f;
-		BarRed->SetVisibility(bFlashA);
-		BarBlue->SetVisibility(!bFlashA);
-		FlashRed->SetIntensity(bFlashA ? 9000.f : 0.f);
-		FlashBlue->SetIntensity(bFlashA ? 0.f : 12000.f);
+		if (!bHit)
+		{
+			const bool bFlashA = FMath::Fmod(C, 0.24f) < 0.12f;
+			BarRed->SetVisibility(bFlashA);
+			BarBlue->SetVisibility(!bFlashA);
+			FlashRed->SetIntensity(bFlashA ? 9000.f : 0.f);
+			FlashBlue->SetIntensity(bFlashA ? 0.f : 12000.f);
+		}
 		if (!bHit)
 		{
 			PlaceCar(Police, TramLocal(Sample(PoliceKeys, C)), Dt, PolicePrev, 0.f);
@@ -360,7 +424,17 @@ void ANVTramRideDirector::Tick(float Dt)
 			Q.AddIgnoredActor(Ride->Tram.Get());
 			const bool bWall = GetWorld()->LineTraceSingleByChannel(Hit, CrashFrom, CrashFrom + (Aim - CrashFrom) * 2.f, ECC_Visibility, Q);
 			CrashTo = (bWall && Hit.Distance < 5000.f) ? Hit.ImpactPoint : Aim;
-			if (SparksFX) { UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SparksFX, CrashFrom, FRotator::ZeroRotator, FVector(3.f)); }
+			if (SparksFX) { UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SparksFX, CrashFrom, FRotator::ZeroRotator, FVector(5.f)); }
+			if (ExplosionFX) { UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ExplosionFX, CrashFrom, FRotator::ZeroRotator, FVector(ExplosionScale * 0.35f)); }
+			if (ExplosionSound) { UGameplayStatics::PlaySoundAtLocation(this, ExplosionSound, CrashFrom, 0.8f, 1.3f, 0.f, Attenuation); }
+			UNVBlastShake::Kick(this, 0.3f, 1.2f);
+			if (SirenDyingSound && Siren)
+			{
+				Siren->FadeOut(0.05f, 0.f);
+				SirenDying = UGameplayStatics::SpawnSoundAttached(SirenDyingSound, Police, NAME_None, FVector::ZeroVector,
+					EAttachLocation::KeepRelativeOffset, false, SirenVolume * 1.1f, 1.f, 0.f, Attenuation);
+			}
+			NextSparkBurst = C + 0.25f;
 			if (SmokeFX) { SmokeTrail = UNiagaraFunctionLibrary::SpawnSystemAttached(SmokeFX, Police, NAME_None, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false); }
 			UE_LOG(LogNeonVeil, Log, TEXT("%s: patrol car hit, going down toward %s"), *GetName(), *CrashTo.ToString());
 		}
@@ -369,6 +443,26 @@ void ANVTramRideDirector::Tick(float Dt)
 			const float A = FMath::Clamp((C - HitAt) / CrashTime, 0.f, 1.f);
 			const FVector P = FMath::Lerp(CrashFrom, CrashTo, A * A) + FVector(0, 0, FMath::Sin(A * PI) * 250.f);
 			PlaceCar(Police, P, Dt, PolicePrev, 540.f * A * A);
+			// the siren winds down and detunes as the car tumbles: pitch sags toward SirenDyingPitch with a
+			// growing warble, like the motor losing power
+			if (Siren && !SirenDying)
+			{
+				const float Sag = FMath::InterpEaseIn(1.f, SirenDyingPitch, A, 1.6f);
+				const float Warble = 1.f + FMath::Sin((C - HitAt) * 21.f) * 0.05f * A + FMath::Sin((C - HitAt) * 7.3f) * 0.03f * A;
+				Siren->SetPitchMultiplier(FMath::Max(0.2f, Sag * Warble));
+				Siren->SetVolumeMultiplier(SirenVolume * (1.f - 0.25f * A));
+			}
+			// light bar stutters as the car breaks up
+			const bool bOn = FMath::FRand() > 0.35f + 0.4f * A;
+			BarRed->SetVisibility(bOn && FMath::FRand() > 0.5f);
+			BarBlue->SetVisibility(bOn && !BarRed->IsVisible());
+			FlashRed->SetIntensity(BarRed->IsVisible() ? 12000.f : 0.f);
+			FlashBlue->SetIntensity(BarBlue->IsVisible() ? 15000.f : 0.f);
+			if (SparksFX && C >= NextSparkBurst)
+			{
+				UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SparksFX, Police->GetComponentLocation(), FRotator::ZeroRotator, FVector(2.5f));
+				NextSparkBurst = C + FMath::FRandRange(0.18f, 0.35f);
+			}
 			if (A >= 1.f) { Explode(CrashTo); }
 		}
 	}
@@ -380,7 +474,7 @@ void ANVTramRideDirector::Tick(float Dt)
 		if (C >= NextSuspectShot)
 		{
 			FireShot(S - (S - P).GetSafeNormal() * 300.f, P, false);
-			NextSuspectShot = C + FMath::FRandRange(0.3f, 0.55f);
+			NextSuspectShot = C + (C > HitAt - 2.5f ? FMath::FRandRange(0.12f, 0.22f) : FMath::FRandRange(0.3f, 0.55f));
 		}
 		if (C >= NextPoliceShot)
 		{
