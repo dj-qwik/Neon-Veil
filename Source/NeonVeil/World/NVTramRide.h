@@ -151,6 +151,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Ride")
 	float GetRideDuration() const;
 
+	/** Seconds since the tram started moving with the player aboard; -1 before that (or on a checkpoint load). */
+	UFUNCTION(BlueprintPure, Category = "Ride")
+	float GetRideTime() const { return RideClock; }
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<USplineComponent> Path;
@@ -184,4 +188,5 @@ private:
 	float PhaseTime = 0.f;
 	int32 SteadyFrames = 0;
 	double LastRealTime = 0.0;
+	float RideClock = -1.f;
 };

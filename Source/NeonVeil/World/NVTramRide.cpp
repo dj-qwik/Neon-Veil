@@ -236,6 +236,10 @@ void ANVTramRide::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 	const float Dt = FMath::Min(DeltaSeconds, 0.1f);
 	PhaseTime += Dt;
+	if (RideClock >= 0.f)
+	{
+		RideClock += Dt;
+	}
 
 	switch (Phase)
 	{
@@ -283,6 +287,7 @@ void ANVTramRide::Tick(float DeltaSeconds)
 		}
 		Phase = EPhase::Riding;
 		PhaseTime = 0.f;
+		RideClock = 0.f;
 		if (RideSound)
 		{
 			RideAudio->SetSound(RideSound);
