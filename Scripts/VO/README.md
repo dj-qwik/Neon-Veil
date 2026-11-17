@@ -13,6 +13,12 @@ The spoken lines are listed in `Scripts/VO/<set>_lines.json`. Each line has an i
 | Crown News | Daniel – Steady Broadcaster (`onwK4e9ZLuTAKqWW03F9`) | eleven_v4 |
 | **GHOST-7** | Vane – Rugged and gravelly (`cymHWdiF8WjUCg6vvFxx`) | eleven_v4. Cast by the owner on 2026-11-13 for the game and all trailers. Direction: weary, restrained anger. |
 
+## Crown Line ride (set `CL`, R_RideDirector)
+
+The ride reuses the cast above: Station PA and Crown News = Daniel (same as the prologue PA), Ops = Eva, AION = N.A.V.I., Ghost-7 = Vane.
+The one new role is **CPD Unit 7**: Admiral Action – Military Man (`GLSWsaquVBsIPLPPRi2s`, eleven_v4). Its wavs get a radio band-pass (380 Hz–3.2 kHz) and light bit-crush after `vo_convert.sh`.
+The flow is "NEON VEIL – Crown Line Ride VO", with one take per line. The HUD queues lines back to back, so `nv_ride_director.py` spaces the cue times to fit each take. It also re-attaches the CL voices whenever it rebuilds the lines. `CL_Ops_01` ("You're green on the board…") was voiced but is not used, because it didn't fit before the pursuit warning.
+
 The ElevenLabs flow is "NEON VEIL - M00 Voice Lines". It holds two takes per line, and take 1 is the one imported.
 
 ## Rule for future runs

@@ -44,6 +44,16 @@ for a in EAS.get_all_level_actors():
             arr = a.get_editor_property(prop)
         except Exception:
             continue
+        if arr and isinstance(arr[0], unreal.NVTimedLine):
+            k = 0; new = []
+            for tl in list(arr):
+                kk, nl = fix([tl.get_editor_property("line")])
+                if kk:
+                    tl.set_editor_property("line", nl[0]); k += kk
+                new.append(tl)
+            if k:
+                a.set_editor_property(prop, new); total += k; log.append("%s.%s (timed): %d" % (a.get_actor_label(), prop, k))
+            continue
         if arr and isinstance(arr[0], unreal.NVSubtitleLine):
             k, new = fix(arr)
             if k:
@@ -72,6 +82,8 @@ for a in EAS.get_all_level_actors():
         except Exception:
             continue
         for ln in list(arr or []):
+            if isinstance(ln, unreal.NVTimedLine):
+                ln = ln.get_editor_property("line")
             if isinstance(ln, unreal.NVSubtitleLine) and ln.get_editor_property("voice"):
                 check += 1
     try:

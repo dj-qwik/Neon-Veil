@@ -17,6 +17,12 @@ AUD = "/Game/NeonVeil/Audio/Chase"
 MAT = "/Game/NeonVeil/Materials/Chase"
 SRC = os.path.join(unreal.Paths.project_dir(), "Art", "Audio", "Chase")
 
+import json
+try:
+    VO_IDS = {l["text"].strip(): l["id"] for l in json.load(open(os.path.join(unreal.Paths.project_dir(), "Scripts", "VO", "CL_lines.json")))}
+except Exception:
+    VO_IDS = {}
+
 def T(s):
     return unreal.Text(s)
 
@@ -28,25 +34,32 @@ def line(t, speaker, text, dur=3.8, comms=False, channel="", priority=False):
     if comms:
         l.set_editor_property("as_comms", True)
         l.set_editor_property("channel", T(channel))
+    # Keep the ElevenLabs VO (Scripts/VO/CL_lines.json, imported by nv_vo_hook CL) when the director is rebuilt.
+    vid = VO_IDS.get(text.strip())
+    if vid:
+        s = unreal.load_asset("/Game/NeonVeil/Audio/VO/CL/VO_" + vid)
+        if s:
+            l.set_editor_property("voice", s)
+            l.set_editor_property("duration", max(dur, s.get_editor_property("duration") + 0.35))
     tl = unreal.NVTimedLine()
     tl.set_editor_property("time", t)
     tl.set_editor_property("line", l)
     return tl
 
+# Voiced lines play back to back (the HUD queues them), so the times leave room for each take.
 # Ride ~51 s; the pursuit starts at 13 s (cars from behind), spotlight 17.6-21.8, firefight 23-28.6, crash ~31.4.
 LINES = [
-    line(0.8, "Station PA", "Crown Line express. Next and final stop: the Glass Crown.", 4.0, True, "Crown Line"),
-    line(5.2, "Ghost-7", "Forty floors of glass up there, and they still make you ride the rail in.", 4.2),
-    line(9.8, "Ops Monitor", "You're green on the board, Ghost-7. Sit back. Enjoy the view.", 3.6, True, "Directorate Ops"),
-    line(13.4, "Ops Monitor", "Heads up. Patrol unit in pursuit, crossing the Crown Line on your left. Stay in the car.", 4.4, True, "Directorate Ops"),
-    line(18.2, "Ghost-7", "Easy. I'm on your side.", 3.0),
-    line(22.4, "CPD Unit 7", "Suspect is armed! Engaging, engaging!", 2.8, True, "CPD Band 4"),
-    line(26.0, "CPD Unit 7", "Taking fire, I'm hit, I'm hi-", 2.4, True, "CPD Band 4"),
+    line(0.3, "Station PA", "Crown Line express. Next and final stop: the Glass Crown.", 4.0, True, "Crown Line"),
+    line(5.6, "Ghost-7", "Forty floors of glass up there, and they still make you ride the rail in.", 4.2),
+    line(12.4, "Ops Monitor", "Heads up. Patrol unit in pursuit, crossing the Crown Line on your left. Stay in the car.", 4.4, True, "Directorate Ops"),
+    line(18.0, "Ghost-7", "Easy. I'm on your side.", 3.0),
+    line(23.0, "CPD Unit 7", "Suspect is armed! Engaging, engaging!", 2.8, True, "CPD Band 4"),
+    line(26.4, "CPD Unit 7", "Taking fire, I'm hit, I'm hi-", 2.4, True, "CPD Band 4"),
     line(32.6, "Ghost-7", "That was a patrol car.", 2.8),
-    line(36.0, "AION", "Incident contained. There is nothing to see, Ghost-7.", 3.6, True, "Secure"),
-    line(40.2, "Ghost-7", "There's always nothing to see up here.", 3.4),
-    line(44.0, "Crown News", "Crown Sector marks a fourteenth consecutive quarter without a recorded incident.", 4.2, True, "Public Feed"),
-    line(48.6, "Station PA", "Arriving: the Glass Crown. Please stand clear of the doors.", 3.6, True, "Crown Line"),
+    line(35.2, "AION", "Incident contained. There is nothing to see, Ghost-7.", 3.6, True, "Secure"),
+    line(39.4, "Ghost-7", "There's always nothing to see up here.", 3.4),
+    line(42.8, "Crown News", "Crown Sector marks a fourteenth consecutive quarter without a recorded incident.", 4.2, True, "Public Feed"),
+    line(48.4, "Station PA", "Arriving: the Glass Crown. Please stand clear of the doors.", 3.6, True, "Crown Line"),
 ]
 
 def import_wav(name):

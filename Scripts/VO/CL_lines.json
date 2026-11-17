@@ -1,0 +1,62 @@
+[
+ {
+  "id": "CL_PA_01",
+  "speaker": "Station PA",
+  "text": "Crown Line express. Next and final stop: the Glass Crown."
+ },
+ {
+  "id": "CL_Ghost_01",
+  "speaker": "Ghost-7",
+  "text": "Forty floors of glass up there, and they still make you ride the rail in."
+ },
+ {
+  "id": "CL_Ops_01",
+  "speaker": "Ops Monitor",
+  "text": "You're green on the board, Ghost-7. Sit back. Enjoy the view."
+ },
+ {
+  "id": "CL_Ops_02",
+  "speaker": "Ops Monitor",
+  "text": "Heads up. Patrol unit in pursuit, crossing the Crown Line on your left. Stay in the car."
+ },
+ {
+  "id": "CL_Ghost_02",
+  "speaker": "Ghost-7",
+  "text": "Easy. I'm on your side."
+ },
+ {
+  "id": "CL_CPD_01",
+  "speaker": "CPD Unit 7",
+  "text": "Suspect is armed! Engaging, engaging!"
+ },
+ {
+  "id": "CL_CPD_02",
+  "speaker": "CPD Unit 7",
+  "text": "Taking fire, I'm hit, I'm hi-"
+ },
+ {
+  "id": "CL_Ghost_03",
+  "speaker": "Ghost-7",
+  "text": "That was a patrol car."
+ },
+ {
+  "id": "CL_AION_01",
+  "speaker": "AION",
+  "text": "Incident contained. There is nothing to see, Ghost-7."
+ },
+ {
+  "id": "CL_Ghost_04",
+  "speaker": "Ghost-7",
+  "text": "There's always nothing to see up here."
+ },
+ {
+  "id": "CL_CrownNews_01",
+  "speaker": "Crown News",
+  "text": "Crown Sector marks a fourteenth consecutive quarter without a recorded incident."
+ },
+ {
+  "id": "CL_PA_02",
+  "speaker": "Station PA",
+  "text": "Arriving: the Glass Crown. Please stand clear of the doors."
+ }
+]
