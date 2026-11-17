@@ -2,6 +2,9 @@
 #include "Objectives/NVObjectiveSubsystem.h"
 #include "NeonVeil.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/BoxComponent.h"
+#include "Interaction/NVInteractableActor.h"
+#include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 
@@ -20,6 +23,36 @@ ANVObjectiveDoor::ANVObjectiveDoor()
 	PanelRight->SetupAttachment(Root);
 	PanelLeft->SetMobility(EComponentMobility::Movable);
 	PanelRight->SetMobility(EComponentMobility::Movable);
+	Blocker = CreateDefaultSubobject<UBoxComponent>(TEXT("Blocker"));
+	Blocker->SetupAttachment(Root);
+	Blocker->SetBoxExtent(FVector(1.f));
+	Blocker->SetCollisionProfileName(TEXT("BlockAll"));
+	Blocker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Blocker->SetHiddenInGame(true);
+}
+
+void ANVObjectiveDoor::UpdateBlocker()
+{
+	const bool bUse = !BlockerExtent.IsNearlyZero();
+	if (bUse)
+	{
+		Blocker->SetBoxExtent(BlockerExtent);
+	}
+	Blocker->SetCollisionEnabled(bUse && !bTargetOpen ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+}
+
+void ANVObjectiveDoor::HandleUsed(ANVInteractableActor*, AActor*)
+{
+	if (bTargetOpen || GetWorldTimerManager().IsTimerActive(OpenTimer))
+	{
+		return;
+	}
+	if (OpenDelay <= 0.f)
+	{
+		SetOpen(true);
+		return;
+	}
+	GetWorldTimerManager().SetTimer(OpenTimer, FTimerDelegate::CreateWeakLambda(this, [this]() { SetOpen(true); }), OpenDelay, false);
 }
 
 void ANVObjectiveDoor::BeginPlay()
@@ -33,6 +66,14 @@ void ANVObjectiveDoor::BeginPlay()
 		Obj->OnObjectiveCompleted.AddDynamic(this, &ANVObjectiveDoor::HandleObjectiveEvent);
 		Obj->OnObjectivesRestored.AddDynamic(this, &ANVObjectiveDoor::Evaluate);
 	}
+	for (ANVInteractableActor* I : OpenWhenUsed)
+	{
+		if (I)
+		{
+			I->OnInteracted.AddDynamic(this, &ANVObjectiveDoor::HandleUsed);
+		}
+	}
+	UpdateBlocker();
 	Evaluate();
 	if (bTargetOpen)
 	{
@@ -78,6 +119,7 @@ void ANVObjectiveDoor::SetOpen(bool bOpen, bool bInstant)
 		UE_LOG(LogNeonVeil, Log, TEXT("%s %s"), *GetName(), bOpen ? TEXT("opening") : TEXT("closing"));
 	}
 	bTargetOpen = bOpen;
+	UpdateBlocker();
 	if (bInstant)
 	{
 		Alpha = bOpen ? 1.f : 0.f;
