@@ -9,6 +9,8 @@ class UBoxComponent;
 class USoundBase;
 class UAudioComponent;
 class UStaticMeshComponent;
+class ANVInteractableActor;
+class AActor;
 
 /**
  * Crown Line platform service (prologue). Drives an existing tram actor (the Sci-Fi Tram Station BP_Tram):
@@ -53,6 +55,27 @@ public:
 	/** Seconds the player must be aboard (inside BoardVolume) before the doors close. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram", meta = (ClampMin = "0"))
 	float BoardDelay = 2.f;
+
+	/** The doors only close once the player has used the palm scanner on one of the cab-end consoles. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Scanner")
+	bool bRequireScanner = true;
+
+	/** Scanner face in tram space (mirrored to the other cab end through X). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Scanner")
+	FVector ScannerLocal = FVector(893.f, 0.f, 112.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Scanner")
+	FText ScannerPrompt = NSLOCTEXT("NeonVeil", "TramScanPrompt", "Scan palm to depart");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Scanner", meta = (ClampMin = "0"))
+	float ScannerHold = 0.6f;
+
+	/** Shown once if the player is aboard but has not scanned yet. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Scanner")
+	FText ScannerHint = NSLOCTEXT("NeonVeil", "TramScanHint", "Scan your palm at the cab console to depart");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram|Scanner")
+	TObjectPtr<USoundBase> ScannerSound;
 
 	/** Seconds into the departure when BoardedEventTag is sent (starts the fade to the tower). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tram", meta = (ClampMin = "0"))
@@ -111,6 +134,14 @@ private:
 	/** Rider position in tram space, frozen when the doors close: the rider is carried rigidly from then on. */
 	FVector RiderLocal = FVector::ZeroVector;
 	void CarryRider();
+
+	void SpawnScanners();
+	UFUNCTION()
+	void HandleScanned(ANVInteractableActor* Interactable, AActor* Interactor);
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<ANVInteractableActor>> Scanners;
+	bool bScanned = false;
+	bool bHintShown = false;
 	EPhase Phase = EPhase::Away;
 	float PhaseTime = 0.f;
 	float AboardTime = 0.f;

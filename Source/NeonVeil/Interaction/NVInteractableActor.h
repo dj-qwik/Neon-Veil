@@ -43,6 +43,15 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Interaction")
 	FNVOnInteracted OnInteracted;
 
+	/** Runtime setup for interactables spawned by code (e.g. the tram's palm scanners). */
+	void Configure(const FText& InPrompt, float InHoldDuration, bool bInSingleUse, USoundBase* InUseSound)
+	{
+		Prompt = InPrompt;
+		HoldDuration = InHoldDuration;
+		bSingleUse = bInSingleUse;
+		UseSound = InUseSound;
+	}
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> Mesh;

@@ -8,6 +8,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Objectives/NVObjectiveSubsystem.h"
+#include "Interaction/NVInteractableActor.h"
+#include "UI/NVHUD.h"
+#include "Engine/StaticMesh.h"
+#include "GameFramework/PlayerController.h"
 #include "NeonVeil.h"
 
 ANVTramService::ANVTramService()
@@ -74,9 +78,10 @@ void ANVTramService::BeginPlay()
 		}
 	}
 	SetDoorAlpha(0.f);
+	SpawnScanners();   // placed against the docked tram, then carried out with it
 	SetOffset(-ArriveDistance);
 	Tram->SetActorHiddenInGame(true);
-	UE_LOG(LogNeonVeil, Log, TEXT("%s: tram parked %.0f cm out, %d door leaves"), *GetName(), ArriveDistance, Leaves.Num());
+	UE_LOG(LogNeonVeil, Log, TEXT("%s: tram parked %.0f cm out, %d door leaves, %d palm scanners"), *GetName(), ArriveDistance, Leaves.Num(), Scanners.Num());
 }
 
 void ANVTramService::SetOffset(float NewOffset)
@@ -116,6 +121,50 @@ void ANVTramService::PlayAtTram(USoundBase* Sound) const
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, Sound, Tram->GetActorLocation() + FVector(0.f, 0.f, 150.f));
 	}
+}
+
+void ANVTramService::SpawnScanners()
+{
+	if (!bRequireScanner || !Tram)
+	{
+		return;
+	}
+	UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+	for (const float Sign : { 1.f, -1.f })
+	{
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		const FVector Local(ScannerLocal.X * Sign, ScannerLocal.Y, ScannerLocal.Z);
+		ANVInteractableActor* S = GetWorld()->SpawnActor<ANVInteractableActor>(ANVInteractableActor::StaticClass(),
+			Tram->GetActorTransform().TransformPosition(Local), Tram->GetActorRotation(), Params);
+		if (!S)
+		{
+			continue;
+		}
+		if (UStaticMeshComponent* M = S->FindComponentByClass<UStaticMeshComponent>())
+		{
+			M->SetMobility(EComponentMobility::Movable);
+			M->SetStaticMesh(Cube);
+			M->SetWorldScale3D(FVector(0.3f, 0.45f, 0.4f));   // a box just covering the scanner disc
+			M->SetCollisionProfileName(TEXT("BlockAll"));
+			M->SetVisibility(false);                           // the tram's own scanner is what you see
+		}
+		S->AttachToActor(Tram, FAttachmentTransformRules::KeepWorldTransform);
+		S->Configure(ScannerPrompt, ScannerHold, true, ScannerSound);
+		S->SetEnabled(false);
+		S->OnInteracted.AddDynamic(this, &ANVTramService::HandleScanned);
+		Scanners.Add(S);
+	}
+}
+
+void ANVTramService::HandleScanned(ANVInteractableActor* Interactable, AActor* Interactor)
+{
+	bScanned = true;
+	for (ANVInteractableActor* S : Scanners)
+	{
+		if (S) { S->SetEnabled(false); }
+	}
+	UE_LOG(LogNeonVeil, Log, TEXT("%s: palm scanned, departing"), *GetName());
 }
 
 void ANVTramService::Tick(float DeltaSeconds)
@@ -168,6 +217,10 @@ void ANVTramService::Tick(float DeltaSeconds)
 		{
 			Phase = EPhase::Boarding;
 			PhaseTime = 0.f;
+			for (ANVInteractableActor* S : Scanners)
+			{
+				if (S) { S->SetEnabled(true); }
+			}
 			UE_LOG(LogNeonVeil, Log, TEXT("%s: doors open, boarding"), *GetName());
 		}
 		break;
@@ -176,7 +229,19 @@ void ANVTramService::Tick(float DeltaSeconds)
 		APawn* P = UGameplayStatics::GetPlayerPawn(this, 0);
 		const bool bAboard = P && BoardVolume->IsOverlappingActor(P);
 		AboardTime = bAboard ? AboardTime + Dt : 0.f;
-		if (AboardTime >= BoardDelay)
+		const bool bScanOk = !bRequireScanner || Scanners.Num() == 0 || bScanned;
+		if (bAboard && !bScanOk && !bHintShown && AboardTime >= BoardDelay + 1.5f)
+		{
+			bHintShown = true;
+			if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+			{
+				if (ANVHUD* Hud = Cast<ANVHUD>(PC->GetHUD()))
+				{
+					Hud->ShowNotice(ScannerHint, 4.f);
+				}
+			}
+		}
+		if (AboardTime >= BoardDelay && bScanOk)
 		{
 			Rider = P;
 			// From here the rider rides the car rigidly: no walking, no depenetration against the closing doors or the

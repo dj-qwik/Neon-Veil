@@ -29,3 +29,6 @@ RawAssets/** !text !filter !merge !diff
 
 # Small doc reference images stay out of LFS (LFS uploads are blocked from the build workspace)
 Docs/Reference/** -filter -diff -merge binary
+
+# Repainted texture sources applied by scripts (LFS uploads are blocked from the build workspace)
+Art/** -filter -diff -merge binary
