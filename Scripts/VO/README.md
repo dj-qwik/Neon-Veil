@@ -2,7 +2,7 @@
 
 The spoken lines are listed in `Scripts/VO/<set>_lines.json`. Each line has an id, a speaker and the subtitle text.
 
-## M00 cast
+## M00 cast (the master cast for all levels is `Docs/VO_Cast.md`)
 
 | Speaker | ElevenLabs voice | Model |
 |---|---|---|
