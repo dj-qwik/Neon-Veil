@@ -522,7 +522,13 @@ void UNVWeaponComponent::PlayFireEffects(const UNVWeaponData& Data, const FVecto
 	{
 		if (MuzzleParent && MuzzleParent->DoesSocketExist(TEXT("Eject")))
 		{
-			UNiagaraFunctionLibrary::SpawnSystemAttached(Casing, MuzzleParent, TEXT("Eject"), FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true);
+			if (UNiagaraComponent* CasingComp = UNiagaraFunctionLibrary::SpawnSystemAttached(Casing, MuzzleParent, TEXT("Eject"), FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, true))
+			{
+				// Drawn like the gun, so casings leave the drawn ejection port instead of hanging in the air
+				// (or in a wall) where the undistorted gun actually is.
+				CasingComp->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
+				CasingComp->MarkRenderStateDirty();
+			}
 		}
 	}
 	if (Data.FireSoundVariants.Num() > 0)

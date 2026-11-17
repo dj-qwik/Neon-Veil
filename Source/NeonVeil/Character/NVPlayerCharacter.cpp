@@ -45,7 +45,9 @@ ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	FirstPersonCamera->bEnableFirstPersonFieldOfView = true;
 	FirstPersonCamera->FirstPersonFieldOfView = 70.f;
 	FirstPersonCamera->bEnableFirstPersonScale = true;
-	FirstPersonCamera->FirstPersonScale = 0.6f;
+	// Draw the arms and gun squashed toward the camera so they never sink into a wall Ghost is pressed against
+	// (at 0.6 the Kestrel's barrel vanished into walls while the hands stayed visible).
+	FirstPersonCamera->FirstPersonScale = 0.25f;
 
 	ViewmodelRoot = CreateDefaultSubobject<USceneComponent>(TEXT("ViewmodelRoot"));
 	ViewmodelRoot->SetupAttachment(FirstPersonCamera);
@@ -148,6 +150,8 @@ ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializ
 void ANVPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	// The Blueprint may still carry the old 0.6 from before; the constructor value is the one we want.
+	FirstPersonCamera->FirstPersonScale = FMath::Min(FirstPersonCamera->FirstPersonScale, 0.25f);
 
 	DefaultGroundFriction = GetCharacterMovement()->GroundFriction;
 	DefaultBrakingDecel = GetCharacterMovement()->BrakingDecelerationWalking;
