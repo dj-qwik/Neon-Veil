@@ -1,6 +1,6 @@
 """Glass Crown atrium: a console on each side of the orrery holo-table toggles the room between "show" (dim,
 orrery on) and "work lights" (ceiling lights x BRIGHT back to standard, full-brightness materials, holograms off).
-Needs build ga44+ (NVRoomLightSwitch). Args: [console yaw offset, default 0]. Idempotent. Report: Saved/NV_atrium_switch.txt"""
+Needs build ga44+ (NVRoomLightSwitch). Args: [console yaw offset; run with 180 - the SM_Console screen faces its local -X]. Idempotent. Report: Saved/NV_atrium_switch.txt"""
 import sys
 import unreal
 EAS = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
