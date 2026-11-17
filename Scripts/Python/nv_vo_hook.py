@@ -42,7 +42,7 @@ def fix(arr):
 total = 0
 EAS = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 for a in EAS.get_all_level_actors():
-    for prop in ("lines_on_complete", "lines", "lines_on_use"):
+    for prop in ("lines_on_complete", "lines", "lines_on_use", "lines_on_lights_on", "lines_on_liftoff"):
         try:
             arr = a.get_editor_property(prop)
         except Exception:
@@ -79,7 +79,7 @@ for a in EAS.get_all_level_actors():
 log.append("lines voiced: %d of %d" % (total, len(lines)))
 check = 0
 for a in EAS.get_all_level_actors():
-    for prop in ("lines_on_complete", "lines", "lines_on_use"):
+    for prop in ("lines_on_complete", "lines", "lines_on_use", "lines_on_lights_on", "lines_on_liftoff"):
         try:
             arr = a.get_editor_property(prop)
         except Exception:

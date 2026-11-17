@@ -54,3 +54,4 @@ In-game credit text:
 - Engine: Unreal® Engine, © Epic Games, Inc.
 
 > Before release, check every listing's licence terms for required attribution wording. Some sellers specify exact text.
+- Prologue sky car: "Cyberpunk Hovercar" by atiqa (Fab, Standard licence); converted locally (canopy split, rescaled), kept in Content/NeonVeil/Fab/SkyCar (not redistributed)

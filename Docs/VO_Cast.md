@@ -42,4 +42,5 @@ Daniel voices both Crown News and the Station PA. If those two ever speak back t
 | M00P (prologue) | NEON VEIL – Prologue VO (Crown Line) |
 | CL (Crown Line ride) | NEON VEIL – Crown Line Ride VO |
 | GC (Glass Crown extras: atrium entry scanner) | NEON VEIL – Crown Line Ride VO |
+| SKY (prologue sky car: Ghost quips + liftoff SFX) | NEON VEIL – Sky Car Liftoff (Prologue) |
 | Trailers | NEON VEIL – Intro Trailer, NEON VEIL – Ghost Protocol Trailer |
