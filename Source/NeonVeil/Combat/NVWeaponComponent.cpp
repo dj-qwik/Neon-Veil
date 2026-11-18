@@ -4,6 +4,7 @@
 #include "Combat/NVWeaponData.h"
 #include "Combat/NVHealthComponent.h"
 #include "Core/NVGameplayTags.h"
+#include "World/NVLightBreakSubsystem.h"
 #include "NeonVeil.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -414,6 +415,10 @@ void UNVWeaponComponent::FireShot()
 						OnHitConfirmed.Broadcast(HitActor, bWeak);
 					}
 				}
+			}
+			if (UNVLightBreakSubsystem* Lights = UNVLightBreakSubsystem::Get(this))
+			{
+				Lights->TryBreak(Hit);
 			}
 			if (UPrimitiveComponent* Prim = Hit.GetComponent())
 			{

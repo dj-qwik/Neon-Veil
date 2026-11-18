@@ -1,4 +1,5 @@
 #include "Core/NVGameMode.h"
+#include "World/NVLightBreakSubsystem.h"
 #include "Abilities/NVAbilityComponent.h"
 #include "Core/NVPlayerController.h"
 #include "Core/NVMapPreloadSubsystem.h"
@@ -104,6 +105,10 @@ void ANVGameMode::StartPlay()
 					P->GetWeapons()->RestoreSlots(Pending->WeaponSlots, Pending->CurrentWeaponSlot);
 				}
 			}
+		}
+		if (UNVLightBreakSubsystem* Lights = UNVLightBreakSubsystem::Get(this))
+		{
+			Lights->RestoreFromFlags(Pending->Flags);   // lights he shot out before the checkpoint stay out
 		}
 	}
 	if (SaveSys && Pending)

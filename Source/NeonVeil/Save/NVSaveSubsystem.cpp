@@ -1,4 +1,5 @@
 #include "Save/NVSaveSubsystem.h"
+#include "World/NVLightBreakSubsystem.h"
 #include "Abilities/NVAbilityComponent.h"
 #include "Save/NVSaveGame.h"
 #include "World/NVCheckpoint.h"
@@ -80,6 +81,10 @@ bool UNVSaveSubsystem::SaveCheckpoint(FName CheckpointID)
 	Save->WeaponSlots = Player->GetWeapons()->GetSlots();
 	Save->DisabledAbilities = Player->GetAbilities()->GetDisabledTags();
 	Save->CurrentWeaponSlot = Player->GetWeapons()->GetCurrentSlotIndex();
+	if (const UNVLightBreakSubsystem* Lights = UNVLightBreakSubsystem::Get(World))
+	{
+		Lights->AppendSaveFlags(Save->Flags);
+	}
 	Save->SavedAt = FDateTime::Now();
 
 	const bool bOk = UGameplayStatics::SaveGameToSlot(Save, SlotName, 0);
