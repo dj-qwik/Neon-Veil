@@ -263,6 +263,10 @@ void ANVGuardCharacter::BeginPlay()
 	Super::BeginPlay();
 	BindAppearance();
 	UCharacterMovementComponent* Move = GetCharacterMovement();
+	if (bNonHostile)
+	{
+		ApplyCrowdDetail();
+	}
 	if (HoldPoseAnim)
 	{
 		// seated / posed citizen: play the pose, never move or turn
@@ -291,5 +295,40 @@ void ANVGuardCharacter::BeginPlay()
 			Body->bEnableUpdateRateOptimizations = true;
 			Body->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 		}
+	}
+}
+
+void ANVGuardCharacter::ApplyCrowdDetail()
+{
+	auto Pin = [this](USkinnedMeshComponent* C, int32 Lod)
+	{
+		if (!C || !C->GetSkinnedAsset())
+		{
+			return;
+		}
+		if (Lod >= 0)
+		{
+			C->SetForcedLOD(Lod + 1);               // 0 = automatic, n = LOD n-1 (clamped to what the mesh has)
+		}
+		C->StreamingDistanceMultiplier = CrowdTextureScale;
+		C->bEnableUpdateRateOptimizations = true;
+	};
+	Pin(GetMesh(), CrowdBodyLOD);
+	for (USkeletalMeshComponent* Part : OutfitComponents)
+	{
+		const bool bFace = Part && Part->GetSkinnedAsset() && Part->GetSkinnedAsset()->GetName().Contains(TEXT("Face"));
+		Pin(Part, bFace ? CrowdFaceLOD : CrowdBodyLOD);
+		if (bFace)
+		{
+			Part->bDisableMorphTarget = true;      // nobody talks: the face rig never drives its morphs
+		}
+	}
+	for (UChaosClothComponent* G : GarmentComponents)
+	{
+		Pin(G, CrowdBodyLOD);
+	}
+	if (Helmet)
+	{
+		Helmet->StreamingDistanceMultiplier = CrowdTextureScale;
 	}
 }

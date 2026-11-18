@@ -29,14 +29,15 @@ WHITE = (232, 240, 245)
 RED = (255, 70, 60)
 BG = (6, 10, 16)
 
-# Crown Line, south to north. (name, sub-label, interchange)
+# Crown Line from Veyra Central. The tram ride in M00 runs non-stop from Veyra Central up to the Glass Crown, so the
+# Glass Crown is the next stop; the line carries on past it to the outer districts. (name, sub-label, interchange)
 CROWN = [
     ("VEYRA CENTRAL", "you are here", None),
-    ("MERIDIAN EXCHANGE", "financial district", "NOVA"),
+    ("GLASS CROWN", "Crown Sector  ·  Directorate", None),
     ("KESTREL ARCADE", "markets  ·  hotels", "GUTTER"),
     ("ETHERION PLAZA", "Etherion campus", None),
     ("AION SPIRE", "civic oversight", None),
-    ("GLASS CROWN", "Crown Sector  ·  Directorate", None),
+    ("MERIDIAN EXCHANGE", "financial district", "NOVA"),
 ]
 NOVA = ["RAINMARKET", "NEON ROW", "MERIDIAN EXCHANGE", "ECHO DOCKS"]
 
@@ -66,7 +67,7 @@ def line_map(d, x0, y0, x1, y1, scale=1.0):
         y = y1 - (y1 - y0) * t
         pts.append((x, y))
     # Nova Line (magenta) through Meridian
-    mx, my = pts[1]
+    mx, my = pts[[c[2] for c in CROWN].index("NOVA")]
     nova = [(x0 + 10, my + 120 * scale), (mx - 160 * scale, my + 40 * scale), (mx, my), (mx + 220 * scale, my - 60 * scale), (x1 - 10, my - 60 * scale)]
     d.line(nova, fill=MAGENTA, width=int(10 * scale), joint="curve")
     nova_stops = [nova[0], nova[1], nova[3], nova[4]]
@@ -77,7 +78,7 @@ def line_map(d, x0, y0, x1, y1, scale=1.0):
         d.ellipse([sx - r, sy - r, sx + r, sy + r], fill=BG, outline=MAGENTA, width=int(5 * scale))
         d.text((sx - 10 * scale, sy + dy * scale), name, font=RS(int(26 * scale)), fill=(255, 150, 225))
     # Gutter link (grey dashed, suspended) from Kestrel
-    kx, ky = pts[2]
+    kx, ky = pts[[c[2] for c in CROWN].index("GUTTER")]
     gx, gy = x1 - 50 * scale, ky - 40 * scale
     segs = 9
     for s in range(segs):
@@ -93,7 +94,7 @@ def line_map(d, x0, y0, x1, y1, scale=1.0):
     d.line(pts, fill=GOLD, width=int(8 * scale), joint="curve")
     for i, ((x, y), (name, sub, ic)) in enumerate(zip(pts, CROWN)):
         here = i == 0
-        end = i == n - 1
+        end = i == n - 1 or name == "GLASS CROWN"
         r = (19 if (here or end or ic) else 14) * scale
         d.ellipse([x - r, y - r, x + r, y + r], fill=WHITE if ic else BG, outline=WHITE, width=int(6 * scale))
         if here:

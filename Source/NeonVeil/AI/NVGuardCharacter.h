@@ -70,6 +70,20 @@ public:
 
 	bool IsHoldingPose() const { return HoldPoseAnim != nullptr; }
 
+	/**
+	 * Ambient-crowd detail budget (non-hostile citizens only). MetaHuman bodies, faces and garments are pinned to a
+	 * reduced LOD and ask for lower-resolution texture mips, so a dozen citizens fit in a 6 GB card. -1 = automatic.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Performance")
+	int32 CrowdBodyLOD = 2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Performance")
+	int32 CrowdFaceLOD = 3;
+
+	/** Texture streaming distance multiplier for the citizen's meshes (< 1 = coarser mips). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Performance", meta = (ClampMin = "0.05"))
+	float CrowdTextureScale = 0.35f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
 	TObjectPtr<USkeletalMesh> BodyMeshAsset;
 
@@ -171,6 +185,7 @@ protected:
 
 	/** Leader-pose the appearance actor's body to our animated mesh. */
 	void BindAppearance();
+	void ApplyCrowdDetail();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TArray<TObjectPtr<USkeletalMeshComponent>> OutfitComponents;
