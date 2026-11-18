@@ -220,6 +220,11 @@ void ANVBlackProtocolDirector::HandleObjectiveCompleted(FName ObjectiveID)
 	{
 		ArteryTurret->SetMode(ENVTurretMode::Hostile);
 	}
+	if (ObjectiveID == O01)
+	{
+		// reaching the emergency door saves the next checkpoint (CP_M01_Artery): the escape track ends here
+		StopEscapeMusic(EscapeMusicFadeOut);
+	}
 }
 
 void ANVBlackProtocolDirector::HandleGameplayEvent(FGameplayTag EventTag)
@@ -341,7 +346,7 @@ void ANVBlackProtocolDirector::StartLockdown()
 
 void ANVBlackProtocolDirector::StartEscapeMusic(float FadeSeconds)
 {
-	if (!CombatMusic || (EscapeMusic && EscapeMusic->IsPlaying()))
+	if (!CombatMusic || bEscapeMusicDone || (EscapeMusic && EscapeMusic->IsPlaying()))
 	{
 		return;
 	}
@@ -350,6 +355,17 @@ void ANVBlackProtocolDirector::StartEscapeMusic(float FadeSeconds)
 	{
 		EscapeMusic->FadeIn(FadeSeconds, CombatMusicVolume);
 	}
+}
+
+void ANVBlackProtocolDirector::StopEscapeMusic(float FadeSeconds)
+{
+	bEscapeMusicDone = true;
+	if (EscapeMusic && EscapeMusic->IsPlaying())
+	{
+		UE_LOG(LogNeonVeil, Log, TEXT("M01: escape music fading out (%.1f s)"), FadeSeconds);
+		EscapeMusic->FadeOut(FadeSeconds, 0.f);
+	}
+	EscapeMusic = nullptr;
 }
 
 void ANVBlackProtocolDirector::DirectorTurnTo(const FVector& Target, float Seconds)
@@ -516,9 +532,10 @@ void ANVBlackProtocolDirector::ApplyRestoredState()
 	}
 	UE_LOG(LogNeonVeil, Log, TEXT("M01: restoring world state from checkpoint"));
 	DirectorGone(true);
-	StartEscapeMusic(2.f);
 	if (!IsDone(TEXT("M01-O01")))
 	{
+		// restored at the lockdown checkpoint: the escape track belongs to this fight only
+		StartEscapeMusic(2.f);
 		// died during the lockdown: the fight replays (no second revocation speech)
 		bLockdownStarted = true;
 		ApplyLockdownWorld(true);

@@ -106,6 +106,9 @@ public:
 	/** Same level as the Crown Line ride music (NVTramRide MusicVolume). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Lockdown")
 	float CombatMusicVolume = 0.6f;
+	/** The escape track fades out over this long when the next checkpoint is reached (M01-O01 complete). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Lockdown")
+	float EscapeMusicFadeOut = 3.f;
 
 	// ----- A: the Director signs the order (Bible §15 "authorization revoked")
 	/** The Director (MetaHuman BP) standing at the dark glass; turns to Ghost-7, signs at the console, leaves by evac tube. */
@@ -257,8 +260,10 @@ private:
 	bool IsDone(const TCHAR* ObjectiveID) const;
 
 	void StartEscapeMusic(float FadeSeconds);
+	void StopEscapeMusic(float FadeSeconds);
 	UPROPERTY(Transient)
 	TObjectPtr<UAudioComponent> EscapeMusic;
+	bool bEscapeMusicDone = false;
 	void DirectorTurnTo(const FVector& Target, float Seconds);
 	void DirectorSign();
 	void DirectorEvac();
