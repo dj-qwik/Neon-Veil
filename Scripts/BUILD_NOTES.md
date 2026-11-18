@@ -47,3 +47,5 @@ Over budget, D3D12 removes the device and the editor dies ("GPU Crashed or D3D D
 - Set `r.Streaming.PoolSize 1200` in the editor console before PIE when testing here.
 - Hostile fire and drone deaths spawn no GPU Niagara per shot; M01 graybox meshes cast no shadows. Keep it that
   way until the art pass budgets for it.
+- The art pass (`nv_m01_art.py`, folder M01_Art, ~760 actors) lays kit meshes over the graybox with no collision
+  and no shadows; graybox props it replaces are only hidden. Re-run it after every `nv_setup_m01.py` run.
