@@ -97,6 +97,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|FX")
 	float ExplosionScale = 6.f;
 
+	/** Gunfire: each shot is a short glowing bolt that flies from the shooter's hull toward the other car. Bolts are
+	 *  tracked in tram space every frame (muzzle and target follow the cars), so they always leave the gun and land on
+	 *  the hull instead of hanging in the air while the convoy moves on. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Gunfire")
+	float BoltSpeed = 15000.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Gunfire")
+	float BoltLength = 650.f;
+	/** Bolt diameter as a scale on the 1 m cylinder. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Gunfire")
+	float BoltThickness = 0.22f;
+	/** Chance a shot lands on the hull (sparks); misses streak close past it. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Gunfire")
+	float SuspectAccuracy = 0.65f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Gunfire")
+	float PoliceAccuracy = 0.55f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
 	TObjectPtr<USoundBase> SirenSound;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase|Audio")
@@ -138,7 +154,13 @@ private:
 	static FVector Sample(const TArray<FKey>& Keys, float T);
 	void UpdateFrame(float Dt);
 	void PlaceCar(UStaticMeshComponent* Car, const FVector& World, float Dt, FVector& PrevWorld, float Roll);
-	void FireShot(const FVector& From, const FVector& To, bool bPolice);
+	void FireShot(bool bPolice);
+	void UpdateBolts(float Dt);
+	FVector Muzzle(const UStaticMeshComponent* Shooter, const FVector& Dir) const;
+
+	struct FBolt { bool bPolice = false; bool bHit = true; float Age = 0.f; float Flight = 0.1f; FVector AimOfs = FVector::ZeroVector; int32 Tracer = -1; };
+	TArray<FBolt> Bolts;
+	float MuzzleAge[2] = { 1.f, 1.f };
 	void Explode(const FVector& At);
 	void SayLine(const FNVSubtitleLine& Line);
 	void SecondaryBlast(const FVector& At, float Scale, bool bLoud);
@@ -162,7 +184,10 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UAudioComponent> SuspectEngine;
 	UPROPERTY(Transient) TObjectPtr<UNiagaraComponent> SmokeTrail;
 	UPROPERTY(Transient) TArray<TObjectPtr<UStaticMeshComponent>> Tracers;
-	TArray<float> TracerLife;
+	TArray<bool> TracerBusy;
+	UPROPERTY(Transient) TObjectPtr<UPointLightComponent> MuzzleSuspect;
+	UPROPERTY(Transient) TObjectPtr<UPointLightComponent> MuzzlePolice;
+	int32 SuspectBurst = 0;
 
 	TArray<FKey> SuspectKeys;
 	TArray<FKey> PoliceKeys;

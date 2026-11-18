@@ -212,9 +212,12 @@ bool ANVSimulationDirector::IsStepDone(const FNVSimStep& Step) const
 		int32 Count = 0;
 		for (const ANVTrainingTarget* T : Step.Targets)
 		{
-			Count += (T && Marked.Contains(T)) ? 1 : 0;
+			// A profile the player has already destroyed (grenade over the wall, a lucky shot through a gap) counts
+			// as located: once cleared it is hidden and the uplink can no longer mark it, which used to soft-lock
+			// the suite.
+			Count += (T && (Marked.Contains(T) || T->IsCleared())) ? 1 : 0;
 		}
-		return Count >= Step.MinMarks;
+		return Count >= FMath::Min(Step.MinMarks, Step.Targets.Num());
 	}
 	case ENVSimStepType::WaitForEvent:
 		return bEventReceived;

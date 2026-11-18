@@ -148,7 +148,19 @@ void ANVTramRideDirector::BeginPlay()
 	BlastLight->SetLightColor(FLinearColor(1.f, 0.55f, 0.2f));
 	BlastLight->SetCastShadows(false);
 	BlastLight->RegisterComponent();
-	for (int32 i = 0; i < 12; ++i)
+	for (int32 m = 0; m < 2; ++m)
+	{
+		UPointLightComponent* L = NewObject<UPointLightComponent>(this);
+		L->SetMobility(EComponentMobility::Movable);
+		L->SetIntensityUnits(ELightUnits::Lumens);
+		L->SetIntensity(0.f);
+		L->SetAttenuationRadius(1400.f);
+		L->SetLightColor(m == 0 ? FLinearColor(1.f, 0.35f, 0.1f) : FLinearColor(0.35f, 0.6f, 1.f));
+		L->SetCastShadows(false);
+		L->RegisterComponent();
+		(m == 0 ? MuzzleSuspect : MuzzlePolice) = L;
+	}
+	for (int32 i = 0; i < 16; ++i)
 	{
 		UStaticMeshComponent* T = NewObject<UStaticMeshComponent>(this);
 		T->SetMobility(EComponentMobility::Movable);
@@ -158,7 +170,7 @@ void ANVTramRideDirector::BeginPlay()
 		T->SetVisibility(false);
 		T->RegisterComponent();
 		Tracers.Add(T);
-		TracerLife.Add(0.f);
+		TracerBusy.Add(false);
 	}
 }
 
@@ -221,30 +233,108 @@ void ANVTramRideDirector::PlaceCar(UStaticMeshComponent* Car, const FVector& Wor
 	Car->SetVisibility(true, true);
 }
 
-void ANVTramRideDirector::FireShot(const FVector& From, const FVector& To, bool bPolice)
+FVector ANVTramRideDirector::Muzzle(const UStaticMeshComponent* Shooter, const FVector& Dir) const
 {
-	const FVector Aim = To + FMath::VRand() * FMath::FRandRange(60.f, 260.f);
-	const FVector D = Aim - From;
-	for (int32 i = 0; i < Tracers.Num(); ++i)
+	// the hull surface facing the target: project the bounds box onto the firing direction
+	const FVector E = Shooter->Bounds.BoxExtent;
+	const float Reach = FMath::Abs(Dir.X) * E.X + FMath::Abs(Dir.Y) * E.Y + FMath::Abs(Dir.Z) * E.Z;
+	return Shooter->Bounds.Origin + Dir * Reach * 0.85f;
+}
+
+void ANVTramRideDirector::FireShot(bool bPolice)
+{
+	const UStaticMeshComponent* From = bPolice ? Police.Get() : Suspect.Get();
+	const UStaticMeshComponent* To = bPolice ? Suspect.Get() : Police.Get();
+	if (!From || !To) { return; }
+	int32 Free = INDEX_NONE;
+	for (int32 i = 0; i < Tracers.Num(); ++i) { if (!TracerBusy[i] && Tracers[i]) { Free = i; break; } }
+	if (Free == INDEX_NONE) { return; }
+
+	FBolt B;
+	B.bPolice = bPolice;
+	// the last shots before the patrol car is hit always land, so the hit reads as caused by the gunfire
+	const float C = Ride ? Ride->GetRideTime() - ChaseStart : 0.f;
+	B.bHit = (!bPolice && C > HitAt - 0.7f) || FMath::FRand() < (bPolice ? PoliceAccuracy : SuspectAccuracy);
+	// aim point in tram axes (X fwd, Y right, Z up) relative to the target's centre: on the hull for hits,
+	// a near miss just past it otherwise
+	const FVector E = To->Bounds.BoxExtent;
+	if (B.bHit)
 	{
-		if (TracerLife[i] <= 0.f && Tracers[i])
-		{
-			UStaticMeshComponent* T = Tracers[i];
-			T->SetMaterial(0, bPolice ? PoliceTracer : SuspectTracer);
-			T->SetWorldLocation(From + D * 0.5f);
-			T->SetWorldRotation(FRotationMatrix::MakeFromZ(D.GetSafeNormal()).Rotator());
-			T->SetWorldScale3D(FVector(0.12f, 0.12f, D.Size() / 100.f));
-			T->SetVisibility(true);
-			TracerLife[i] = 0.1f;
-			break;
-		}
+		B.AimOfs = FVector(FMath::FRandRange(-0.45f, 0.45f) * E.X, FMath::FRandRange(-0.3f, 0.3f) * E.Y, FMath::FRandRange(-0.3f, 0.35f) * E.Z);
 	}
+	else
+	{
+		const float Ang = FMath::FRandRange(0.f, 2.f * PI);
+		B.AimOfs = FVector(FMath::FRandRange(-0.5f, 0.5f) * E.X, FMath::Cos(Ang) * (E.Y + 160.f), FMath::Sin(Ang) * (E.Z + 120.f));
+	}
+	const FVector D = (To->Bounds.Origin - From->Bounds.Origin);
+	B.Flight = FMath::Clamp(D.Size() / FMath::Max(BoltSpeed, 1000.f), 0.05f, 0.3f);
+	B.Tracer = Free;
+	TracerBusy[Free] = true;
+	UStaticMeshComponent* T = Tracers[Free];
+	T->SetMaterial(0, bPolice ? PoliceTracer : SuspectTracer);
+	Bolts.Add(B);
+
+	// muzzle flash at the gun side of the hull
+	const FVector M = Muzzle(From, D.GetSafeNormal());
+	UPointLightComponent* L = bPolice ? MuzzlePolice : MuzzleSuspect;
+	if (L) { L->SetWorldLocation(M); }
+	MuzzleAge[bPolice ? 1 : 0] = 0.f;
 	if (ShotSounds.Num() > 0)
 	{
 		if (USoundBase* S = ShotSounds[FMath::RandRange(0, ShotSounds.Num() - 1)])
 		{
-			UGameplayStatics::PlaySoundAtLocation(this, S, From, FMath::FRandRange(0.7f, 0.95f), FMath::FRandRange(0.9f, 1.1f), 0.f, Attenuation);
+			UGameplayStatics::PlaySoundAtLocation(this, S, M, FMath::FRandRange(0.7f, 0.95f), FMath::FRandRange(0.9f, 1.1f), 0.f, Attenuation);
 		}
+	}
+}
+
+void ANVTramRideDirector::UpdateBolts(float Dt)
+{
+	for (int32 m = 0; m < 2; ++m)
+	{
+		MuzzleAge[m] += Dt;
+		UPointLightComponent* L = m == 0 ? MuzzleSuspect : MuzzlePolice;
+		if (L) { L->SetIntensity(MuzzleAge[m] < 0.05f ? 60000.f : 0.f); }
+	}
+	for (int32 i = Bolts.Num() - 1; i >= 0; --i)
+	{
+		FBolt& B = Bolts[i];
+		const UStaticMeshComponent* From = B.bPolice ? Police.Get() : Suspect.Get();
+		const UStaticMeshComponent* To = B.bPolice ? Suspect.Get() : Police.Get();
+		UStaticMeshComponent* T = Tracers.IsValidIndex(B.Tracer) ? Tracers[B.Tracer].Get() : nullptr;
+		B.Age += Dt;
+		const bool bGone = !From || !To || !T || !To->IsVisible() || bExploded;
+		// a near miss carries on past the target for a little longer before it fades
+		const float End = B.bHit ? 1.f : 1.8f;
+		const float A = B.Age / B.Flight;
+		if (bGone || A >= End)
+		{
+			if (!bGone && B.bHit)
+			{
+				const FVector Hit = To->Bounds.Origin + Fwd * B.AimOfs.X + Right * B.AimOfs.Y + FVector::UpVector * B.AimOfs.Z;
+				if (SparksFX && FMath::FRand() < 0.7f)
+				{
+					UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, SparksFX, Hit, FRotator::ZeroRotator, FVector(B.bPolice ? 1.2f : 1.6f));
+				}
+			}
+			if (T) { T->SetVisibility(false); }
+			if (TracerBusy.IsValidIndex(B.Tracer)) { TracerBusy[B.Tracer] = false; }
+			Bolts.RemoveAt(i);
+			continue;
+		}
+		// muzzle and aim follow both cars this frame
+		const FVector Aim = To->Bounds.Origin + Fwd * B.AimOfs.X + Right * B.AimOfs.Y + FVector::UpVector * B.AimOfs.Z;
+		const FVector Dir = (Aim - From->Bounds.Origin).GetSafeNormal();
+		const FVector M0 = Muzzle(From, Dir);
+		const FVector Head = M0 + (Aim - M0) * A;
+		const float Len = FMath::Min(BoltLength, FVector::Dist(M0, Head));
+		if (Len < 5.f) { T->SetVisibility(false); continue; }
+		const FVector Tail = Head - Dir * Len;
+		T->SetWorldLocation((Head + Tail) * 0.5f);
+		T->SetWorldRotation(FRotationMatrix::MakeFromZ(Dir).Rotator());
+		T->SetWorldScale3D(FVector(BoltThickness, BoltThickness, Len / 100.f));
+		T->SetVisibility(true);
 	}
 }
 
@@ -340,10 +430,6 @@ void ANVTramRideDirector::Tick(float Dt)
 		++NextLine;
 	}
 
-	for (int32 i = 0; i < Tracers.Num(); ++i)
-	{
-		if (TracerLife[i] > 0.f && (TracerLife[i] -= Dt) <= 0.f && Tracers[i]) { Tracers[i]->SetVisibility(false); }
-	}
 	if (BlastAge >= 0.f)
 	{
 		BlastAge += Dt;
@@ -467,19 +553,20 @@ void ANVTramRideDirector::Tick(float Dt)
 		}
 	}
 
-	// firefight
+	// firefight: short controlled bursts from both cars, the suspect's bursts getting longer toward the hit
 	if (Suspect && Police && !bHit && C >= FightFrom)
 	{
-		const FVector S = Suspect->GetComponentLocation(), P = Police->GetComponentLocation();
 		if (C >= NextSuspectShot)
 		{
-			FireShot(S - (S - P).GetSafeNormal() * 300.f, P, false);
-			NextSuspectShot = C + (C > HitAt - 2.5f ? FMath::FRandRange(0.12f, 0.22f) : FMath::FRandRange(0.3f, 0.55f));
+			FireShot(false);
+			const int32 Len = C > HitAt - 2.5f ? 5 : 3;
+			NextSuspectShot = C + (++SuspectBurst % Len == 0 ? FMath::FRandRange(0.35f, 0.6f) : 0.09f);
 		}
 		if (C >= NextPoliceShot)
 		{
-			FireShot(P + (S - P).GetSafeNormal() * 300.f, S, true);
-			NextPoliceShot = C + (++PoliceBurst % 3 == 0 ? FMath::FRandRange(0.5f, 0.8f) : 0.1f);
+			FireShot(true);
+			NextPoliceShot = C + (++PoliceBurst % 3 == 0 ? FMath::FRandRange(0.55f, 0.85f) : 0.1f);
 		}
 	}
+	UpdateBolts(Dt);
 }

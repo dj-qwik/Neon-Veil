@@ -165,6 +165,8 @@ def main():
     sp("big_explosion_sound", big)
     sp("secondary_explosion_sound", cook)
     sp("explosion_scale", 7.0)
+    sp("bolt_thickness", 0.32)   # gunfire bolts read at ~30 m from the cabin
+    sp("bolt_length", 800.0)
     log("ride duration %.1f s, path %.0f cm" % (ride.get_ride_duration(), ride.get_path_length()))
     log("director set: %d lines, %d shot sounds" % (len(LINES), len(shots)))
     unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
