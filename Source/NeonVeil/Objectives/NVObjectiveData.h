@@ -61,6 +61,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mission")
 	TArray<FNVObjectiveDef> Objectives;
 
+	/** Mission that carries straight on in the same map when this one completes (M00 -> M01 at the Director's door):
+	 *  no fade, no end card, no travel. Checkpoints inside it restore it. Takes precedence over NextMissionMap. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mission")
+	TObjectPtr<UNVMissionData> ContinuesInto;
+
 	/** Map to open when the final required objective completes. Empty = stay. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Mission")
 	TSoftObjectPtr<UWorld> NextMissionMap;

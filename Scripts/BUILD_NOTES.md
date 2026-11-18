@@ -35,3 +35,15 @@ All screen UI is code-built Slate in `Source/NeonVeil/UI`:
 - Messages: `ANVHUD::PushMessage(FNVCommsMessage)` / `ShowMessage(...)`, or set `bAsComms` on an FNVSubtitleLine.
 - Console: `NVUIDemo [Title=0|1] [MenuTab+1]` fires one of everything.
 Fonts are read from disk, so packaging stages `Content/UI/Fonts` as non-UFS (DefaultGame.ini).
+
+## M01 testing and video memory (Nov 2026)
+
+The owner's GPU (RTX 4060 laptop, 8 GB, ~5.1 GB budget in the editor) runs the Glass Crown close to its limit.
+Over budget, D3D12 removes the device and the editor dies ("GPU Crashed or D3D Device Removed").
+- Don't `HighResShot` in PIE in this map; use window screenshots.
+- Don't teleport from the prologue tram straight into M01: the tram/city section stays resident. Run
+  `nv_pie_m01.py` twice: the first pass completes M00-O01..O03 and reloads the gallery checkpoint, the second
+  plays M01. A third pass after its deliberate death checks the checkpoint restore and finishes the mission.
+- Set `r.Streaming.PoolSize 1200` in the editor console before PIE when testing here.
+- Hostile fire and drone deaths spawn no GPU Niagara per shot; M01 graybox meshes cast no shadows. Keep it that
+  way until the art pass budgets for it.

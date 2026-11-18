@@ -54,6 +54,38 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
 	bool bNonHostile = true;
 
+	/** M01+: a Directorate trooper hunting Ghost-7 from the start (stealth sections). Overrides bNonHostile. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Combat")
+	bool bStartHostile = false;
+	/** Sight cone used once hostile. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Combat")
+	float SightRange = 2400.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Combat")
+	float SightHalfAngle = 55.f;
+	/** Seconds of clear sight at mid range before a patrolling trooper commits to combat (closer = faster). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Combat")
+	float SpotTime = 1.1f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Combat")
+	float RunSpeed = 380.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Combat")
+	int32 BurstShots = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Combat")
+	FVector2D BurstPause = FVector2D(0.9f, 1.6f);
+
+	/** Turn hostile (the M01 betrayal flips agency troopers once AION falsifies the threat designation). */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Guard")
+	void SetHostile(bool bHostile);
+
+	UFUNCTION(BlueprintPure, Category = "NeonVeil|Guard")
+	bool IsHostile() const { return bIsHostile; }
+
+	UFUNCTION(BlueprintPure, Category = "NeonVeil|Guard")
+	class UNVHostileFire* GetGun() const;
+
+	/** Checkpoint restore: already dead earlier, stay down and out of the way. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Guard")
+	void SetCorpse();
+
 	/**
 	 * Optional looping pose that replaces locomotion (e.g. a citizen seated on a bench waiting for a train). The citizen
 	 * stays where it is placed: no patrol, no glance turns, no movement. Garments and face follow as usual.
@@ -173,6 +205,14 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UNVHealthComponent> Health;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<class UNVHostileFire> Gun;
+
+	UFUNCTION()
+	void HandleDeath(UNVHealthComponent* HealthComp, AActor* Killer);
+
+	bool bIsHostile = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UStaticMeshComponent> BatteryPack;

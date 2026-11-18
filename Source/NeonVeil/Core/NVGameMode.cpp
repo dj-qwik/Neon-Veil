@@ -59,7 +59,9 @@ void ANVGameMode::StartPlay()
 	UNVObjectiveSubsystem* Obj = UNVObjectiveSubsystem::Get(this);
 	UNVSaveSubsystem* SaveSys = UNVSaveSubsystem::Get(this);
 	const UNVSaveGame* Pending = SaveSys ? SaveSys->GetPendingRestore() : nullptr;
-	const bool bRestoring = Pending && Mission && Pending->MissionID == Mission->MissionID;
+	UNVMissionData* RestoreMission = Pending ? FindChainedMission(Pending->MissionID) : nullptr;
+	const bool bRestoring = RestoreMission != nullptr;
+	ActiveMission = bRestoring ? RestoreMission : Mission.Get();
 
 	// Objective state must exist before actors' BeginPlay so doors and directors see it.
 	if (Obj)
@@ -67,7 +69,7 @@ void ANVGameMode::StartPlay()
 		Obj->OnMissionCompleted.AddUniqueDynamic(this, &ANVGameMode::HandleMissionCompleted);
 		if (bRestoring)
 		{
-			Obj->RestoreState(Mission, Pending->CompletedObjectives);
+			Obj->RestoreState(RestoreMission, Pending->CompletedObjectives);
 		}
 		else if (Mission)
 		{
@@ -81,7 +83,7 @@ void ANVGameMode::StartPlay()
 	if (UNVMapPreloadSubsystem* Pre = UNVMapPreloadSubsystem::Get(this))
 	{
 		Pre->Release();
-		if (bPreloadNextMap && Mission && !Mission->NextMissionMap.IsNull())
+		if (bPreloadNextMap && Mission && !Mission->NextMissionMap.IsNull())   // first mission's hand-off only
 		{
 			Pre->Preload(Mission->NextMissionMap.ToSoftObjectPath().GetLongPackageName());
 		}
@@ -109,8 +111,41 @@ void ANVGameMode::StartPlay()
 	}
 }
 
+UNVMissionData* ANVGameMode::FindChainedMission(FName MissionID) const
+{
+	int32 Guard = 0;
+	for (UNVMissionData* M = Mission; M && Guard < 16; M = M->ContinuesInto, ++Guard)
+	{
+		if (M->MissionID == MissionID)
+		{
+			return M;
+		}
+	}
+	return nullptr;
+}
+
+void ANVGameMode::StartContinuation()
+{
+	if (ActiveMission)
+	{
+		UE_LOG(LogNeonVeil, Log, TEXT("Mission continues in this map: %s"), *ActiveMission->MissionID.ToString());
+		if (UNVObjectiveSubsystem* Obj = UNVObjectiveSubsystem::Get(this))
+		{
+			Obj->StartMission(ActiveMission);
+		}
+	}
+}
+
 void ANVGameMode::HandleMissionCompleted(FName MissionID)
 {
+	// seamless hand-off inside this map: start the next mission on the next tick (we are inside the
+	// objective subsystem's broadcast here)
+	if (ActiveMission && ActiveMission->MissionID == MissionID && ActiveMission->ContinuesInto)
+	{
+		ActiveMission = ActiveMission->ContinuesInto;
+		GetWorldTimerManager().SetTimerForNextTick(this, &ANVGameMode::StartContinuation);
+		return;
+	}
 	if (bTransitionStarted)
 	{
 		return;
@@ -140,7 +175,7 @@ void ANVGameMode::HandleMissionCompleted(FName MissionID)
 	}
 	BP_OnMissionCompleted(MissionID);
 
-	if (Mission && !Mission->NextMissionMap.IsNull())
+	if (ActiveMission && !ActiveMission->NextMissionMap.IsNull())
 	{
 		GetWorldTimerManager().SetTimer(TransitionTimer, this, &ANVGameMode::TravelToNextMission, TransitionDelay, false);
 	}
@@ -160,7 +195,7 @@ void ANVGameMode::ShowEndCard()
 
 void ANVGameMode::TravelToNextMission()
 {
-	const FString MapName = Mission->NextMissionMap.ToSoftObjectPath().GetLongPackageName();
+	const FString MapName = ActiveMission->NextMissionMap.ToSoftObjectPath().GetLongPackageName();
 	UE_LOG(LogNeonVeil, Log, TEXT("Travelling to %s"), *MapName);
 	UGameplayStatics::OpenLevel(this, FName(*MapName));
 }

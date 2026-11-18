@@ -41,6 +41,9 @@ working mid-levels, industrial undercity below.
 | **Operation LANTERN** | the op just before the game: Ghost-7 alone recovers an experimental intelligence core from a hostile-held research complex (the master blueprint's opening op, told in M00 as a closed after-action) | in game (M00 gallery wall, antechamber core case, VO set LAN) |
 | Aster Ridge research complex | where LANTERN took place; off-map, outside Veyra-9's nine districts | in game (briefing text) |
 | LANTERN Core 01 | the recovered core, sealed in the Glass Crown antechamber | in game |
+| Directorate troopers | the agency's armed security units; turn on Ghost-7 once AION re-designates him (M01) | in game |
+| Service lift seven | the Glass Crown maintenance lift that fails in the transit shaft (M01-C) | in game (VO) |
+| Medical reclamation suite | where AION strips Ghost-7's cyberware under the tower (M01-D, bible §05) | in game |
 
 Retired invented names (were on station signage before 2026-11-17, now replaced): Meridian Exchange → Floodworks
 stop, Kestrel Arcade → Chrome Mile, Etherion Plaza → Helix Ward, AION Spire → The Spindle, Nova Line → Harbor Line,
@@ -76,7 +79,14 @@ after Act I; every encounter allows two approaches.
 
 - Built: M00 prologue (Veyra Central street, sky car, lobby, Crown Line station, tram ride) + M00 Glass Crown
   (skybridge, Etherion door, atrium with holo-table, sim suite, gallery, antechamber).
-- Next per the continuation bible: finish/playtest M00, then plan M01 Black Protocol and M02 Below the Veil before M03.
+- Built (graybox, 2026-11-17): **M01 Black Protocol**, in the same map. M00's mission data continues into
+  DA_Mission_M01 at the Director's door (no load). Areas A-F of bible §05 sit under and beside the antechamber
+  (`Scripts/Python/nv_setup_m01.py`): lockdown with two drones and turned troopers, server artery with the
+  reroutable sentry turret or the crawlway bypass, the lift failure and assisted grabs in the transit shaft,
+  medical reclamation (drone uplink, optical disruption, kinetic shield and motor augmentation stripped; health
+  left at 35), the waste conduit on six rounds, and the spillway. Every objective saves when it activates;
+  death reloads the last checkpoint. The end card now points at M02.
+- Next: M01 art pass (kits, lighting, VFX); then M02 Below the Veil (the Gutter, Mara Vey, Hunter-01).
 
 ## 6. Open story decisions (need the owner's call; recommendation in brackets)
 

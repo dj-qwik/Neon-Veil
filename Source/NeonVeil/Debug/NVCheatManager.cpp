@@ -27,6 +27,9 @@
 #include "GameFramework/PlayerController.h"
 #include "TimerManager.h"
 #include "UI/NVHUD.h"
+#include "AI/NVSecurityDrone.h"
+#include "AI/NVSentryTurret.h"
+#include "GameplayTagsManager.h"
 #include "Core/NVPlayerController.h"
 
 ANVPlayerCharacter* UNVCheatManager::GetNVPlayer() const
@@ -497,4 +500,44 @@ void UNVCheatManager::NVUIDemo(int32 Title, int32 Menu)
 		}
 	}
 	UE_LOG(LogNeonVeil, Log, TEXT("NVUIDemo fired"));
+}
+
+void UNVCheatManager::NVEvent(const FString& TagName)
+{
+	const FGameplayTag Tag = UGameplayTagsManager::Get().RequestGameplayTag(FName(*TagName), false);
+	UNVObjectiveSubsystem* O = UNVObjectiveSubsystem::Get(this);
+	const bool bOk = Tag.IsValid() && O && O->SendEvent(Tag);
+	UE_LOG(LogNeonVeil, Log, TEXT("NVEvent %s -> %s"), *TagName, !Tag.IsValid() ? TEXT("unknown tag") : (bOk ? TEXT("completed an objective") : TEXT("sent")));
+}
+
+void UNVCheatManager::NVGod(int32 bOn)
+{
+	if (ANVPlayerCharacter* P = Cast<ANVPlayerCharacter>(UGameplayStatics::GetPlayerPawn(this, 0)))
+	{
+		P->GetHealth()->bCannotDie = bOn != 0;
+		UE_LOG(LogNeonVeil, Log, TEXT("NVGod %d"), bOn);
+	}
+}
+
+void UNVCheatManager::NVEnemies()
+{
+	for (TActorIterator<ANVSecurityDrone> It(GetWorld()); It; ++It)
+	{
+		const UNVHealthComponent* H = It->FindComponentByClass<UNVHealthComponent>();
+		UE_LOG(LogNeonVeil, Log, TEXT("NVEnemies drone %s destroyed=%d hp=%.0f at %s"), *It->GetName(), It->IsDestroyed(), H ? H->GetHealth() : -1.f, *It->GetActorLocation().ToCompactString());
+	}
+	for (TActorIterator<ANVSentryTurret> It(GetWorld()); It; ++It)
+	{
+		UE_LOG(LogNeonVeil, Log, TEXT("NVEnemies turret %s mode=%s"), *It->GetName(), *UEnum::GetValueAsString(It->GetMode()));
+	}
+	for (TActorIterator<ANVGuardCharacter> It(GetWorld()); It; ++It)
+	{
+		if (!It->IsHostile())
+		{
+			continue;
+		}
+		const ANVEnemyController* C = Cast<ANVEnemyController>(It->GetController());
+		UE_LOG(LogNeonVeil, Log, TEXT("NVEnemies trooper %s state=%s hp=%.0f at %s"), *It->GetName(), C ? *UEnum::GetValueAsString(C->GetAIState()) : TEXT("none"),
+			It->GetHealth()->GetHealth(), *It->GetActorLocation().ToCompactString());
+	}
 }

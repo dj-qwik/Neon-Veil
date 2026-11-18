@@ -27,6 +27,13 @@
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
 #include "UI/NVNavArrow.h"
+#include "UI/NVHUD.h"
+#include "Save/NVSaveSubsystem.h"
+#include "Objectives/NVObjectiveSubsystem.h"
+#include "Core/NVGameplayTags.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
 
 
 ANVPlayerCharacter::ANVPlayerCharacter(const FObjectInitializer& ObjectInitializer)
@@ -160,6 +167,7 @@ void ANVPlayerCharacter::BeginPlay()
 
 	Weapons->Initialize(FirstPersonCamera, WeaponMesh, WeaponStaticMesh);
 	Weapons->OnWeaponFired.AddDynamic(this, &ANVPlayerCharacter::HandleWeaponFired);
+	Health->OnDeath.AddUniqueDynamic(this, &ANVPlayerCharacter::HandleDeath);
 	if (!ArmsMeshAsset)
 	{
 		// Default arms: the KINEMATION gloves (local-only pack content; stays null if the pack is absent).
@@ -1268,4 +1276,42 @@ void ANVPlayerCharacter::UpdateViewmodel(float DeltaSeconds)
 		bScopedIn = bScoped;
 		ApplyViewmodelVisibility(bScoped);
 	}
+}
+
+void ANVPlayerCharacter::HandleDeath(UNVHealthComponent* HealthComp, AActor* Killer)
+{
+	if (bDeathHandled)
+	{
+		return;
+	}
+	bDeathHandled = true;
+	UE_LOG(LogNeonVeil, Log, TEXT("Player killed by %s: reloading the last checkpoint"), *GetNameSafe(Killer));
+	SetGameplayInputLocked(true, false);
+	Weapons->StopFire();
+	if (UNVObjectiveSubsystem* Obj = UNVObjectiveSubsystem::Get(this))
+	{
+		Obj->SendEvent(NVTags::Event_M01_PlayerKilled);
+	}
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		if (PC->PlayerCameraManager)
+		{
+			PC->PlayerCameraManager->StartCameraFade(0.f, 1.f, 2.2f, FLinearColor(0.12f, 0.f, 0.f), false, true);
+		}
+		if (ANVHUD* HUD = Cast<ANVHUD>(PC->GetHUD()))
+		{
+			HUD->ShowTitleCard(NSLOCTEXT("NeonVeil", "SignalLost", "SIGNAL LOST"), NSLOCTEXT("NeonVeil", "SignalLostSub", "Restoring from the last checkpoint"), 3.f);
+		}
+	}
+	GetWorldTimerManager().SetTimer(DeathTimer, this, &ANVPlayerCharacter::ReloadAfterDeath, 3.f, false);
+}
+
+void ANVPlayerCharacter::ReloadAfterDeath()
+{
+	UNVSaveSubsystem* Save = UNVSaveSubsystem::Get(this);
+	if (Save && Save->HasCheckpoint() && Save->LoadCheckpoint())
+	{
+		return;
+	}
+	UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));
 }

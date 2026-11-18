@@ -36,3 +36,10 @@ Regenerate a single line only when it is asked for.
 ## Operation LANTERN (set `LAN`, M00 gallery holo-table)
 
 Three lines on `D_HoloTable` (Review assignment), between the assignment line and "Proceed to the antechamber": AION = N.A.V.I., Ghost-7 = Vane, one take each, flow "NEON VEIL – LAN VO". Ghost-7's times are spoken as words ("twenty-one twelve"). No new roles. Story context: `Docs/Bible/Continuity.md` (Operation LANTERN).
+
+## M01 Black Protocol (set `M01`)
+
+24 lines on the M01 actors in L_M00_GlassCrown: the director's revocation, designation, door, lift, reclamation and
+recovery lines, plus trigger and interactable lines. AION = N.A.V.I., Ghost-7 = Vane, Ops = Eva (comms card).
+One take each, flow "NEON VEIL – M01 VO". `nv_setup_m01.py` rebuilds those actors, so run `nv_vo_hook.py M01`
+again after it (the hook now also covers the director's `*_lines` arrays).

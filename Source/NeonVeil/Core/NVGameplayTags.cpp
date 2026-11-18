@@ -28,4 +28,15 @@ namespace NVTags
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_PassRegistered, "NV.Event.M00P.PassRegistered", "Prologue: registered the pass at the east wing security desk");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_PlatformPowered, "NV.Event.M00P.PlatformPowered", "Prologue: restored Platform One power from the Platform Two control room");
 	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M00P_GearCollected, "NV.Event.M00P.GearCollected", "Prologue: collected gear from the Platform One crew room");
+
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_EmergencyDoorReached, "NV.Event.M01.EmergencyDoorReached", "M01-O01: drones down, through the emergency door");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_AlternateExit, "NV.Event.M01.AlternateExit", "M01-O02: turret rerouted or service bypass traversed");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_ShaftEscaped, "NV.Event.M01.ShaftEscaped", "M01-O03: reached the bottom of the transit shaft");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_IdentityRecovered, "NV.Event.M01.IdentityRecovered", "M01-O04: damaged agency tag collected");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_SpillwayReached, "NV.Event.M01.SpillwayReached", "M01-O05: out through the drainage spillway");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_DroneDown, "NV.Event.M01.DroneDown", "M01 beat: a security drone destroyed");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_TurretRerouted, "NV.Event.M01.TurretRerouted", "M01 beat: artery sentry turret hacked");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_LiftCalled, "NV.Event.M01.LiftCalled", "M01 beat: service lift boarded");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_ReclamationStart, "NV.Event.M01.ReclamationStart", "M01 beat: entered the medical reclamation suite");
+	UE_DEFINE_GAMEPLAY_TAG_COMMENT(Event_M01_PlayerKilled, "NV.Event.M01.PlayerKilled", "Player died (checkpoint reload follows)");
 }

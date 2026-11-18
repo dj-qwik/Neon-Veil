@@ -2,6 +2,11 @@
 #include "Combat/NVFriendly.h"
 #include "AI/NVEnemyController.h"
 #include "Combat/NVHealthComponent.h"
+#include "AI/NVHostileFire.h"
+#include "NeonVeil.h"
+#include "AI/NVEnemyController.h"
+#include "Combat/NVFriendly.h"
+#include "Components/CapsuleComponent.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSequenceBase.h"
@@ -26,6 +31,11 @@ ANVGuardCharacter::ANVGuardCharacter(const FObjectInitializer& ObjectInitializer
 	GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
 
 	Health = CreateDefaultSubobject<UNVHealthComponent>(TEXT("Health"));
+	Gun = CreateDefaultSubobject<UNVHostileFire>(TEXT("Gun"));
+	Gun->SetupAttachment(RootComponent);
+	Gun->SetRelativeLocation(FVector(55.f, 22.f, 38.f));
+	Gun->Damage = 7.f;
+	Gun->SpreadDeg = 3.2f;
 
 	BatteryPack = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BatteryPack"));
 	BatteryPack->SetupAttachment(GetMesh());
@@ -170,7 +180,7 @@ void ANVGuardCharacter::PostInitializeComponents()
 	{
 		WorldPatrol.Add(GetActorTransform().TransformPosition(P));
 	}
-	if (bNonHostile)
+	if (bNonHostile && !bStartHostile)
 	{
 		Tags.AddUnique(NVFriendly::Tag);
 	}
@@ -258,15 +268,77 @@ void ANVGuardCharacter::ApplyGarments(USkeletalMeshComponent* Host)
 	}
 }
 
+void ANVGuardCharacter::SetHostile(bool bHostile)
+{
+	if (bIsHostile == bHostile || Health->IsDead())
+	{
+		return;
+	}
+	bIsHostile = bHostile;
+	bNonHostile = !bHostile;
+	if (bHostile)
+	{
+		Tags.Remove(NVFriendly::Tag);
+		GlanceRadius = 0.f;
+		Health->ImmuneDamageTypes.Reset();   // M00 security can't be hurt; troopers hunting him can
+	}
+	else
+	{
+		Tags.AddUnique(NVFriendly::Tag);
+	}
+	UE_LOG(LogNeonVeil, Log, TEXT("%s is now %s"), *GetName(), bHostile ? TEXT("hostile") : TEXT("friendly"));
+}
+
+void ANVGuardCharacter::HandleDeath(UNVHealthComponent* HealthComp, AActor* Killer)
+{
+	UE_LOG(LogNeonVeil, Log, TEXT("%s killed by %s"), *GetName(), *GetNameSafe(Killer));
+	if (ANVEnemyController* C = Cast<ANVEnemyController>(GetController()))
+	{
+		C->SetAIState(ENVAIState::Disabled);
+		C->StopMovement();
+		C->ClearFocus(EAIFocusPriority::Gameplay);
+	}
+	GetCharacterMovement()->DisableMovement();
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	USkeletalMeshComponent* M = GetMesh();
+	M->SetCollisionProfileName(TEXT("Ragdoll"));
+	M->SetAllBodiesSimulatePhysics(true);
+	M->SetSimulatePhysics(true);
+	M->WakeAllRigidBodies();
+	M->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+}
+
+UNVHostileFire* ANVGuardCharacter::GetGun() const
+{
+	return Gun;
+}
+
+void ANVGuardCharacter::SetCorpse()
+{
+	Health->SetHealthDirect(0.f);
+	if (ANVEnemyController* C = Cast<ANVEnemyController>(GetController()))
+	{
+		C->SetAIState(ENVAIState::Disabled);
+	}
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+	GetCharacterMovement()->DisableMovement();
+}
+
 void ANVGuardCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	Health->OnDeath.AddUniqueDynamic(this, &ANVGuardCharacter::HandleDeath);
+	if (bStartHostile)
+	{
+		bNonHostile = false;
+		SetHostile(true);
+	}
 	BindAppearance();
 	UCharacterMovementComponent* Move = GetCharacterMovement();
-	if (bNonHostile)
-	{
-		ApplyCrowdDetail();
-	}
+	// every guard and trooper uses the reduced crowd detail: an 8 GB card runs out of video memory with a handful of
+	// full-detail MetaHumans on screen (M01 brings several troopers into one room)
+	ApplyCrowdDetail();
 	if (HoldPoseAnim)
 	{
 		// seated / posed citizen: play the pose, never move or turn

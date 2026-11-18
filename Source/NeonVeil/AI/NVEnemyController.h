@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "GameplayTagContainer.h"
 #include "NVEnemyController.generated.h"
 
 class ANVGuardCharacter;
@@ -48,10 +49,32 @@ public:
 protected:
 	virtual void Tick(float DeltaSeconds) override;
 
+public:
+	/** Hostile: go straight to combat against the player from a known position (damage taken, ally alert). */
+	void AlertTo(const FVector& Where);
+
 private:
 	void Think();
 	void MoveToNextPoint();
 	void UpdateGlance();
+	/** Hostile sensing and combat (M01+). Returns true when it handled this think. */
+	bool ThinkHostile(float Interval);
+	void TickCombat(float DeltaSeconds);
+	void EnterCombat(const FVector& Where, bool bAlertAllies);
+	void SetCombatMovement(bool bCombat);
+	bool SeesPlayer(APawn* Player) const;
+	UFUNCTION()
+	void HandleDamaged(class UNVHealthComponent* HealthComp, float NewHealth, float Delta, AActor* DamageInstigator, FGameplayTag DamageType);
+
+	float Suspicion = 0.f;
+	FVector LastKnown = FVector::ZeroVector;
+	float LastSeenTime = -100.f;
+	float StateEnteredTime = 0.f;
+	float LastThinkTime = 0.f;
+	float FireTimer = 1.f;
+	int32 ShotsLeft = 0;
+	float NextReposition = 0.f;
+	bool bCombatMovement = false;
 
 	TWeakObjectPtr<ANVGuardCharacter> Guard;
 	ENVAIState State = ENVAIState::Idle;

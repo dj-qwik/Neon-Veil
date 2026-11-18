@@ -122,6 +122,18 @@ public:
 	UFUNCTION(Exec)
 	void NVAbilityDisable(int32 Slot, int32 bDisabled = 1);
 
+	/** Send a gameplay event by tag name, e.g. NVEvent NV.Event.M01.LiftCalled */
+	UFUNCTION(Exec)
+	void NVEvent(const FString& TagName);
+
+	/** Toggle player invulnerability (health floors at 1). */
+	UFUNCTION(Exec)
+	void NVGod(int32 bOn = 1);
+
+	/** Log every M01 enemy: drones, turrets, hostile troopers (state, health, position). */
+	UFUNCTION(Exec)
+	void NVEnemies();
+
 private:
 	ANVPlayerCharacter* GetNVPlayer() const;
 	AActor* FindActor(const FString& Name) const;

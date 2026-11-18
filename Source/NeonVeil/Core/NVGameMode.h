@@ -55,10 +55,17 @@ protected:
 	void BP_OnMissionCompleted(FName MissionID);
 
 	void ShowEndCard();
+	void StartContinuation();
+	/** Mission in the chain (Mission, its ContinuesInto, ...) whose ID matches, or null. */
+	UNVMissionData* FindChainedMission(FName MissionID) const;
+	/** The mission currently running in this map (Mission, or a seamless continuation of it). */
+	UPROPERTY(Transient)
+	TObjectPtr<UNVMissionData> ActiveMission;
 	void TravelToNextMission();
 
 private:
 	bool bTransitionStarted = false;
 	FTimerHandle EndCardTimer;
 	FTimerHandle TransitionTimer;
+	FTimerHandle ContinueTimer;
 };

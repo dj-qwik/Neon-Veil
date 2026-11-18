@@ -435,6 +435,13 @@ private:
 	UFUNCTION()
 	void HandleWeaponFired();
 
+	/** Lethal damage (M01 on): lock input, fade, "signal lost", then reload the last checkpoint. */
+	UFUNCTION()
+	void HandleDeath(UNVHealthComponent* HealthComp, AActor* Killer);
+	void ReloadAfterDeath();
+	FTimerHandle DeathTimer;
+	bool bDeathHandled = false;
+
 	UFUNCTION()
 	void HandleWeaponEquipped(UNVWeaponData* Weapon);
 
