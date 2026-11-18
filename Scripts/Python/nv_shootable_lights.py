@@ -79,6 +79,8 @@ for a in EAS.get_all_level_actors():
     if not m or not c.is_visible() or a.get_editor_property("hidden"):
         continue
     lab = a.get_actor_label()
+    if lab.startswith("CoverRim_"):
+        continue          # the dark rim around a light cover; its glowing panel is the fixture
     if re.search(r"beacon|emergency|alarm", lab, re.I) or re.search(r"core|monolith|kiosk|holo|orrery", lab + m.get_name(), re.I):
         continue          # alarm beacons and story props keep working
     o, e = a.get_actor_bounds(False)
@@ -137,6 +139,19 @@ for fx, ls in groups.items():
         if rc.mobility == unreal.ComponentMobility.STATIC:
             rc.set_mobility(unreal.ComponentMobility.MOVABLE)
     out.append("%-22s %-34s lights %d slots %s" % (str(tag)[len(GP):], fx.get_actor_label(), len(ls), slots or "all"))
-out.insert(0, "%d shootable fixtures, %d lights" % (n, sum(len(v) for v in groups.values())))
+# light covers (nv_light_covers.py) whose light went to a real fixture instead: remove them, a cover must always
+# mean "this light can be shot"
+orphans = []
+for a in EAS.get_all_level_actors():
+    lab = a.get_actor_label()
+    if lab.startswith("LampCover_") and "NVLightFixture" not in [str(t) for t in a.tags]:
+        orphans.append(lab[len("LampCover_"):])
+for a in EAS.get_all_level_actors():
+    lab = a.get_actor_label()
+    for pre in ("LampCover_", "CoverRim_"):
+        if lab.startswith(pre) and lab[len(pre):] in orphans:
+            EAS.destroy_actor(a)
+            break
+out.insert(0, "%d shootable fixtures, %d lights; %d unneeded light covers removed" % (n, sum(len(v) for v in groups.values()), len(orphans)))
 unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
 open(unreal.Paths.project_saved_dir() + "NV_shootable_%s.txt" % W.get_name(), "w").write("\n".join(out))

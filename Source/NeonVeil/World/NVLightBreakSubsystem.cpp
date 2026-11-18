@@ -55,6 +55,10 @@ FName UNVLightBreakSubsystem::GroupOf(const AActor* Actor)
 
 void UNVLightBreakSubsystem::BuildIndex()
 {
+	if (!GetWorld())
+	{
+		return;
+	}
 	bIndexed = true;
 	Groups.Reset();
 	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
@@ -75,14 +79,14 @@ bool UNVLightBreakSubsystem::TryBreak(const FHitResult& Hit)
 	{
 		return false;
 	}
-	return BreakGroup(GroupOf(A), false, Hit.ImpactPoint);
+	return BreakGroup(GroupOf(A), false, Hit.ImpactPoint, (Hit.TraceEnd - Hit.TraceStart).GetSafeNormal());
 }
 
-bool UNVLightBreakSubsystem::BreakGroup(FName Group, bool bInstant, FVector EffectLocation)
+bool UNVLightBreakSubsystem::BreakGroup(FName Group, bool bInstant, FVector EffectLocation, FVector ShotDirection)
 {
-	if (Group.IsNone() || Broken.Contains(Group))
+	if (Group.IsNone() || Broken.Contains(Group) || !GetWorld())
 	{
-		return false;
+		return false;   // no world: called on the class default (scripts), nothing to break
 	}
 	if (!bIndexed)
 	{
@@ -114,14 +118,18 @@ bool UNVLightBreakSubsystem::BreakGroup(FName Group, bool bInstant, FVector Effe
 		return true;
 	}
 
-	// effects: a small spark burst and glass at the lamp (the example systems are sized for big impacts), the shatter
+	// effects: sparks raining down from the lamp, glass thrown on along the bullet's path (away from the shooter,
+	// angled down) so it never bursts into the camera of a player standing under the light
 	if (UNiagaraSystem* Sparks = LoadQuiet<UNiagaraSystem>(SparkPath))
 	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, Sparks, EffectLocation, FRotator(-90.f, 0.f, 0.f), FVector(0.3f));
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, Sparks, EffectLocation, FRotator(-90.f, 0.f, 0.f), FVector(1.f));
 	}
 	if (UNiagaraSystem* Glass = LoadQuiet<UNiagaraSystem>(GlassPath))
 	{
-		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, Glass, EffectLocation, FRotator(-90.f, 0.f, 0.f), FVector(0.4f));
+		FVector Dir = ShotDirection.IsNearlyZero() ? FVector(0.f, 0.f, -1.f) : ShotDirection;
+		Dir.Z = FMath::Min(Dir.Z, -0.5f);              // always downward
+		const FRotator GlassRot = Dir.GetSafeNormal().Rotation();
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, Glass, EffectLocation, GlassRot, FVector(0.6f));
 	}
 	USoundBase* Shatter = LoadQuiet<USoundBase>(ShatterPath);
 	if (!Shatter)

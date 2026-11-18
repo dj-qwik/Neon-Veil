@@ -31,6 +31,8 @@
 #include "AI/NVSentryTurret.h"
 #include "GameplayTagsManager.h"
 #include "Core/NVPlayerController.h"
+#include "World/NVLightBreakSubsystem.h"
+#include "EngineUtils.h"
 
 ANVPlayerCharacter* UNVCheatManager::GetNVPlayer() const
 {
@@ -540,4 +542,43 @@ void UNVCheatManager::NVEnemies()
 		UE_LOG(LogNeonVeil, Log, TEXT("NVEnemies trooper %s state=%s hp=%.0f at %s"), *It->GetName(), C ? *UEnum::GetValueAsString(C->GetAIState()) : TEXT("none"),
 			It->GetHealth()->GetHealth(), *It->GetActorLocation().ToCompactString());
 	}
+}
+
+void UNVCheatManager::NVBreakLight(const FString& Name)
+{
+	UNVLightBreakSubsystem* Lights = UNVLightBreakSubsystem::Get(GetWorld());
+	APlayerController* PC = GetOuterAPlayerController();
+	if (!Lights || !PC || !PC->PlayerCameraManager)
+	{
+		return;
+	}
+	const FVector Cam = PC->PlayerCameraManager->GetCameraLocation();
+	const FVector Fwd = PC->PlayerCameraManager->GetActorForwardVector();
+	AActor* Best = Name.IsEmpty() ? nullptr : FindActor(Name);
+	if (!Best)
+	{
+		float BestDot = 0.85f;
+		for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+		{
+			if (!It->ActorHasTag(UNVLightBreakSubsystem::FixtureTag) || Lights->IsBroken(UNVLightBreakSubsystem::GroupOf(*It)))
+			{
+				continue;
+			}
+			const FVector To = It->GetComponentsBoundingBox().GetCenter() - Cam;
+			const float Dot = To.GetSafeNormal() | Fwd;
+			if (To.Size() < 2500.f && Dot > BestDot)
+			{
+				BestDot = Dot;
+				Best = *It;
+			}
+		}
+	}
+	if (!Best)
+	{
+		UE_LOG(LogNeonVeil, Warning, TEXT("NVCheat: no shootable light in view"));
+		return;
+	}
+	const FVector At = Best->GetComponentsBoundingBox().GetCenter();
+	UE_LOG(LogNeonVeil, Log, TEXT("NVCheat: break light %s"), *Best->GetActorNameOrLabel());
+	Lights->BreakGroup(UNVLightBreakSubsystem::GroupOf(Best), false, At, (At - Cam).GetSafeNormal());
 }

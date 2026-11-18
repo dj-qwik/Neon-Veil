@@ -28,7 +28,7 @@ public:
 
 	/** Break one group. bInstant skips the flicker and effects (checkpoint restore). */
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Lights")
-	bool BreakGroup(FName Group, bool bInstant = false, FVector EffectLocation = FVector::ZeroVector);
+	bool BreakGroup(FName Group, bool bInstant = false, FVector EffectLocation = FVector::ZeroVector, FVector ShotDirection = FVector::ZeroVector);
 
 	UFUNCTION(BlueprintPure, Category = "NeonVeil|Lights")
 	bool IsBroken(FName Group) const { return Broken.Contains(Group); }

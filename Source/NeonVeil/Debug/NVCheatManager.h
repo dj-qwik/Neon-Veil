@@ -134,6 +134,10 @@ public:
 	UFUNCTION(Exec)
 	void NVEnemies();
 
+	/** Shoot out a light without aiming: the named fixture, or (no name) the shootable light nearest the crosshair. */
+	UFUNCTION(Exec)
+	void NVBreakLight(const FString& Name = TEXT(""));
+
 private:
 	ANVPlayerCharacter* GetNVPlayer() const;
 	AActor* FindActor(const FString& Name) const;
