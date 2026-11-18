@@ -90,7 +90,7 @@ def line(speaker, text, dur):
     return l
 
 def ground(x, y):
-    w = unreal.EditorLevelLibrary.get_editor_world()
+    w = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     hit = unreal.SystemLibrary.line_trace_single(w, V(x, y, ZS + 600), V(x, y, ZS - 400), unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,
                                                  True, [], unreal.DrawDebugTrace.NONE, True)
     if hit:
@@ -99,7 +99,7 @@ def ground(x, y):
     return ZS
 
 try:
-    if not unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(MAP):
+    if not unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world().get_path_name().startswith(MAP):
         LES.load_level(MAP)
     # --- meshes + textures
     T = {}

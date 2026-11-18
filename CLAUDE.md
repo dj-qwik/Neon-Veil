@@ -6,3 +6,7 @@ Before voicing any line, read `Docs/VO_Cast.md`. It is the master ElevenLabs cas
 - Add any new role to that file before generating its lines.
 - Generate one take per line.
 - New dialogue is voiced, not left as subtitles only.
+
+## C++ rebuilds
+Follow `Scripts/BUILD_NOTES.md`: after the rebuild session, reopen the editor with the full uproject
+(MetaHuman crowd content mounted) before running any script that saves a level.

@@ -12,7 +12,7 @@ OUT = []
 def log(*a):
     OUT.append(" ".join(str(x) for x in a))
 MAP = "/Game/NeonVeil/Maps/M00/L_M00_Prologue"
-if not unreal.EditorLevelLibrary.get_editor_world().get_path_name().startswith(MAP):
+if not unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world().get_path_name().startswith(MAP):
     LES.load_level(MAP)
 FOLDER, TAG = "P_NPC", "NVNPC"
 for a in list(EAS.get_all_level_actors()):
@@ -250,6 +250,6 @@ for label, c, size in (("NPC_NoNav_Track", (1500, -1425, 0), (6200, 600, 400)),)
     m.set_actor_label(label); m.set_folder_path(FOLDER); m.tags = [TAG]
     m.set_actor_scale3d(V(size[0] / 200.0, size[1] / 200.0, size[2] / 200.0))
     m.set_editor_property("area_class", unreal.NavArea_Null)
-unreal.SystemLibrary.execute_console_command(unreal.EditorLevelLibrary.get_editor_world(), "RebuildNavigation")
+unreal.SystemLibrary.execute_console_command(unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world(), "RebuildNavigation")
 LES.save_current_level()
 open(unreal.Paths.project_saved_dir() + "NV_npcs.txt", "w").write("\n".join(OUT))

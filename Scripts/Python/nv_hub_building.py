@@ -235,6 +235,8 @@ BAY = 800.0
 cols = [X_W + BAY * i for i in range(1, int(W / BAY))]
 for i, x in enumerate(cols):
     z0 = ZS + (700 if 6200 < x < 7900 else 0)
+    if 6500 < x < 7600:
+        z0 = ZS + 1175          # the centre bay starts above the first ledge so it never cuts through VEYRA CENTRAL
     segs = [(z0, Z_TOP)]
     for (gx, gz, hw, hh) in GATES:
         if abs(x - gx) < hw + 80:

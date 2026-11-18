@@ -13,6 +13,12 @@ Workaround for any C++ change (Live Coding included):
 3. Open the project and accept the module rebuild.
 4. Close, restore the entry, reopen. (No rebuild is triggered; the crowd assets mount again.)
 
+**Never save a level in the step-3 session.** Without the crowd plugin mounted, the citizens' MetaHuman
+references load as null, and saving `L_M00_Prologue` then writes the nulls into the map: every citizen
+turns invisible except a stray hair-card mesh lying on the floor. If that happens, reopen with the full
+uproject and run `nv_npcs.py`, then `nv_skycar.py nofbx` and `nv_vo_hook.py SKY` (the sky-car driver is
+a copy of `NPC_St_E2`).
+
 The citizens (`Scripts/Python/nv_npcs.py`) use the pack's Chaos cloth garments
 (`CA_<Garment>_<f|m>_med_<nrw|ovw>`) on `ANVGuardCharacter::Garments`; they are skinned to the
 visible MetaHuman body by leader pose with simulation off. The pack's `*_CombinedSkelMesh` assets are

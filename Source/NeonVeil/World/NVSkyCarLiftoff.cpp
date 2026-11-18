@@ -14,7 +14,9 @@
 #include "AIController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "TimerManager.h"
 #include "Sound/SoundAttenuation.h"
 #include "Sound/SoundBase.h"
 
@@ -315,7 +317,29 @@ void ANVSkyCarLiftoff::Tick(float Dt)
 		PlaceCar(ParkPos + FVector(0.f, 0.f, Lift + FMath::Sin(PhaseTime * 23.f) * 0.8f * A), ParkRot);
 		if (A >= 1.f)
 		{
-			if (LiftDustFX) { UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, LiftDustFX, ParkPos, FRotator::ZeroRotator, FVector(LiftDustScale)); }
+			if (LiftDustFX)
+			{
+				DustComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, LiftDustFX, ParkPos, FRotator::ZeroRotator, FVector(LiftDustScale), true, true, ENCPoolMethod::None);
+				if (DustComp)
+				{
+					// the plume loops, so stop emitting after a few seconds, let it thin out, then remove it
+					TWeakObjectPtr<UNiagaraComponent> Weak = DustComp;
+					TWeakObjectPtr<ANVSkyCarLiftoff> Self = this;
+					const float Fade = LiftDustFadeTime;
+					GetWorldTimerManager().SetTimer(DustTimer, FTimerDelegate::CreateLambda([Weak, Self, Fade]()
+					{
+						if (!Weak.IsValid()) { return; }
+						Weak->Deactivate();
+						if (Self.IsValid())
+						{
+							Self->GetWorldTimerManager().SetTimer(Self->DustTimer, FTimerDelegate::CreateLambda([Weak]()
+							{
+								if (Weak.IsValid()) { Weak->DestroyComponent(); }
+							}), FMath::Max(Fade, 0.1f), false);
+						}
+					}), FMath::Max(LiftDustTime, 0.1f), false);
+				}
+			}
 			if (PlayerDistance() < 1800.f) { UNVBlastShake::Kick(this, 0.22f, 0.5f); }
 			SetPhase(EPhase::Rise);
 		}
@@ -327,6 +351,11 @@ void ANVSkyCarLiftoff::Tick(float Dt)
 		const float H = 18.f + (HoverHeight - 18.f) * FMath::InterpEaseInOut(0.f, 1.f, A, 2.2f);
 		const FRotator R(3.5f * FMath::Sin(A * PI), ParkRot.Yaw + 2.f * FMath::Sin(A * PI * 1.3f), 1.8f * FMath::Sin(PhaseTime * 1.7f));
 		PlaceCar(ParkPos + FVector(0.f, 0.f, H), R);
+		// once it is well above head height the kerb is free again
+		if (H > BlockerClearHeight && Blocker->GetCollisionEnabled() != ECollisionEnabled::NoCollision)
+		{
+			Blocker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
 		UnderF->SetIntensity(UnderBase * (1.f - 0.4f * A)); UnderR->SetIntensity(UnderBase * (1.f - 0.4f * A));
 		ParkFill->SetIntensity(2600.f * (1.f - A));
 		if (!bLiftLineSaid && PhaseTime > LiftoffLineDelay - SpoolTime) { bLiftLineSaid = true; Say(LinesOnLiftoff); }
@@ -343,6 +372,7 @@ void ANVSkyCarLiftoff::Tick(float Dt)
 			PrevPos = P1;
 			PrevYaw = CarRoot->GetComponentRotation().Yaw;
 			CurRot = CarRoot->GetComponentRotation();
+			Blocker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			SetPhase(EPhase::Depart);
 		}
 		break;

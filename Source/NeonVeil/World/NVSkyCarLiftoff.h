@@ -9,6 +9,7 @@ class ACharacter;
 class UAudioComponent;
 class UBoxComponent;
 class UMaterialInstanceDynamic;
+class UNiagaraComponent;
 class UNiagaraSystem;
 class UPointLightComponent;
 class USoundAttenuation;
@@ -104,6 +105,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar|Look") float GlowThrust = 3.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar|Look") TObjectPtr<UNiagaraSystem> LiftDustFX;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar|Look") float LiftDustScale = 3.f;
+	/** Seconds the lift dust keeps emitting before it is switched off and left to thin out. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar|Look") float LiftDustTime = 3.5f;
+	/** Seconds after switching off before the dust system is removed outright. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar|Look") float LiftDustFadeTime = 4.f;
+	/** Height of the car's pads above the kerb at which the invisible blocker is dropped. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar") float BlockerClearHeight = 320.f;
 
 	// --- audio / lines
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkyCar|Audio") TObjectPtr<USoundBase> CanopySound;
@@ -133,5 +140,7 @@ private:
 	FRotator ParkRot, CurRot;
 	float PrevYaw = 0.f, Bank = 0.f;
 	bool bLiftLineSaid = false;
+	UPROPERTY(Transient) TObjectPtr<UNiagaraComponent> DustComp;
+	FTimerHandle DustTimer;
 	float HeadBase = 0.f, TailBase = 0.f, UnderBase = 0.f, CabinBase = 0.f;
 };
