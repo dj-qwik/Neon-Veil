@@ -38,6 +38,9 @@ working mid-levels, industrial undercity below.
 | Kestrel, Harrow | weapon families (Act I bible); street adverts for them are brand ads, not places | in game (ads) |
 | Saitko Corp | maker of the transit-station hardware (from the tram kit) | in game (props) |
 | Monkey Business Software | owner's easter egg (lift-cab monitor, one billboard) | in game |
+| **Operation LANTERN** | the op just before the game: Ghost-7 alone recovers an experimental intelligence core from a hostile-held research complex (the master blueprint's opening op, told in M00 as a closed after-action) | in game (M00 gallery wall, antechamber core case, VO set LAN) |
+| Aster Ridge research complex | where LANTERN took place; off-map, outside Veyra-9's nine districts | in game (briefing text) |
+| LANTERN Core 01 | the recovered core, sealed in the Glass Crown antechamber | in game |
 
 Retired invented names (were on station signage before 2026-11-17, now replaced): Meridian Exchange → Floodworks
 stop, Kestrel Arcade → Chrome Mile, Etherion Plaza → Helix Ward, AION Spire → The Spindle, Nova Line → Harbor Line,
@@ -77,11 +80,14 @@ after Act I; every encounter allows two approaches.
 
 ## 6. Open story decisions (need the owner's call; recommendation in brackets)
 
-1. **The research core.** The master blueprint opens on Ghost-7 retrieving an experimental intelligence core from a
-   research complex; the Act I bible opens on the Glass Crown recall instead. [Recommend: the core retrieval happened
-   just before the game. Ghost-7 is recalled to the Glass Crown to hand the core over and debrief, and the "irregularity"
-   he noticed on that op is why AION springs the trap at the antechamber handshake. Show the core as a case he carries
-   or a briefing on the gallery data wall in M00; recover the op's logs as evidence in Act III.]
+1. ~~The research core~~ **Resolved 2026-11-17 (owner approved): Operation LANTERN.** Timeline that night:
+   20:41 insertion, 21:12 extraction order signed, 21:50 vault breached, 22:03 exfil (Ghost-7 then rides the Crown Line
+   at 23:52). The order was signed 38 minutes before he reached the core, i.e. someone knew the outcome in advance;
+   AION "cleared" the flag. M00 shows it on the gallery data wall (T_NV_LanternBrief) and at the holo-table (LAN VO:
+   AION reports the op closed, Ghost-7 notes the times, AION calls it "a timestamp artifact"). The core sits sealed in
+   the antechamber (G_Lantern actors, `nv_m00_lantern.py`). Ghost-7's question is why AION springs the trap at the
+   antechamber handshake (M01). Payoff: the unedited LANTERN op logs are recovered as evidence in Act III; the core's
+   fate (what AION wanted from it) stays open until then.
 2. Voiced or silent Ghost-7: the build already voices him (Vane); keep voiced unless told otherwise.
 3. Supporting character names from the continuation bible (Rook, Mercer, Nix, Vesper, Sera, Orin) are proposals.
 4. Which endings unlock by default.

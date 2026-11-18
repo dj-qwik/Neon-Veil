@@ -386,6 +386,51 @@ def hazard_floor():
         px[x, y] = (int(r * k), int(g * k), int(b * k))
     im.save(os.path.join(OUT, "T_NV_HazardFloor.png"))
 
+def lantern_brief():
+    """Gallery data wall, M00: the closed op that brings Ghost-7 to the Glass Crown (Docs/Bible/Continuity.md)."""
+    W, H = 1600, 800
+    im = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, 0, W, 92], fill=(10, 30, 42))
+    d.text((48, 18), "DIRECTORATE OPERATIONS  ·  AFTER-ACTION", font=RB(52), fill=CYAN)
+    d.text((W - 380, 30), "CLEARANCE  CROWN-4", font=MONO(34), fill=GOLD)
+    d.text((48, 118), "OPERATION LANTERN", font=ORB(78), fill=WHITE)
+    d.rectangle([W - 330, 122, W - 52, 200], outline=(90, 255, 160), width=4)
+    text_c(d, (W - 191, 130), "CLOSED", ORB(54), (90, 255, 160))
+    rows = [("ASSET", "GHOST-7  (sole operator)"),
+            ("TARGET", "Aster Ridge research complex (hostile-held)"),
+            ("RECOVERED", "Experimental intelligence core  x1"),
+            ("CUSTODY", "Sealed. Antechamber, Director's level"),
+            ("NEXT", "Hand-over and personal debrief: the Director")]
+    y = 238
+    for k, v in rows:
+        d.text((60, y), k, font=RS(40), fill=GREY)
+        d.text((340, y), v, font=RS(44), fill=WHITE)
+        y += 56
+    # timeline with the discrepancy
+    y0 = 610
+    d.line([(60, y0 + 60), (W - 60, y0 + 60)], fill=(40, 70, 90), width=4)
+    marks = [(0.06, "20:41", "insertion", CYAN), (0.36, "21:12", "EXTRACTION ORDER SIGNED", GOLD),
+             (0.62, "21:50", "vault breached", CYAN), (0.90, "22:03", "exfil complete", CYAN)]
+    for f, t, lab, col in marks:
+        x = 60 + f * (W - 120)
+        d.ellipse([x - 10, y0 + 50, x + 10, y0 + 70], fill=col)
+        text_c(d, (x, y0 + 4), t, MONO(38), col)
+        text_c(d, (x, y0 + 84), lab, RS(32), col)
+    d.text((60, 534), "LOG NOTE: extraction order precedes vault breach by 38 min. Flag cleared by AION.", font=MONO(30), fill=(255, 150, 90))
+    frame(d, W, H, (60, 140, 170), 8, 40)
+    scanlines(im, 18, 4).save(os.path.join(OUT, "T_NV_LanternBrief.png"))
+
+def lantern_label():
+    W, H = 768, 256
+    im = Image.new("RGB", (W, H), (6, 12, 18))
+    d = ImageDraw.Draw(im)
+    text_c(d, (W / 2, 22), "LANTERN - CORE 01", ORB(58), CYAN)
+    text_c(d, (W / 2, 104), "SEALED  ·  DO NOT OPEN", RB(50), GOLD)
+    text_c(d, (W / 2, 172), "awaiting Director authorization", RS(38), WHITE)
+    frame(d, W, H, (60, 140, 170), 6, 24)
+    scanlines(im, 18, 4).save(os.path.join(OUT, "T_NV_LanternLabel.png"))
+
 if __name__ == "__main__":
     departures_board()
     line_map_poster()
@@ -394,6 +439,8 @@ if __name__ == "__main__":
     schedule_screen()
     breaker_face()
     hazard_floor()
+    lantern_brief()
+    lantern_label()
     if len(sys.argv) > 1:
         logo_screen(sys.argv[1])
         logo_ad(sys.argv[1])

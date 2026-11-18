@@ -32,3 +32,7 @@ Regenerate a single line only when it is asked for.
 3. Run `nv_vo_get` in the editor on the PC to download the mp3s to `Saved/VO_raw/`.
 4. Run `Tools/vo_convert.sh` to make the wavs in `RawAssets/VO/<set>/`: 48 kHz, mono, -18 LUFS.
 5. Run `nv_vo_hook` to import the wavs to `/Game/NeonVeil/Audio/VO/<set>`. It also links each one to its subtitle line by matching the text, and extends the subtitle duration to the audio length plus 0.35 s.
+
+## Operation LANTERN (set `LAN`, M00 gallery holo-table)
+
+Three lines on `D_HoloTable` (Review assignment), between the assignment line and "Proceed to the antechamber": AION = N.A.V.I., Ghost-7 = Vane, one take each, flow "NEON VEIL – LAN VO". Ghost-7's times are spoken as words ("twenty-one twelve"). No new roles. Story context: `Docs/Bible/Continuity.md` (Operation LANTERN).
