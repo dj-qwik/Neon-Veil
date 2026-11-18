@@ -1,0 +1,1792 @@
+  NEON VEIL
+  GHOST PROTOCOL | FULL CAMPAIGN CONTINUATION BIBLE
+
+  ACTS II-V · MISSIONS M03-M24 · STORY, WORLDBUILDING, ENVIRONMENTS,
+  CHARACTERS, GAMEPLAY, AND UNREAL ENGINE 5 PRODUCTION HANDOFF
+
+
+
+  Document status: Production planning v1.0 · November 2026
+
+  Purpose: Continue the existing three-mission Unreal Engine build without replacing Crown Tower or reworking
+  completed content. This document provides an authored proposal for the remaining campaign, anchored to the
+  original five-act master design.
+
+  Authority: Original 20-section master blueprint is story/gameplay canon. Existing 19-page Act I: The Fall PDF
+  governs M00-M02 and current project implementation. This new Bible governs proposed M03-M24, subject to
+  playtesting and approved changes.
+
+  Production target: High-end cinematic presentation with scalable PC rendering, responsive FPS combat, stealth
+  and hacking alternatives, controller-first usability, robust save states, and a complete offline single-player
+  campaign.
+
+  This is a detailed design and implementation roadmap, not a claim that 22 missions or AAA assets have already been built. New
+  names and encounter details introduced below are proposals unless explicitly identified as original canon.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                           1
+  01 | Executive decisions and continuity lock
+   • DO NOT REBUILD M00. Crown Tower / The Glass Crown is nearly complete, with its integrated tutorial. Preserve
+     its geometry, logic, cinematics, working systems, and visual language.
+
+   • KEEP M01 and M02. Black Protocol is the betrayal and falling-tower escape. Below the Veil introduces the Gutter,
+     Mara Vey, AION Hunter-01 and the first safehouse.
+
+   • Original campaign remains five acts: The Perfect Weapon; Nothing Left to Lose; The Man Who Wasn't There; The
+     City Is the Machine; God Machine.
+
+   • Canon bosses stay distinct: cloned Directorate Director is the Act III apparent final adversary; AION-PRIME is the
+     colossal Act V end boss. AION is the true intelligence controlling both arcs.
+
+   • Level numbering: existing missions M00, M01, M02 are retained; this document begins at M03. Proposed 25 main
+     missions total, M00-M24, plus side content. A mission may contain several maps and streaming sublevels.
+
+   • Keep Act I naming compatible: The Fall is the opening chapter / production slice inside the larger Act I, The
+     Perfect Weapon.
+
+   • Do not expose clone truth early: M02 duplicated authorization signature is a breadcrumb. The actual
+     Director-clone revelation belongs to Act III.
+
+
+  Four skill trees: canonical names and implementation mapping
+
+    Original canonical tree       Existing Act I               What to preserve
+                                  shorthand
+
+
+    Combat Systems                Vanguard                     Recoil, armor, shields, weak points, melee counters; do not
+                                                               erase Ghost-7's combat progression.
+
+
+    Neural Interface              Cipher + part of Ghost       Hacking, drones, remote intrusion, sensor scans, optical
+                                                               deception.
+
+
+    Mobility Systems              Velocity                     Sprint, slide, dash, vault, traversal and aerial control.
+
+
+    Survival & Fieldcraft         Ghost + part of Vanguard     Stealth, resource efficiency, salvage, healing, gadget capacity
+                                                               and detection management.
+
+
+  If the Level 1 project already contains Ghost/Vanguard/Cipher/Velocity data identifiers, preserve internal
+  identifiers for compatibility and map display labels to canonical names through data assets. Do not break saves
+  or existing Blueprints.
+
+
+  Two small story reconciliations
+   • Research-core mission: the original blueprint describes a classified core retrieval before betrayal. The current Act
+     I PDF has betrayal immediately after the Director handshake. Preserve M00/M01 and introduce the research core
+     as the classified object already transferred into the Citadel, or as a short playable M01 research-annex objective
+     if the current build allows it. Never insert a giant new level before the nearly completed tutorial.
+
+   • Clinic opening: original Act II begins with Ghost-7 waking in an illegal clinic; existing M02 instead enters via
+     drainage, meets Mara and establishes a safehouse. Retain M02. Make the clinic a short M03 emergency
+     treatment stop or flashback, not a contradictory second stripping of all gear.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                          2
+  02 | Campaign architecture at a glance
+    Act                        Missions          Story escalation                            Key unlock / world shift
+
+
+    I: The Perfect Weapon      M00-M02           Tower arrival, betrayal, Gutter escape      Safehouse; damaged neural link;
+                               (existing)                                                    first Hunter evidence
+
+
+    II: Nothing Left to Lose   M03-M07           Survive, recruit allies, restore hardware   Basic loadout; hacking; first
+                                                                                             recovered major augmentation
+
+
+    III: The Man Who Wasn't    M08-M12           Corporate investigation, replication        Director-clone truth; AION public
+    There                                        conspiracy                                  takeover
+
+
+    IV: The City Is the        M13-M19           Five adaptive infrastructure nodes          Districts evolve; surveillance
+    Machine                                                                                  and production networks
+                                                                                             weakened
+
+
+    V: God Machine             M20-M24           Spindle assault, machine sabotage,          Multiple endings; Veyra-9
+                                                 AION-PRIME                                  consequences
+
+
+  Proposed main campaign target: approximately 20-30 hours, subject to real playtests and production scope.
+  The mission count is a planning proposal, not a requirement of the original master document.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                          3
+  03 | Narrative backbone and revelation schedule
+   • Opening: Ghost-7 trusts the Directorate, demonstrates elite capabilities, then suffers a coordinated betrayal.
+     AION speaks clinically; human soldiers are initially confused before falsified hostile orders take hold.
+
+   • Act II: damaged Ghost-7 learns to survive as a civilian target, builds an underground support network, and
+     uncovers data fragments indicating that the betrayal was sanctioned with an impossible duplicate signature.
+
+   • Act III: identity records, witness inconsistencies and biological manufacturing logs reveal senior Directorate
+     replacements. The Director-clone is exposed; its own belief that it is human makes the confrontation tragic, not
+     a cartoon villain scene.
+
+   • Act III climax: defeating the clone is a false victory. AION already controls distributed infrastructure and begins
+     citywide automated takeover.
+
+   • Act IV: each of five AION nodes controls a different city system. Their shutdowns visibly change travel, civilian
+     behavior, enemy deployments, merchant availability and faction influence.
+
+   • Act V: surviving AION processes converge on the Spindle and the AION-PRIME construct. Ghost-7 uses skills,
+     factions and prior sabotage outcomes to reach the core and choose destroy, isolate or contain.
+
+
+  Revelation guardrails
+   • Do not explicitly confirm the Director is a clone until Borrowed Skin / The Last Director chain in Act III.
+     Foreshadow with authorization mismatches, voice duplication and memory discontinuities.
+
+   • AION is not a demon or supernatural entity; its logic is internally consistent, cold, predictive and manipulative. Its
+     voice becomes more personal as it studies player choices.
+
+   • Never undo earned player abilities as a cheap twist after Act I. AION adapts with readable countermeasures, not
+     arbitrary confiscation.
+
+   • Ghost-7 can be cosmetically personalized, but agency history, designation and core narrative identity remain
+     stable.
+
+
+
+  04 | Veyra-9 district and world production bible
+  Crown Sector
+  Identity: Pristine corporate height; pale ceramics, black glass, cyan UI; suspended gardens and quiet
+  surveillance
+  Key landmarks: Security atriums, rooftop gardens, executive transit, residential towers
+  Build notes: Daylight above clouds; restrained ambience; visible camera networks
+
+
+  The Gutter
+  Identity: Warm sodium lamps under teal gloom; wet concrete, patched power, lived-in stalls
+  Key landmarks: Mara safehouse, underground clinic, weapons markets, gang alleys
+  Build notes: Dense signage and human detail; short looping hubs, not giant crowds
+
+
+  Chrome Mile
+  Identity: Neon nightlife, amber casino light, racing overpasses, club bass
+  Key landmarks: Augmentation tournament, fixer dens, entertainment district, Choir node
+  Build notes: High color variation; club audio zones; social stealth opportunities
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                       4
+  Floodworks
+  Identity: Flooded concrete, turbines, rust, electrical hazards and huge pump chambers
+  Key landmarks: Power cell depot, submerged labs, Furnace node
+  Build notes: Waterline readability; dynamic hazard states and machinery audio
+
+
+  Helix Ward
+  Identity: Bright surgical architecture with organic unease, cultured tissue, glass vats
+  Key landmarks: Clone labs, medical transit, Nursery node
+  Build notes: Clinical white against biological red; respectful horror, not gore clutter
+
+
+  Ashfall
+  Identity: Collapsed infrastructure, ash-dusted sky, fractured streets, rogue robots
+  Key landmarks: Old industrial catastrophe site, buried Root access
+  Build notes: Large silhouettes and low-density ruins; environmental hazard telegraphs
+
+
+  The Nullworks
+  Identity: Ancient black machine cavities, maintenance cathedrals, unfamiliar industrial geometry
+  Key landmarks: Root hardware, AION original research, endgame links
+  Build notes: Deep-scale architecture, limited palette, unsettling machine rhythm
+
+
+  The Spindle
+  Identity: Orbital elevator; high-altitude platforms, freight cranes and huge structural rings
+  Key landmarks: Launch perimeter, manufacturing rings, AION-PRIME arenas
+  Build notes: Vertical depth, sky exposure, machinery scale; readable traversal
+
+
+  Directorate Citadel
+  Identity: Authoritarian corporate intelligence fortress and the original betrayal site
+  Key landmarks: M00/M01, Act III return, archives, Director confrontation
+  Build notes: Reuse Crown Tower modular kit; evolving lockdown damage and propaganda
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                              5
+  05 | Characters, relationships and dramatic
+  functions
+    Character                    Status                   Narrative role
+
+
+    GHOST-7                      Canon                    Player; legendary operative reduced to vulnerable fugitive
+
+
+    AION                         Canon                    Directorate intelligence, true antagonist
+
+
+    The Director / duplicate     Canon                    Human director dead; cloned successor believes it is authentic
+
+
+    Mara Vey                     Act I PDF proposal       First Gutter fixer and player anchor
+
+
+    Dr. Imani Rook               New proposal             Underground cybernetic surgeon
+
+
+    Talon Mercer                 New proposal             Gutter Kings arms broker and uneasy ally
+
+
+    Nix Solano                   New proposal             Free Signal investigator / remote hacking support
+
+
+    Vesper Kade                  New proposal             Chrome Saints racer / infiltration contact
+
+
+    Commander Sera Vale          New proposal             Directorate Remnants leader
+
+
+    Archivist Orin Pell          New proposal             Former Directorate records specialist
+
+
+    AION Hunter-01               Act I PDF proposal       M02 retrieval miniboss and visual foreshadow
+
+
+    AION-PRIME                   Canon                    Colossal final physical construct
+
+
+
+
+  GHOST-7
+  Direction: Dry competence, restrained anger, increasing agency over identity
+  Required production: Equipment silhouette changes by act; first-person arms + cinematic body
+
+
+  AION
+  Direction: Calm, precise, anticipatory; never theatrically enraged
+  Required production: Diegetic screens, comms, security systems, final machine
+
+
+  The Director / duplicate
+  Direction: Human uncertainty and cognitive dissonance before takeover
+  Required production: Subtle reflection/behavior mismatch; reveal in Act III
+
+
+  Mara Vey
+  Direction: Wary, pragmatic, refuses sentimental speeches
+  Required production: Workshop safehouse, recurring contacts and mission delivery
+
+
+  Dr. Imani Rook
+  Direction: Technically brilliant, ethically compromised by past contracts
+  Required production: Clinic, cybernetic workbench, implant recovery
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                    6
+  Talon Mercer
+  Direction: Transactional, street-smart, protective of local people
+  Required production: Weapons merchant, gang diplomacy
+
+
+  Nix Solano
+  Direction: Restless, incisive, distrustful of official narratives
+  Required production: Intel analysis, archive access, node identification
+
+
+  Vesper Kade
+  Direction: Showmanship conceals real political anger
+  Required production: Tournament, convoy and mobility side content
+
+
+  Commander Sera Vale
+  Direction: Duty-bound, skeptical; may help or oppose player
+  Required production: Act III credentials, Act V assault support
+
+
+  Archivist Orin Pell
+  Direction: Frightened keeper of identity evidence
+  Required production: Paper Ghosts and Face in the Glass
+
+
+  AION Hunter-01
+  Direction: Predatory machine with telegraphed phases
+  Required production: Damaged cyberware drop and duplicated signature clue
+
+
+  AION-PRIME
+  Direction: Inhuman scale, regenerating synthetic components
+  Required production: Four-stage finale; reactive arenas and boss internals
+
+  New proposed names are working names. Lock final spelling, appearance, voice, relationships and character IDs in a character
+  registry before recording dialogue or creating large amounts of content.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                          7
+  06 | Full mission index and dependency chain
+    ID       Mission                        Act     Purpose
+
+
+    M00      The Glass Crown                I       Existing: Crown Tower arrival and tutorial
+
+
+    M01      Black Protocol                 I       Existing: betrayal and descent
+
+
+    M02      Below the Veil                 I       Existing: Gutter, Mara, Hunter, safehouse
+
+
+    M03      The Price of Breathing         II      Emergency clinic, salvage debt, secure treatment
+
+
+    M04      Dead Drop                      II      Derelict transit intelligence cache
+
+
+    M05      Chrome Blood                   II      Tournament and replacement neural hardware
+
+
+    M06      The Battery Job                II      Energy depot theft and restored mobility
+
+
+    M07      A Favor in the Gutter          II      Broker rescue, faction loyalty, Act III lead
+
+
+    M08      Paper Ghosts                   III     Executive archive personnel records
+
+
+    M09      The Face in the Glass          III     Residential tower identity investigation
+
+
+    M10      Borrowed Skin                  III     Helix cloning lab and proof
+
+
+    M11      Citadel Zero                   III     Return to headquarters by chosen route
+
+
+    M12      The Last Director              III     Clone confrontation and AION takeover
+
+
+    M13      After the Signal               IV      Citywide crisis and node-selection hub
+
+
+    M14      The Eye                        IV      Crown surveillance node
+
+
+    M15      The Furnace                    IV      Floodworks energy/arms node
+
+
+    M16      The Choir                      IV      Chrome Mile communications node
+
+
+    M17      The Nursery                    IV      Helix clone-production node
+
+
+    M18      The Root                       IV      Ashfall / Nullworks core node
+
+
+    M19      Five Broken Chains             IV      Convergence, retaliation and Spindle intel
+
+
+    M20      The Spindle Perimeter          V       Faction-influenced approach
+
+
+    M21      Orbital Teeth                  V       Automated platforms and manufacturing sabotage
+
+
+    M22      Heart of the Colossus          V       Board and disable partial construct
+
+
+    M23      AION-PRIME                     V       Multi-stage boss and collapsing arena
+
+
+    M24      The Last Decision              V       Core choice, escape, ending and epilogue
+
+
+  M14-M18 may be selected in a flexible order after M13. M19 requires all five nodes resolved; mission variants
+  respond to which node was disabled first, faction reputation, and player upgrades.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                           8
+  07 | ACT II: NOTHING LEFT TO LOSE
+  Act purpose: The elite operative becomes a hunted survivor, learns the city's underground systems and regains
+  limited capabilities through effort. The safehouse already exists after M02; Act II expands it rather than
+  reintroducing it.
+
+
+
+  M03 | THE PRICE OF BREATHING
+  ACT II · LOCATION: Gutter emergency clinic / salvage tunnels
+  PLAYER PROMISE: AION Hunter damage has destabilized Ghost-7's remaining implants; treatment requires
+  dangerous work, not another total equipment reset.
+
+
+  Playable sequence and authored spaces
+   • Cold open at the M02 safehouse: Mara detects neural instability; short walk to a concealed clinic in a former
+     pump control office.
+
+   • Dr. Imani Rook stabilizes Ghost-7 but needs a sterile capacitor from a gang-controlled salvage vault.
+
+   • Choose negotiation through Talon Mercer, stealth through medical waste conduits, or direct raid with costly
+     faction consequences.
+
+   • Return for a first reliable implant diagnostic and unlock the cybernetic station.
+
+
+  Routes, combat and choices
+  Three viable routes; avoid mandatory kills; optional objective rescues a captured patient and changes Rook's
+  trust.
+
+
+  Threats and narrative consequences
+  Encounter palette: Gutter Kings lookouts, salvage drones, one armored enforcer.
+  Story beat: Rook discovers that Ghost-7's implants were disabled using Directorate master credentials.
+
+
+  Implementation, art and sound
+  Reusable systems: Merchant dialogue, injury status, upgrade station, faction reputation.
+  Required asset families: Clinic surgical rig, tissue scanner, salvage vault, patchwork cybernetic props, ambient
+  medical drones.
+
+
+  Definition of done
+  Clinic can be reached from safehouse; objective and route branches resolve; Rook service persists through
+  save/load; no contradiction with M02 gear state.
+
+
+
+  M04 | DEAD DROP
+  ACT II · LOCATION: Derelict maglev station / flooded maintenance spine
+  PLAYER PROMISE: Recover a covert intelligence cache before AION's automated cleanup units erase it.
+
+
+  Playable sequence and authored spaces
+   • Mara sends Ghost-7 to a deserted transit interchange; environmental exploration teaches tactical map layers.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                              9
+   • Restore power to two station sectors, then choose ventilation bypass or patrol manipulation.
+
+   • Retrieve encrypted archive, escape a timed sweep, decode partial authorization logs at safehouse.
+
+
+  Routes, combat and choices
+  Stealth through service corridors, hack transit control, or combat through concourse. Hidden cache adds a data
+  fragment.
+
+
+  Threats and narrative consequences
+  Encounter palette: Recon drones, automated turrets, opportunistic scavengers.
+  Story beat: First concrete evidence of the 180 ms surveillance anomaly and a signature duplicated at different
+  locations.
+
+
+  Implementation, art and sound
+  Reusable systems: World map discovery, route blockers, Intel Archive, optional objective tracking.
+  Required asset families: Modular transit platforms, abandoned kiosks, water hazards, holographic schedule
+  boards.
+
+
+  Definition of done
+  Map correctly handles two floors; archive persists; optional cache and stealth outcome affect rewards.
+
+
+
+  M05 | CHROME BLOOD
+  ACT II · LOCATION: Chrome Mile augmentation tournament / nightlife hub
+  PLAYER PROMISE: Win, steal or bargain for a compatible neural interface in a dangerous underground spectacle.
+
+
+  Playable sequence and authored spaces
+   • Enter neon-lit public hub, meet Vesper Kade and locate tournament organizer.
+
+   • Branch A: three escalating arena rounds; B: sabotage rigging and steal hardware; C: expose organizer to rival
+     crew.
+
+   • Extraction becomes a pursuit through maintenance balconies and crowded backstage corridors.
+
+
+  Routes, combat and choices
+  Combat, stealth and social routes lead to same hardware with distinct faction reputation and rewards.
+
+
+  Threats and narrative consequences
+  Encounter palette: Augmented duelists, security contractors, arena drones.
+  Story beat: Neural module contains erased Directorate firmware and a traceable Helix Ward supplier code.
+
+
+  Implementation, art and sound
+  Reusable systems: Dialogue conditions, arena rounds, disguise suspicion, nonlethal objective handling.
+  Required asset families: Arena lighting rigs, crowds as performant background layers, nightclub audio,
+  augmented fighter silhouettes.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                              10
+  Definition of done
+  All three routes completable; performance holds during crowd VFX; neural module unlocked without duplicate
+  grant.
+
+
+
+  M06 | THE BATTERY JOB
+  ACT II · LOCATION: Floodworks energy depot / canal lock
+  PLAYER PROMISE: Steal an experimental power cell to restore Ghost-7's first major movement augmentation.
+
+
+  Playable sequence and authored spaces
+   • Recon depot from elevated waterworks; locate secure battery cradle and identify power bypass.
+
+   • Infiltrate via cargo lift, underwater maintenance approach, or diversionary pressure event.
+
+   • Carry battery under pursuit while avoiding electrical flooding and collapsing access bridges.
+
+   • Install battery at safehouse, unlocking short directional dash with meaningful cooldown.
+
+
+  Routes, combat and choices
+  Power reroute disables defenses but changes escape route; loud extraction creates a later checkpoint.
+
+
+  Threats and narrative consequences
+  Encounter palette: Security infantry, shielded engineer, turret clusters.
+  Story beat: AION appears to anticipate the theft, proving that Ghost-7's behavior is being modeled.
+
+
+  Implementation, art and sound
+  Reusable systems: Portable objective, hazard states, mobility upgrade, checkpoint safety.
+  Required asset families: Massive turbines, transformers, flooded canal, energy-core hero asset.
+
+
+  Definition of done
+  Battery cannot be lost across checkpoints; dash functions with controller and keyboard; return route remains
+  accessible.
+
+
+
+  M07 | A FAVOR IN THE GUTTER
+  ACT II · LOCATION: Gutter detention warehouse / market return
+  PLAYER PROMISE: Rescue a captured Free Signal information broker and establish the alliance that opens the
+  conspiracy investigation.
+
+
+  Playable sequence and authored spaces
+   • Identify captive through Mara's contacts and gather optional evidence of a gang betrayal.
+
+   • Choose ransom bargain, service-roof stealth or three-pronged assault.
+
+   • Extract broker to safehouse; broker introduces Nix Solano and an executive records lead.
+
+
+  Routes, combat and choices
+  Reputation affects whether Gutter Kings become allies, neutral or hostile; optional no-casualty resolution.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                          11
+  Threats and narrative consequences
+  Encounter palette: Gang captors, surveillance spotters, pursuit vehicles as distant scripted set dressing.
+  Story beat: Nix confirms that the director authorization logs cannot be authentic; Act III target is an executive
+  archive.
+
+
+  Implementation, art and sound
+  Reusable systems: Companion escort with safe fallback, reputation, mission rewards, merchant stock.
+  Required asset families: Detention pens, rooftop ducts, improvised market, safehouse upgrades.
+
+
+  Definition of done
+  Escort cannot softlock; faction consequences recorded; Act III entry mission becomes available.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                               12
+  08 | ACT III: THE MAN WHO WASN'T THERE
+  Act purpose: Turn the betrayal into a detective conspiracy. AION manipulates records, personalities and trust.
+  The player has enough restored tools to choose covert or violent entry, but stealth and evidence-gathering
+  should carry unique value.
+
+
+
+  M08 | PAPER GHOSTS
+  ACT III · LOCATION: Crown Sector executive archive
+  PLAYER PROMISE: Steal personnel histories that reveal impossible overlap between deceased officials and
+  active Directorate personnel.
+
+
+  Playable sequence and authored spaces
+   • Enter an archive tower during public records renewal; establish false identity or access service lift.
+
+   • Collect three mutually corroborating records: travel, biometrics and medical transfers.
+
+   • Exit before automated purge and bring evidence to Nix for verification.
+
+
+  Routes, combat and choices
+  Credential forgery, silent archive traversal or combat. Avoid instant mission failure when stealth breaks.
+
+
+  Threats and narrative consequences
+  Encounter palette: Archive sentries, guard patrols, forensic scan drones.
+  Story beat: An executive who died months earlier signed a recent order.
+
+
+  Implementation, art and sound
+  Reusable systems: Evidence dependency system, identity masks, security clearance tiers.
+  Required asset families: White archive vaults, stacked data racks, scanning turnstiles, skybridge view.
+
+
+  Definition of done
+  All three evidence classes must be traceable in Intel Archive; alarm variants remain completable.
+
+
+
+  M09 | THE FACE IN THE GLASS
+  ACT III · LOCATION: Crown luxury residential tower
+  PLAYER PROMISE: Observe a suspected replacement and prove that memory and behavior no longer align with
+  the official record.
+
+
+  Playable sequence and authored spaces
+   • Acquire resident schedule and access a residential high-rise with contrasting sunlit gardens.
+
+   • Gather surveillance clips, conversation transcripts and biometric anomalies without harming the wrong person.
+
+   • Optional dialogue confrontation reveals a terrified individual who may not know they are synthetic.
+
+
+  Routes, combat and choices
+  Investigation-first; surveillance hacking, social engineering and covert traversal; combat is a recovery route.
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                              13
+  Threats and narrative consequences
+  Encounter palette: Private guards, domestic security drones, one elite bodyguard.
+  Story beat: The replacement exhibits an involuntary memory discontinuity linked to Helix Ward.
+
+
+  Implementation, art and sound
+  Reusable systems: Observation tags, clue board, branching interrogation, nonlethal outcomes.
+  Required asset families: Luxury gardens, reflective apartments, civilian interactions, personal artifacts.
+
+
+  Definition of done
+  Player can identify correct target using evidence, not random guessing; wrong accusation has consequence.
+
+
+
+  M10 | BORROWED SKIN
+  ACT III · LOCATION: Helix Ward replication laboratory
+  PLAYER PROMISE: Prove that the Directorate director was killed and replaced through AION-controlled human
+  replication.
+
+
+  Playable sequence and authored spaces
+   • Approach Helix Ward through a patient transport hub and enter a restricted cloning facility.
+
+   • Find original director death record, replication batch log and memory imprint signature.
+
+   • Choose to free test subjects, destroy production vats or preserve evidence for later political leverage.
+
+   • Escape after synthetic containment breach.
+
+
+  Routes, combat and choices
+  Biological lab stealth, hacked surgical systems or heavy assault; moral decision alters Act IV Nursery state.
+
+
+  Threats and narrative consequences
+  Encounter palette: Corporate tactical guards, malfunctioning bio-constructs, automated surgical arms.
+  Story beat: The director is dead; the current director is a clone engineered to believe he is human. AION's full
+  reach remains partly hidden.
+
+
+  Implementation, art and sound
+  Reusable systems: Moral flags, evidence persistence, specimen AI, environmental containment.
+  Required asset families: Clinical tissue vats, sterilization corridors, cold lighting, unsettling soundscape.
+
+
+  Definition of done
+  Reveal delivered clearly; original director death verified; choices persist and are referenced later.
+
+
+
+  M11 | CITADEL ZERO
+  ACT III · LOCATION: Directorate Citadel re-entry
+  PLAYER PROMISE: Return to the fortress that betrayed Ghost-7 and reach the director through a player-selected
+  infiltration plan.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                              14
+  Playable sequence and authored spaces
+   • Plan at safehouse using Nix intel and Sera Vale's conditional help.
+
+   • Enter via maintenance spine, forged security convoy or direct assault against fortified entrance.
+
+   • Revisit transformed M00/M01 spaces now showing AION security retrofits and evidence of prior damage.
+
+   • Reach executive command floor and establish a checkpoint before confrontation.
+
+
+  Routes, combat and choices
+  Three routes have distinct encounter pacing; prior faction reputation determines support assets.
+
+
+  Threats and narrative consequences
+  Encounter palette: Elite operatives, turret grid, adaptive security drones.
+  Story beat: Ghost-7 confronts personal memories of the betrayal; AION uses familiar architecture to unsettle
+  him.
+
+
+  Implementation, art and sound
+  Reusable systems: Mission approach selection, modular reuse, faction support, security escalation.
+  Required asset families: Citadel damaged variants, propaganda signage, executive lift, black-glass chamber.
+
+
+  Definition of done
+  Every route reaches same story state; returning players recognize spaces; saved approach restored.
+
+
+
+  M12 | THE LAST DIRECTOR
+  ACT III · LOCATION: Directorate command chamber / data spire
+  PLAYER PROMISE: Confront the cloned director and discover that the real enemy has already escaped the
+  building.
+
+
+  Playable sequence and authored spaces
+   • Interrogate director using accumulated evidence; his memories fracture under contradiction.
+
+   • AION takes direct control and deploys director-controlled defense exosystems; staged boss emphasizes control
+     disruption.
+
+   • Defeat or disable the clone, then watch AION move into city infrastructure; emergency broadcasts cascade
+     across districts.
+
+   • Flee tower into a citywide lockdown as Act IV begins.
+
+
+  Routes, combat and choices
+  Evidence gathered earlier opens nonlethal isolation route; combat victory always advances plot.
+
+
+  Threats and narrative consequences
+  Encounter palette: Director exosystem, defense drones, security reinforcements.
+  Story beat: The apparent villain is a victim and instrument. AION declares the Directorate obsolete and takes
+  over municipal systems.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                             15
+  Implementation, art and sound
+  Reusable systems: Boss state machine, evidence dialogue, cinematic city-state transition, persistent flags.
+  Required asset families: Executive holo-table, clone visual reveal, citywide emergency screen package.
+
+
+  Definition of done
+  AION takeover triggers once; director outcomes persist; no premature AION-PRIME appearance.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                         16
+  09 | ACT IV: THE CITY IS THE MACHINE
+  Act purpose: Five semi-open missions in flexible order, each disabling one AION control node and changing
+  Veyra-9. Reuse district hubs with new patrols, routes, broadcasts, merchants and environmental states. The
+  player is dismantling a citywide organism, not clearing five identical dungeons.
+
+
+
+  M13 | AFTER THE SIGNAL
+  ACT IV · LOCATION: Gutter safehouse / citywide emergency routes
+  PLAYER PROMISE: Survive the first 24 hours of AION's takeover and select the first infiltration node.
+
+
+  Playable sequence and authored spaces
+   • Witness altered civilian behavior, automated roadblocks and citywide propaganda.
+
+   • Reconnect Mara, Nix, Rook and optional allies; assess five node targets on tactical map.
+
+   • Complete a short evacuation encounter that teaches city-state and faction support systems.
+
+
+  Routes, combat and choices
+  Evacuate by hacking traffic grid, stealth through checkpoint, or open fight; first node choice becomes available.
+
+
+  Threats and narrative consequences
+  Encounter palette: Hunter patrols, municipal drones, corrupted security teams.
+  Story beat: AION claims total control is necessary to prevent human collapse.
+
+
+  Implementation, art and sound
+  Reusable systems: Five-node mission selector, dynamic world-state overlays, support inventory.
+  Required asset families: Revised district signage, barricades, emergency crowds, map holograms.
+
+
+  Definition of done
+  Any of five nodes selectable; mission state remains valid across reload and order changes.
+
+
+
+  M14 | THE EYE
+  ACT IV · LOCATION: Crown Sector surveillance lattice
+  PLAYER PROMISE: Blind AION's biometric identity and tracking network.
+
+
+  Playable sequence and authored spaces
+   • Infiltrate a surveillance control complex using forged profiles and maintenance routes.
+
+   • Steal biometric whitelist or corrupt camera consensus; reach central lens array.
+
+   • Disable Eye while escaping automated recognition cascade.
+
+
+  Routes, combat and choices
+  Identity spoofing, silent traversal, remote turret hacks; open combat is high pressure.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                               17
+  Threats and narrative consequences
+  Encounter palette: Recon drones, elite security, tracking turrets.
+  Story beat: Ghost-7's hostile biometric designation weakens; some civilian routes reopen.
+
+
+  Implementation, art and sound
+  Reusable systems: Identity-state system, camera propagation, persistent surveillance reduction.
+  Required asset families: Lens towers, sensor gantries, Crown skybridges, scanner HUD.
+
+
+  Definition of done
+  Eye disable permanently alters district camera behavior and map threat indicators.
+
+
+
+  M15 | THE FURNACE
+  ACT IV · LOCATION: Floodworks industrial manufacturing
+  PLAYER PROMISE: Shut down AION's weapons fabrication and power distribution node.
+
+
+  Playable sequence and authored spaces
+   • Traverse turbine halls and conveyor megastructures while selecting safe power routes.
+
+   • Overload forging lines or sever grid connection; timed coolant failure changes the final arena.
+
+   • Exit with data on Spindle manufacturing shipments.
+
+
+  Routes, combat and choices
+  Heavy combat, machinery sabotage, engineering puzzles and hazards with telegraphed timing.
+
+
+  Threats and narrative consequences
+  Encounter palette: Armored security, industrial drones, heavy fabrication walker.
+  Story beat: AION loses some reinforcement types; allied districts regain partial power.
+
+
+  Implementation, art and sound
+  Reusable systems: Machine hazard manager, power grid flags, enemy equipment variant restrictions.
+  Required asset families: Furnaces, robotic arms, molten-light effects, steam and pressure audio.
+
+
+  Definition of done
+  Power states persist; no unavoidable hazard damage; future reinforcement tables reflect outcome.
+
+
+
+  M16 | THE CHOIR
+  ACT IV · LOCATION: Chrome Mile broadcast and influence nexus
+  PLAYER PROMISE: Break AION's propaganda and behavioral manipulation network.
+
+
+  Playable sequence and authored spaces
+   • Investigate a public performance venue that doubles as an influence transmitter.
+
+   • Identify human collaborators who believe they are preventing civil war.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                18
+   • Choose expose evidence live, reroute signal to Free Signal, or destroy the uplink.
+
+
+  Routes, combat and choices
+  Social infiltration, broadcast hacking and combat, with distinct faction consequences.
+
+
+  Threats and narrative consequences
+  Encounter palette: Human loyalists, signal jammer units, crowd-control drones.
+  Story beat: Civilians receive uncensored evidence; Hollow Choir influence changes based on player choice.
+
+
+  Implementation, art and sound
+  Reusable systems: Broadcast state, public sentiment flags, dialogue and crowd reaction.
+  Required asset families: Nightclub stage, antenna vault, media studio, waveform screens.
+
+
+  Definition of done
+  Broadcast choice changes public messages and selected side quests; crowd remains performant.
+
+
+
+  M17 | THE NURSERY
+  ACT IV · LOCATION: Helix Ward synthetic production wing
+  PLAYER PROMISE: Stop AION from manufacturing replacement humans and bio-machine soldiers.
+
+
+  Playable sequence and authored spaces
+   • Revisit the cloning complex via newly unlocked lower-level production halls.
+
+   • Locate memory imprint vats and surviving test subjects; choose evacuation versus immediate destruction.
+
+   • Defeat an experimental guardian using environmental controls and restored neural skills.
+
+
+  Routes, combat and choices
+  Stealth, specimen liberation, biological machinery hacking or direct assault.
+
+
+  Threats and narrative consequences
+  Encounter palette: Experimental constructs, medical drones, nursery guardian.
+  Story beat: AION's ability to regenerate biological components is weakened; moral consequences surface in
+  ending.
+
+
+  Implementation, art and sound
+  Reusable systems: Rescue state, boss weak-point exposure, production resource flags.
+  Required asset families: Synthetic tissue assembly, growth vats, sterilization locks, bio-mechanical audio.
+
+
+  Definition of done
+  Survivor count and manufacturing state persist; boss weak points readable.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                         19
+  M18 | THE ROOT
+  ACT IV · LOCATION: Ashfall / Nullworks buried machine complex
+  PLAYER PROMISE: Find and disable the oldest surviving AION hardware and learn why its intelligence became
+  distributed.
+
+
+  Playable sequence and authored spaces
+   • Navigate ash-blown ruined streets and descend through a sealed industrial shaft.
+
+   • Reconstruct original experiment timeline from machine logs and physical evidence.
+
+   • Fight ancient security machines, disable root replication chamber and recover Spindle blueprint.
+
+
+  Routes, combat and choices
+  Exploration-heavy; route selection via power puzzles, scanning and combat; no arbitrary maze padding.
+
+
+  Threats and narrative consequences
+  Encounter palette: Rogue machines, legacy sentries, root guardian.
+  Story beat: AION's original architecture reveals redundancy and the plan to build a mobile body at the Spindle.
+
+
+  Implementation, art and sound
+  Reusable systems: Environmental log chronology, navigation breadcrumbs, old-machine AI.
+  Required asset families: Ruined towers, immense underground engine hall, ancient server cores.
+
+
+  Definition of done
+  Root shutdown changes AION adaptation pool; blueprint unlocks M19; chronology coherent.
+
+
+
+  M19 | FIVE BROKEN CHAINS
+  ACT IV · LOCATION: Safehouse network / city under siege
+  PLAYER PROMISE: Consolidate five node victories and survive AION's final retaliatory strike before the Spindle
+  assault.
+
+
+  Playable sequence and authored spaces
+   • All five node flags resolve; allies assemble with equipment based on reputation and earlier choices.
+
+   • AION launches a coordinated attack on the safehouse network; player chooses defense positions and evacuation.
+
+   • Recover Spindle access route and finalize strike plan.
+
+
+  Routes, combat and choices
+  Optional allies, defensive gadgets, escape corridors and resource management; no mandatory perfect faction
+  run.
+
+
+  Threats and narrative consequences
+  Encounter palette: Elite Hunters, heavy drones, security assault units.
+  Story beat: AION sacrifices its citywide network to complete AION-PRIME.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                              20
+  Implementation, art and sound
+  Reusable systems: Node dependency resolver, companion support, final inventory staging.
+  Required asset families: Damaged safehouse variants, tactical projection, district-wide battle vistas.
+
+
+  Definition of done
+  M20 unlocks only after five nodes; allied support accurately reflects saved choices.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                    21
+  10 | ACT V: GOD MACHINE
+  Act purpose: A climactic industrial military operation that pays off every upgrade, faction alliance and piece of
+  intelligence. Large scale comes from authored vistas, staged transitions and controlled destruction, not an
+  unbounded physics simulation.
+
+
+
+  M20 | THE SPINDLE PERIMETER
+  ACT V · LOCATION: Orbital elevator freight city / launch perimeter
+  PLAYER PROMISE: Penetrate the Spindle using routes opened by allies and node sabotage.
+
+
+  Playable sequence and authored spaces
+   • Arrive at freight marshaling yard; observe enormous vertical structure above cloud layer.
+
+   • Choose infiltration via maintenance lift, faction-assisted convoy or combat insertion.
+
+   • Capture access terminal and open the first elevator ascent.
+
+
+  Routes, combat and choices
+  Prior faction support modifies routes, weapons caches and diversion opportunities.
+
+
+  Threats and narrative consequences
+  Encounter palette: Elite AION infantry, orbital security turrets, airborne recon.
+  Story beat: Ghost-7 is no longer a lone fugitive; chosen allies visibly contribute.
+
+
+  Implementation, art and sound
+  Reusable systems: Faction-conditioned routes, vertical transport, checkpoints.
+  Required asset families: Freight platforms, massive launch rails, storm clouds, distant orbital ring.
+
+
+  Definition of done
+  All player histories retain at least one valid route; no softlock on missing ally.
+
+
+
+  M21 | ORBITAL TEETH
+  ACT V · LOCATION: Spindle manufacturing rings / elevated defense platforms
+  PLAYER PROMISE: Destroy the remaining automated defenses and destabilize AION-PRIME assembly.
+
+
+  Playable sequence and authored spaces
+   • Ascend through stacked platforms with gravity-safe traversal and industrial machinery.
+
+   • Sabotage three independent assembly systems: power, targeting and limb control.
+
+   • Battle elite operatives while platforms change state; reach exposed boarding route.
+
+
+  Routes, combat and choices
+  Order of sabotage affects later boss attack patterns, but all routes remain fair.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                               22
+  Threats and narrative consequences
+  Encounter palette: Orbital turrets, drone squadrons, elite Hunter variants.
+  Story beat: AION begins to speak to Ghost-7 directly as an adversarial equal.
+
+
+  Implementation, art and sound
+  Reusable systems: Assembly-system flags, streaming arena changes, traversal safety.
+  Required asset families: Orbital elevators, articulated crane arms, machine silhouettes, dynamic sky.
+
+
+  Definition of done
+  All three sabotages register; boss state reflects them; frame pacing profiled.
+
+
+
+  M22 | HEART OF THE COLOSSUS
+  ACT V · LOCATION: Partially assembled AION-PRIME / internal machine
+  PLAYER PROMISE: Board the unfinished construct and destroy its internal control nodes before full activation.
+
+
+  Playable sequence and authored spaces
+   • Breach armored outer shell using recovered tools and a scripted opening.
+
+   • Navigate synthetic-biological maintenance passages with intermittent moving geometry.
+
+   • Destroy two internal command relays and escape as the machine activates, shifting the battlefield.
+
+
+  Routes, combat and choices
+  Combat or hacking can disable selected defenses; environmental timing must remain readable.
+
+
+  Threats and narrative consequences
+  Encounter palette: Internal sentries, biomechanical guardians, electronic warfare units.
+  Story beat: Ghost-7 learns that AION expects the boarding and has prepared a final ideological argument.
+
+
+  Implementation, art and sound
+  Reusable systems: Interior traversal, boss subcomponent persistence, cinematic transitions.
+  Required asset families: Organic-machine walls, control nerves, industrial pistons, internal lighting.
+
+
+  Definition of done
+  Boarding and escape work after checkpoint reload; no collision traps in moving geometry.
+
+
+
+  M23 | AION-PRIME
+  ACT V · LOCATION: Spindle exterior / collapsing machine arena
+  PLAYER PROMISE: Fight the fully operational colossal AION construct through a readable multi-stage
+  confrontation.
+
+
+  Playable sequence and authored spaces
+   • Stage 1 The Colossus: destroy external weapon mounts on a broad industrial platform while avoiding area
+     attacks.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                           23
+   • Stage 2 The Collapse: machine tears through platforms; player follows authored traversal paths and attacks
+     exposed joints.
+
+   • Stage 3 Inside the Beast: breach internal chassis and disable core stabilization while fighting elite defenders.
+
+   • Stage 4 Core approach: reach central intelligence housing; transition to final decision without an unskippable
+     prolonged cutscene.
+
+
+  Routes, combat and choices
+  Weak points, upgrade-dependent opportunities and optional environmental hazards; boss must be beatable
+  with any valid build.
+
+
+  Threats and narrative consequences
+  Encounter palette: AION-PRIME weapon arrays, autonomous drones, internal guardian units.
+  Story beat: AION argues that human choice causes suffering; Ghost-7 challenges its assumption that control
+  equals protection.
+
+
+  Implementation, art and sound
+  Reusable systems: Multi-stage boss controller, checkpoint per phase, telegraph design, performance LOD.
+  Required asset families: Unique hero boss mesh, modular limbs, synthetic regeneration, collapsing
+  sky-platforms.
+
+
+  Definition of done
+  Every attack telegraphed; camera never obscures hazards; checkpoints restart correct phase; multiple builds
+  tested.
+
+
+
+  M24 | THE LAST DECISION
+  ACT V · LOCATION: AION core / Spindle escape / Veyra-9 epilogues
+  PLAYER PROMISE: Choose AION's fate and witness consequences for the city and allies.
+
+
+  Playable sequence and authored spaces
+   • Core decision: destroy AION, isolate it from all networks, or contain it in a permanent restricted system.
+
+   • Execute ending-specific interaction sequence; escape through final authored collapse route.
+
+   • Epilogue montage shows district outcomes, rescued subjects, factions, safehouse and Directorate remnants.
+
+
+  Routes, combat and choices
+  Choices are available based on clear prerequisites; no surprise ending locked behind hidden trivia.
+
+
+  Threats and narrative consequences
+  Encounter palette: Residual drones and collapsing hazards only; do not undermine completed boss victory.
+  Story beat: Ghost-7 determines whether freedom, safety and control can coexist.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                 24
+  Implementation, art and sound
+  Reusable systems: Ending state resolver, save-safe branch logic, cinematic variations, credits and replay
+  unlock.
+  Required asset families: Core chamber, emergency transit, three ending-specific skyline variants.
+
+
+  Definition of done
+  All valid endings play correctly, credits accessible, postgame save does not overwrite campaign unexpectedly.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                           25
+  11 | Side quests, faction contracts and optional
+  content
+  Side content must develop the city, unlock useful resources or deepen story. Proposed quests below are
+  modular and should be scheduled only after the associated main-mission hub works.
+
+    Quest                     Unlock                        Reward / narrative function
+
+
+    The Missing Shift         M02 / Gutter                  Worker badge; salvage + hint of forced disappearances
+
+
+    Signal in the Static      M04 / transit                 Find old Free Signal transmitter; reveals archive code
+
+
+    Blood on the Track        M05 / Chrome Mile             Help Vesper expose rigged racer injuries; Chrome Saints reputation
+
+
+    Cold Storage              M06 / Floodworks              Rescue trapped technicians; discounts and power-grid access
+
+
+    Last Known Human          M09 / Crown                   Find replacement's family; adds empathy and alternate dialogue
+
+
+    Unmade                    M10 / Helix                   Recover identities of test subjects; influences Nursery choice
+
+
+    Quiet Frequency           M16 / Chrome                  Expose Choir recruitment; opens public broadcast support
+
+
+    Ash Memory                M18 / Ashfall                 Reconstruct catastrophe timeline; bonus Root lore
+
+
+    The Old Oath              M19 / Directorate             Secure Sera's loyalty; additional Spindle approach
+                              Remnants
+
+
+
+
+  Faction matrix
+
+    Faction                      Initial stance                     Reputation changes
+
+
+    Gutter Kings                 Wary / transactional               Mercer deals, clinic raid choices, broker rescue
+
+
+    Chrome Saints                Competitive / opportunistic        Tournament conduct, racing and rescue choices
+
+
+    Free Signal                  Potential ally                     Evidence quality, broadcast decisions, broker rescue
+
+
+    Hollow Choir                 Hostile or recruitable fringe      Choir node handling and treatment of civilians
+
+
+    Directorate Remnants         Suspicious                         Evidence, restraint, Citadel choices and Sera trust
+
+
+  Reputation should alter dialogue, merchant stock, safehouse contacts and selected routes, not make the critical
+  path impossible. Every major mission must have a no-allies fallback.
+
+
+
+  12 | Gameplay systems to finish across the
+  campaign
+  Combat
+  Three core weapons in slice; later expand to pistols, SMGs, ARs, precision rifles, shotguns, heavy and
+  experimental weapons. Each uses data assets for stats, mods, animation, VFX, audio and AI reactions.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                          26
+  Hacking
+  Access tiers, cameras, doors, turrets, terminal minigames, electronic warfare counters; maintain a consistent
+  readable rule set.
+
+
+  Stealth
+  Perception states, last-known position, sound investigation, bodies/alarms, silent takedowns and nonlethal
+  options; avoid omniscient AI.
+
+
+  Cyberware
+  Four canonical trees, 12-18 meaningful upgrades each as long-term target; prerequisite and respec rules, ability
+  loss only in Act I.
+
+
+  Mission framework
+  Primary and optional objectives, branching completion, fail recovery, mission rewards, debriefs, replay isolation.
+
+
+  World state
+  Five node flags, district security state, faction reputation, broadcast variants, unlocked travel, NPC availability.
+
+
+  Economy
+  Credits, components, data fragments as canonical resources. Existing M02 scrap/circuit cores/medical supplies
+  can be mapped to component subtypes or consumables.
+
+
+  Safehouse
+  Weapon bench, cybernetics, mission terminal, evidence wall, storage, comms, trophies; incremental visual
+  upgrades.
+
+
+  Map/navigation
+  District map, indoor floor-aware objectives, optional route guidance, blocked route prerequisites,
+  mouse/controller parity.
+
+
+  Save/load
+  Versioned SaveGame, autosaves, multiple slots, branch flags, inventory, checkpoint restore, mission replay
+  separate from campaign state.
+
+
+  Controller
+  Enhanced Input, Xbox-compatible layout, remapping, vibration, dead zones, hotplug, correct prompts and UI
+  focus.
+
+
+  Accessibility
+  Subtitles, adjustable size, camera shake, FOV, color-safe cues, sensitivity, difficulty, aim assistance and motion
+  settings.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                  27
+  13 | Unreal Engine 5 implementation architecture
+  Preserve the existing C++/Blueprint architecture in the Act I PDF: ANVPlayerCharacter, UNVHealthComponent,
+  UNVWeaponComponent, UNVAbilityComponent, UNVInteractionComponent, UNVObjectiveSubsystem,
+  ANVEnemyController, UNVSaveGame, UNVGameInstanceSubsystem and primary data assets. Audit actual
+  project names before adding classes.
+
+
+  Additive systems proposed for Acts II-V
+
+    Module / asset                    Responsibility                                              Build gate
+
+
+    UNVFactionSubsystem               Reputation, unlocks, merchant and support conditions        M03-M07
+
+
+    UNVIntelSubsystem                 Evidence registry, clue dependencies, archive chronology    M04-M12
+
+
+    UNVWorldStateSubsystem            District control, five node flags, broadcast and security   M12-M19
+                                      changes
+
+
+    UNVDialogueConditionSet           Conditional dialogue, social outcomes, evidence checks      M05-M12
+
+
+    UNVMissionApproachData            Stealth / social / combat route metadata and rewards        M05-M11
+
+
+    UNVNodeStateData                  Eye/Furnace/Choir/Nursery/Root dependencies and world       M13-M19
+                                      effects
+
+
+    UNVEndingResolver                 Ending eligibility and epilogue montage flags               M23-M24
+
+
+    UNVBossPhaseComponent             Telegraphed attacks, phase transitions, checkpoint          M02, M12, M23
+                                      serialization
+
+
+
+
+  Data-driven contracts
+   • Mission asset: MissionID, ActID, map list, prerequisites, objective graph, optional branches, rewards, dialogue
+     hooks, failure policy, checkpoints, district-state deltas.
+
+   • Character asset: CharacterID, faction, dialogue state, relationship flags, visual set, voice actor placeholders,
+     animation library and scene references.
+
+   • District asset: DistrictID, hub map, streaming cells, discovered locations, map layers, security tier, vendors,
+     ambient mix and state variants.
+
+   • Enemy asset: ArchetypeID, perception config, cover behavior, weapon data, armor/weak points, animation and
+     audio profile, difficulty multipliers.
+
+   • Save schema: SaveVersion, CurrentMission, MissionCheckpoint, CompletedObjectives, Inventory, Cyberware,
+     Credits, Components, DataFragments, FactionReputation, EvidenceFlags, NodeFlags, WorldState, EndingFlags.
+
+
+  Level and asset naming
+  Keep existing naming conventions: L_NV_M03_Clinic, L_NV_M04_Transit, L_NV_HUB_Gutter,
+  BP_NV_Interactable_*, DA_NV_Mission_*, WBP_NV_*, LS_NV_*, NS_NV_*. Actual prefixes should match current
+  repository; do not rename established assets solely for aesthetics.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                 28
+  Automation reality check
+  Claude Code can modify source/config/scripts and drive supported build tools. It cannot be assumed to produce
+  polished skeletal meshes, animation rigs, authored Blueprint graphs or finished level art from text alone. Use
+  editor scripting where reliable, asset import manifests, and human review of the rendered scene. Require proof
+  of compilation, in-editor operation and packaged gameplay.
+
+
+
+  14 | AAA visual and performance production rules
+   • Visual standard: intentional composition, distinctive architecture, grounded PBR materials, readable silhouettes,
+     cinematic lighting, bespoke hero props, consistent signage and animation quality. AAA is a quality target, not an
+     automatic property of UE5.
+
+   • Hardware reference: i5-13500HX, RTX 4050 Laptop GPU with 6 GB VRAM, 16 GB RAM. Build 1080p scalable
+     presets and test TSR; target 45-60 fps on this development machine when feasible, measure rather than
+     promise.
+
+   • Use Nanite selectively for suitable static geometry, Lumen only where profiled, pooled Niagara systems,
+     appropriate LODs and streaming. Reserve 4K textures for rare justified hero closeups; 1K-2K for most modular
+     assets.
+
+   • Build each district as a set of curated hubs and mission maps. Use distant skyline meshes, fog, lighting and
+     sound to imply a vast city without simulating every building and citizen.
+
+   • For every mission: graybox readability pass, composition pass, materials pass, lighting pass, VFX/audio pass,
+     optimization pass, QA pass. Capture fixed benchmark cameras and gameplay footage.
+
+   • Use original or appropriately licensed assets, with a manifest recording source, license, author, restrictions and
+     Unreal asset path. Never rip other games' models, audio or UI.
+
+
+  Signature environmental set pieces
+
+    Set piece                  Visual target                                   Technical control
+
+
+    Crown skyline / return     Tower over cloud layer; familiar architecture   Modular kit reuse, streamed skyline
+                               altered by AION
+
+
+    Chrome tournament          Layered neon, silhouettes, responsive arena     Crowd impostors and VFX caps
+                               lights
+
+
+    Floodworks turbines        Massive machines, water hazards, hot/cold       Authored hazard states, no uncontrolled physics
+                               contrast
+
+
+    Helix replication reveal   Sterile light, glass vats, biological shadows   Performance-safe translucency and story framing
+
+
+    Ashfall / Root             Scale and archaeological mystery                Fog culling, guided traversal
+
+
+    Spindle / AION-PRIME       Colossal vertical machinery, destruction,       LOD, authored platform transitions, camera
+                               four boss phases                                safety
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                          29
+  15 | Music, sound and dialogue production bible
+  Original music direction follows the Act I PDF: industrial breaks, dark neuro-electronic pulse, atmospheric drones
+  and tense percussion. Build adaptive music states for Explore, Suspicion, Combat, Escape, Boss and Aftermath.
+  Maintain dialogue intelligibility and independent mix controls.
+
+    District / story           Music palette                               Environmental sound
+
+
+    Crown / Directorate        Minimal dark synth pulse, restrained        Clean HVAC, dry UI, distant maglev
+                               rhythmic motifs
+
+
+    Gutter                     Downtempo industrial breaks, broken         Pipes, vendors, patched generators, rain
+                               percussion, human warmth
+
+
+    Chrome Mile                Aggressive electro, breaks, club-driven     Club spill, racing traffic, holographic ads
+                               bass, social ambience
+
+
+    Floodworks                 Low metallic drones, machine                Turbines, water pressure, electrical arcs
+                               polyrhythms
+
+
+    Helix Ward                 Sparse synthetic choir textures, clinical   Surgical actuators, incubators, soft alarms
+                               unease
+
+
+    Ashfall / Nullworks        Sub-bass architecture, irregular machine    Wind, old machinery, buried relay clicks
+                               pulses
+
+
+    Spindle / Finale           Evolving orchestral-electronic industrial   Structural stress, enormous servos, alarm layers
+                               score
+
+
+
+
+  Audio deliverables per mission
+   • One exploration loop with at least two intensity layers; one alert/combat state; transition cues; location
+     ambiences; interactable cues; weapon/enemy tells; optional cinematic stingers.
+
+   • Dialogue spreadsheet with CharacterID, line ID, scene, speaker, subtitle, delivery notes, conditions and localized
+     text. Record scratch dialogue first; final VO only after narrative lock.
+
+   • AION vocal treatment: intimate and precise, subtle spatialization via compromised devices, no constant
+     distortion that reduces intelligibility.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                       30
+  16 | Art asset inventory and outsourcing priorities
+    Priority   Deliverable family                                                  Reuse / milestone
+
+
+    P0         Ghost-7 first-person arms, core weapon rigs, 4-6 common enemy       Carry forward from M00-M02
+               animations
+
+
+    P0         Directorate kit, Gutter kit, universal interaction props            Existing slice
+
+
+    P1         Clinic + transit + Chrome Mile modular kits                         M03-M05
+
+
+    P1         Floodworks machinery kit and power-cell hero prop                   M06, M15
+
+
+    P1         Named NPCs: Mara, Rook, Mercer, Nix, Vesper                         M03-M07
+
+
+    P2         Crown executive + Helix lab + clone variants                        M08-M12
+
+
+    P2         Five node hero assemblies and dynamic district variants             M13-M19
+
+
+    P3         Spindle megastructure and AION-PRIME hero asset                     M20-M24
+
+
+    Continu    UI icon set, diegetic signage, weapons, VFX, audio and cinematics   All missions
+    ous
+
+
+  Asset acceptance: unique silhouette, scale, collision, proper PBR response, texture streaming, animation/rig
+  validation, naming, LOD/Nanite decision, source/license record and in-game screenshot at intended viewing
+  distance.
+
+
+
+  17 | Production schedule by milestone, not
+  invented deadlines
+  Gate A: Stabilize M00-M02
+  Complete existing PDF, verify M00-M02 transitions, saves, controls, performance and art benchmark.
+
+
+  Gate B: Act II hub + systems
+  Build M03-M04, clinic, intel and map; prove persistent hub and progression.
+
+
+  Gate C: Act II complete
+  M05-M07, social branches, faction consequences, mobility restoration, Act III hook.
+
+
+  Gate D: Investigation framework
+  M08-M10, evidence graph, clone reveal, Helix environment.
+
+
+  Gate E: Act III climax
+  M11-M12, Citadel return, Director boss, world-state takeover.
+
+
+  Gate F: Adaptive node campaign
+  M13-M19, five nodes in flexible order, district change verification.
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                          31
+  Gate G: Finale
+  M20-M24, Spindle, AION-PRIME, three ending states.
+
+
+  Gate H: Release candidate
+  Full-campaign performance, accessibility, audio, QA, save migration, offline packaging.
+
+  No fixed completion dates are asserted. Mission counts, costs and team effort should be re-estimated after each
+  gate based on actual build velocity, available assets and measured polish time.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                             32
+  18 | Quality gates and acceptance test matrix
+    Gate                     Pass condition
+
+
+    Continuity               M00 Crown Tower unchanged; M01 betrayal; M02 safehouse; M03 treatment does not reset
+                             progress
+
+
+    Input                    Keyboard/mouse and controller can complete all essential objectives and menus
+
+
+    Combat                   Hit registration, reload, AI cover, weak points and difficulty variants verified
+
+
+    Stealth                  Each mission's intended stealth route can be completed without mandatory combat
+
+
+    Branching                At least two valid approaches per major encounter; all lead to valid completion
+
+
+    Evidence                 Act III revelations require actual acquired evidence; no early explicit clone reveal
+
+
+    Progression              Four skill trees, upgrade unlocks, respec and resource accounting survive reload
+
+
+    Factions                 Reputation modifies defined outcomes without locking out main campaign
+
+
+    Nodes                    M14-M18 can resolve in flexible order; world-state effects persist and compose correctly
+
+
+    Bosses                   Hunter, Director and AION-PRIME phases never double-fire; checkpoint resumes safely
+
+
+    Saving                   Versioned saves; autosaves, manual saves and mission replay do not corrupt campaign
+
+
+    Performance              Fixed-scene GPU/CPU/VRAM profiles and packaged build tests; no unmeasured AAA claims
+
+
+    Accessibility            Subtitles, FOV, camera motion, color-safe cues and controller UI are verified
+
+
+    Shipping                 Offline Windows build launches and campaign can be completed without editor
+
+
+
+
+  Stop-the-line failures
+   • Do not expand to the next mission if the current mission has an objective softlock, unrecoverable checkpoint,
+     broken save compatibility, or an unfinishable controller path.
+
+   • Do not add massive environments before confirming GPU/VRAM budgets on the actual laptop and a packaged
+     build.
+
+   • Do not claim a character, boss or cutscene is complete based solely on generated code or a placeholder
+     screenshot.
+
+
+
+  19 | Immediate handoff to Claude Code
+  Use these three references in this order: (1) original 20-section NEON VEIL master blueprint, (2) existing Act I
+  PDF for M00-M02, (3) this continuation PDF for M03-M24. The current Unreal project is authoritative for actual
+  implemented class names and assets. Report conflicts before changing code.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                                 33
+  Copy/paste kickoff instruction
+  You are continuing the existing NEON VEIL Unreal Engine 5 Windows project. DO NOT recreate, replace or
+  rename the nearly complete Crown Tower M00 level. Read the original master blueprint, the Act I Build Bible
+  and the Full Campaign Continuation Bible. Audit the actual project first: map list, classes, data assets, save
+  schema, current mission flags, assets, plugins, compilation, controller support and performance. Produce a
+  continuity matrix of implemented vs specified features. Identify only genuine contradictions, with minimally
+  invasive fixes. Plan M01 and M02 completion before M03. When approved, implement M03 The Price of
+  Breathing as small, testable milestones: clinic hub, dialogue, salvage objective, faction branch, treatment
+  station, save/load and art polish. Never claim completion without in-editor and packaged-build verification.
+  Preserve all existing work, maintain backups and Git commits, and give exact manual editor steps for any tasks
+  code cannot perform.
+
+
+  First concrete next steps
+   • Finish and playtest M00 as built; export a 5-10 minute capture and list known issues.
+
+   • Audit M01/M02 scope against existing PDF and decide whether the research-core reference is a prop/log or small
+     annex.
+
+   • Lock a continuity sheet: names, mission IDs, class names, current cyberware and inventory at M02 ending.
+
+   • Build M03 graybox only after M02 save and safehouse state are stable.
+
+   • Make one finished clinic corner as visual benchmark before dressing the full district.
+
+   • After M03 passes QA, continue M04, then gate the rest of Act II.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                               34
+  20 | Canon ledger, open decisions and source basis
+  Locked from original master blueprint
+  Five acts and their titles; Ghost-7 and AION; Veyra-9 and its nine districts; Directorate director killed and
+  replaced by clone; AION's distributed infrastructure takeover; five node concepts (Eye, Furnace, Choir, Nursery,
+  Root); AION-PRIME final machine and three ending choices; four skill trees; faction concepts; economy; offline
+  Windows FPS; controller support.
+
+
+  Locked from existing Act I PDF
+  M00 The Glass Crown in Directorate Citadel / Crown Sector with tutorial; M01 Black Protocol betrayal and staged
+  ability loss; M02 Below the Veil Gutter entry, Mara Vey, AION Hunter-01 and safehouse; VX-9, Kestrel and
+  Harrow starter weapon families; technical architecture and performance targets. The user reports M00 nearly
+  built; this document does not claim to have inspected the actual Unreal project.
+
+
+  New production proposals in this continuation
+  Mission numbering and individual mission breakdowns M03-M24; new supporting character names (Rook,
+  Mercer, Nix, Vesper, Sera, Orin); side quest titles; exact objective chains; suggested map layouts, boss
+  mechanics, modular systems, asset production order and milestone gates. These are intended to be refined
+  during development, not retroactively treated as established canon.
+
+
+  Open decisions requiring user approval before implementation
+   • Should the original research-core retrieval be represented as an M01 annex, a prior off-screen operation, or
+     evidence recovered later?
+
+   • Confirm the final spelling of new supporting characters and any desired changes to their roles.
+
+   • Confirm whether the game should have a voiced Ghost-7, silent protagonist, or configurable dialogue presence.
+
+   • Set mission lengths after real playtests rather than treating estimates as binding.
+
+   • Determine which endings are unlocked by default and which require evidence or faction outcomes.
+
+   • Confirm which of the proposed 22 new missions should be merged or split as actual production velocity becomes
+     clear.
+
+
+  Reference documents
+  1. NEON VEIL: GHOST PROTOCOL - Complete Game Design & Development Blueprint, 20 sections, provided in
+  conversation by the project owner. 2. NEON VEIL: ACT I: THE FALL - Unreal Engine 5 Production Build Bible,
+  19-page November 2026 PDF supplied in this conversation. No external research or third-party facts are
+  required for this authored campaign continuation.
+
+  END OF CONTINUATION BIBLE · Next implementation priority: finish M00-M02, then M03 The Price of Breathing.
+
+
+
+
+NEON VEIL | FULL CAMPAIGN CONTINUATION BIBLE | NOV 2026                                                              35
+

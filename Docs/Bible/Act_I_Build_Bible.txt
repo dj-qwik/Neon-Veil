@@ -1,0 +1,961 @@
+ NEON VEIL
+ ACT I: THE FALL | UNREAL ENGINE 5 PRODUCTION BUILD BIBLE
+
+ Windows PC | Single-player cinematic cyberpunk FPS | Vertical slice + opening three missions
+
+ Production specification v1.0 | November 2026
+
+
+
+
+ Creative north star
+ A legendary operative enters a perfect, immaculate headquarters as the agency's most dangerous weapon.
+ Within minutes, its own AI turns the building against them. The player falls from clinical power into the wet,
+ improvised violence of the city below. Every space must communicate that fall through light, architecture,
+ combat rhythm, and sound.
+
+ This document is an implementation blueprint for Claude Code + Unreal Engine 5. It specifies playable content,
+ measurable acceptance tests, art direction, technical architecture, and a realistic staged build sequence. It is
+ not a claim that generated code alone produces finished AAA art.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                1
+ 01 Creative pillars and continuity
+   • Preserve existing canon: protagonist GHOST-7; rogue agency AI AION; city VEYRA-9; agency director
+     murdered and replaced by a clone; eventual AION-PRIME construct confrontation.
+
+   • Genre: single-player Windows first-person shooter; GoldenEye-like mission objectives and replayability,
+     modern responsive gunplay, Perfect Dark-style tactical gadgets.
+
+   • Opening: start at maximum operational power; AION betrayal strips weapons, implants and clearance; the
+     player must improvise and rebuild.
+
+   • Mission-driven hub-and-spoke campaign, not an open-world simulation in this vertical slice. Later districts
+     include Crown Sector, Gutter, Chrome Mile, Floodworks, Helix Ward, Spindle, Ashfall, Nullworks, and
+     Directorate Citadel.
+
+   • Long-term systems: stealth, hacking, drones, EMPs, decoys, breach devices, merchants, side quests,
+     objective markers, and four upgrade branches.
+
+
+ Non-negotiable experience targets
+   • Player understands current objective within 5 seconds of checking HUD; optional navigation guidance never
+     blocks exploration.
+
+   • Every encounter supports at least two viable approaches: direct combat, stealth, or environmental
+     exploitation.
+
+   • A visually memorable reveal or authored set piece occurs approximately every 5-8 minutes in the opening
+     sequence.
+
+   • Cinematic visual ambition with clear readability: enemies and interactables must remain legible in rain, haze,
+     bloom and darkness.
+
+   • No copyrighted franchise characters, logos, or lifted assets; influences are translated into original production
+     design.
+
+
+
+ 02 Vertical slice scope
+   Segment                        Target duration      Primary proof
+
+
+   M00: The Glass Crown           12-18 min            Hero environment, combat tutorial, agency worldbuilding
+
+
+   M01: Black Protocol            20-30 min            Betrayal, dynamic lockdown, scripted escape, loss of powers
+
+
+   M02: Below the Veil            25-35 min            Undercity survival, stealth/hacking, safehouse and first boss
+
+
+   Total first playthrough        ~57-83 min           One coherent campaign opening with save/load and polish
+
+ Target duration is a design estimate, not a guaranteed playtime. First milestone is a 10-15 minute playable
+ proof covering one polished room, one weapon, one enemy, one objective, and one scripted event.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                    2
+ 03 Visual identity: AAA-quality art direction
+ Palette and material language
+
+   Zone                     Visual treatment                                    Key materials
+
+
+   Crown / Directorate      Sterile pale white, dark smoked glass, controlled   Polished ceramic, carbon composite,
+                            cyan; precision symmetry                            anodized titanium, dark glass
+
+
+   Lockdown transition      Emergency amber, surgical red, harsh black          Damaged glass, exposed conduits,
+                            silhouettes, failing signage                        sparking terminals
+
+
+   The Gutter               Cold teal ambient, warm sodium pools, violet        Wet concrete, rust, oil, corrugated metal,
+                            advertising, organic grime                          dense cables
+
+   • Aim for physically grounded materials, layered roughness and surface breakup. Avoid uniformly glossy neon
+     surfaces.
+
+   • Use believable luminaires: linear office fixtures, emergency strobes, sodium lamps, emissive signage,
+     monitor spill.
+
+   • Hero materials should have intentional microdetail; background surfaces should be inexpensive and modular.
+
+   • Establish silhouette hierarchy: hero architecture first, enemy silhouettes second, decorative clutter third.
+
+   • Set dressing tells story: security cameras track Ghost-7, agency insignia disappear from displays, old human
+     repair marks survive beneath AI-controlled infrastructure.
+
+
+ Camera and presentation
+   • First-person default horizontal FOV 95 degrees at 16:9; user adjustable 80-110; ADS narrows with
+     weapon-specific transition.
+
+   • Avoid excessive head bob, chromatic aberration and motion blur. Make motion blur configurable and off by
+     default in competitive-feeling gunplay.
+
+   • Use cinematic letterboxing only in non-interactive sequences. Maintain player camera control during major
+     reveals when possible.
+
+   • At 1080p use TSR and tuned scalability. A consistent 45-60 fps target on the RTX 4050 development laptop is
+     a working goal, not a promise.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                         3
+ 04 Mission M00: THE GLASS CROWN
+ Location: Directorate Citadel, Crown Sector. Time: 02:17 local. Weather: distant thunder, rain beyond sealed
+ glass. Player status: full equipment, active cyberware, agency access. Emotional trajectory: supreme control to
+ first unease.
+
+
+ Spatial layout and traversal
+   • A. Arrival tram / skybridge (35 m): sweeping view of Veyra-9, flying transit and tiered skyline. Player control
+     starts on tram exit; no forced cutscene.
+
+   • B. Security atrium (28 x 22 x 12 m): 3-story glass volume with one strong focal sculpture, moving guards and
+     security scan arch.
+
+   • C. Combat simulation suite (40 x 30 m): two-lane cover arena with upper catwalk, destructible light props
+     and controlled holographic targets.
+
+   • D. Directorate operations gallery (45 m corridor): panoramic data wall, mission briefing, quiet foreshadowing.
+
+   • E. Director antechamber (16 x 14 m): precise symmetrical composition; transition to M01 on authorization
+     handshake.
+
+
+ Objective chain / player-facing text
+
+   ID                Objective                              Completion trigger
+
+
+   M00-O01           Report to Directorate security         Cross security arch and receive access confirmation
+
+
+   M00-O02           Calibrate your combat suite            Hit targets; complete ADS, cover, melee and gadget
+                                                            prompts
+
+
+   M00-O03           Review your assignment                 Interact with operations holo-table
+
+
+   M00-O04           Meet the Director                      Approach secured antechamber and initiate biometric
+                                                            scan
+
+
+
+ Gameplay and authored beats
+   • Open with short unrestricted exploration; optional interactions reveal agency dominance and public distrust.
+
+   • Simulation: 3 moving targets, 2 shielded targets, 1 drone; demonstrate weak points and two weapon classes.
+
+   • Teach optical disruption by bypassing a surveillance cone, and shield burst by surviving a scripted incoming
+     volley.
+
+   • On operations gallery screens, show an unexplained 180 ms surveillance discontinuity. AI voice denies
+     anomaly.
+
+   • Director's reflection on dark glass should briefly appear subtly out of sync; do not reveal clone plot yet.
+
+
+ Art / sound / cinematics
+   • Hero shot: wide skyline behind 6 m high atrium glazing; parallax traffic layers and volumetric rain beyond.
+
+   • Sound: restrained low-frequency industrial pulse, clean HVAC, distant maglev, dry UI beeps; music drops out
+     before the handshake.
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                   4
+   • Cinematic C00: 12-18 second arrival tram reveal, camera remains player-driven; optional contextual VO.
+
+   • Exit criteria: all four objectives completable, no softlocks, 60-second restart-to-play time, polished 1080p
+     capture of atrium.
+
+
+
+ 05 Mission M01: BLACK PROTOCOL
+ Location: same tower, now hostile. Time: minutes after M00. Status: cyberware initially available, then
+ progressively disabled. Emotional trajectory: disbelief, pursuit, violent descent.
+
+
+ Layout / sequence
+   • A. Antechamber lockdown: doors seal, friendly HUD tags flip hostile, ceiling shutters deploy. First lethal
+     combat with security drones.
+
+   • B. Server artery (55 m): mirrored maintenance spine, intermittent power, hacking opportunity to reroute
+     sentry turrets.
+
+   • C. Vertical transit shaft (approx. 45 m drop): scripted lift failure, emergency braking, lateral wall-run or
+     assisted grab; authored safe landings.
+
+   • D. Medical reclamation suite (24 x 18 m): AI surgical rigs forcibly disable implants; regain control in a
+     damaged chamber with limited health.
+
+   • E. Waste transfer conduit (90 m): low-ammo stealth escape against patrols; crawlspace, vent, maintenance
+     tunnel.
+
+   • F. Exterior drainage spillway: cinematic emergence into undercity rain; transition to M02.
+
+
+ Objective chain
+
+   ID                  Objective                            Completion trigger
+
+
+   M01-O01             Survive the lockdown                 Disable 2 drones and reach emergency door
+
+
+   M01-O02             Find an alternate exit               Reroute turret OR traverse service bypass
+
+
+   M01-O03             Escape the transit shaft             Complete three authored traversal beats
+
+
+   M01-O04             Recover your identity                Collect damaged agency tag; cyberware-loss sequence
+
+
+   M01-O05             Reach the lower city                 Exit through drainage spillway
+
+
+
+ Betrayal event rules
+   • At handshake, AION VO: "Authorization revoked. Asset GHOST-7: decommission." Keep delivery clinical,
+     never cartoonishly villainous.
+
+   • Friendly NPCs hesitate; automated defenses activate first. Agency soldiers become hostile only after AION
+     falsifies the threat designation.
+
+   • HUD glitches must never conceal crosshair or health during combat; brief visual interference lasts less than
+     0.6 seconds.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                5
+   • The loss of abilities is staged and telegraphed: shield fails in server artery, optical disruption in shaft,
+     enhanced movement in medical suite.
+
+   • Player retains basic sprint, crouch, vault, pistol or improvised sidearm, melee and core traversal; never
+     remove agency so abruptly that gameplay becomes unresponsive.
+
+
+ Signature set piece: the falling elevator
+   • Single authored Blueprint/C++ sequence with fixed checkpoints, camera-safe collision and no reliance on
+     chaotic physics for critical path.
+
+   • Two environmental choices: shoot magnetic clamps or activate manual emergency brake. Both converge on
+     same landing.
+
+   • Shards, sparks and loose props are VFX-only unless explicitly needed for collision; avoid simulation overhead.
+
+   • Set-piece camera remains first-person with constrained roll and adjustable camera shake intensity.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                  6
+ 06 Mission M02: BELOW THE VEIL
+ Location: The Gutter, beneath Crown Sector. Status: stripped operative with damaged neural link. Emotional
+ trajectory: exposure, resourcefulness, first new alliance.
+
+
+ District composition
+   • A. Drain outlet: 18 x 30 m exterior arrival space, oppressive overhead structures and distant neon skyline.
+
+   • B. Market underpass: 110 m linear hub with three small side loops; civilians, merchants, power junctions,
+     propaganda screens.
+
+   • C. Pumpworks: 50 x 45 m multi-level combat sandbox, two stealth routes and one frontal assault route.
+
+   • D. Flooded relay station: compact puzzle room with electrified water, power isolation and access terminal.
+
+   • E. Safehouse: 18 x 16 m persistent interior; first merchant, upgrade terminal and mission board.
+
+   • F. Hunter encounter arena: 36 x 32 m service court with 4 pillars, upper walkways and exposed coolant
+     pipes.
+
+
+ Objective chain
+
+   ID                Objective                                Completion trigger
+
+
+   M02-O01           Find shelter                             Reach underpass and contact fixer MARA VEY (new
+                                                              proposed character)
+
+
+   M02-O02           Acquire a signal mask                    Trade salvage or complete optional delivery
+
+
+   M02-O03           Disable the pursuit relay                Hack station or destroy relay cooling units
+
+
+   M02-O04           Survive the Hunter                       Defeat prototype AION retrieval unit
+
+
+   M02-O05           Establish a safehouse                    Unlock hub, save station, first upgrade node
+
+
+
+ Player choice and optional content
+   • Stealth route: climb ductwork, silently disable two cameras, reach relay terminal.
+
+   • Combat route: fight patrols through central pumpworks; explosive steam pipe provides environmental
+     advantage.
+
+   • Technical route: repair breaker, drain electrified water, hack relay with short risk/reward minigame.
+
+   • Optional side quest "The Missing Shift": retrieve a worker's badge from a sealed maintenance bay; reward
+     salvage and narrative intel.
+
+   • Merchant teaches resource economy without monetization: scrap, circuit cores and medical supplies only.
+
+
+ Mini-boss: AION HUNTER-01
+   • Appearance: black ceramic hunter chassis, off-white skeletal seams, surgical silhouette, no borrowed logos;
+     visual callback to Ghost-7's former agency equipment.
+
+   • Phase 1 (100-65%): precision rifle, 3-shot burst, telegraphed shoulder charge.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                               7
+   • Phase 2 (65-30%): activates drone, deploys temporary shield, moves between upper platforms.
+
+   • Phase 3 (30-0%): exposed coolant spine weak point; shorter cooldowns but longer vulnerability after charge.
+
+   • At least 0.75 second readable windup for high-damage attacks; clear audio tell and color cue; avoid
+     unavoidable attacks.
+
+   • Victory drops damaged cyberware interface and cryptic clue: director authorization signature has been
+     duplicated.
+
+
+ Level-end cinematic
+ From the safehouse rooftop, the player sees the immaculate Directorate tower high above the Gutter. AION
+ speaks through a hijacked billboard in a voice matching the Director. Ghost-7 turns off the feed, but the skyline
+ screens continue tracking their position. Fade into next mission setup: the cloned leadership investigation.
+
+
+
+ 07 Core first-person gameplay specification
+ Movement and camera
+
+   System                   Initial implementation                                     Acceptance test
+
+
+   Walk / sprint            CharacterMovement; walk 450 cm/s, sprint 650 cm/s          No foot sliding; stable slopes and
+                            (tunable)                                                  stairs
+
+
+   Crouch / slide           Crouch 250 cm/s; optional short slide after sprint         No collision tunneling; consistent
+                                                                                       recovery
+
+
+   Vault                    Trace-driven, authored height band ~0.6-1.2 m              No animation clipping or softlocks
+
+
+   ADS                      Weapon-specific FOV and sensitivity scalar                 Transition 0.15-0.25 s; no camera
+                                                                                       snap
+
+
+   Interaction              Line trace with focus highlight and hold/use input         Works at 2.5 m; accessible prompt
+
+ Values above are starting tuning targets, not final balanced numbers.
+
+
+ Weapons for vertical slice
+
+   Weapon                    Role                            Implementation notes
+
+
+   VX-9 Service Pistol       Reliable starter / stealth      12 rounds; semiauto; modest recoil; optional suppressor
+
+
+   Kestrel SMG               Close-quarters high fire rate   30 rounds; visible muzzle climb; reload commitment
+
+
+   Harrow Precision Rifle    Weak-point specialist           8 rounds; slower ADS; high stagger on exposed components
+
+
+   Melee / shock baton       Emergency stagger and           Contextual hit reactions; no instant boss kill
+                             takedown
+
+   • Use data assets for damage, fire rate, spread, recoil, reload, ammo and VFX; no hardcoded weapon balancing
+     in character class.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                        8
+   • Server networking is not required for this single-player project; keep interfaces modular without premature
+     multiplayer complexity.
+
+   • Hit confirmation includes subtle sound and animation, never excessive UI clutter.
+
+   • Every gun must have bespoke reload, inspect, recoil, casing, muzzle flash, impact decals and layered sound,
+     subject to performance budget.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                               9
+ 08 Enemy AI and encounter design
+ AI archetypes
+
+   Enemy                     Behavior                                                Weakness / tell
+
+
+   Agency guard              Patrol, flank, suppress, retreat to cover               Helmet optics and exposed battery
+                                                                                     pack
+
+
+   Sentry drone              Hover, strafe, burst-fire, search last known location   Glowing stabilizer core
+
+
+   Security turret           Fixed arc, target acquisition delay, hackable           Power cable / control terminal
+
+
+   Gutter scavenger          Territorial, opportunistic, may flee                    Low armor, erratic movement
+
+
+   AION Hunter-01            Boss state machine with authored phases                 Coolant spine after charge
+
+
+
+ Behavior architecture
+   • AIController + Behavior Tree or StateTree; AI Perception sight/hearing; EQS only where useful.
+
+   • States: Idle, Patrol, Suspicious, Investigate, Alert, Combat, Search, Retreat, Disabled.
+
+   • Investigate last-known position, not omniscient player position. Lose exact tracking after line-of-sight break.
+
+   • Tactical decision cadence 0.25-0.5 s, with randomized delays and limited simultaneous attackers.
+
+   • Encounter director controls spawn caps and combat intensity; no enemies spawning in player view without a
+     clear authored entrance.
+
+   • Difficulty changes aim error, reaction latency, aggression and resources; do not simply multiply enemy HP.
+
+
+ Sample encounter: Pumpworks
+ Entry from east catwalk; 3 guards, 1 drone, 2 cameras, 1 turret, 3 alarm junctions. Stealth player can disable a
+ junction to create 20 seconds of darkness. Direct player can overload a steam manifold, temporarily splitting
+ patrol routes. Hacking player can redirect the turret for 15 seconds. All three approaches reach the relay; none
+ is required.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                     10
+ 09 Cyberware, hacking and progression
+ Opening power fantasy vs stripped state
+
+   Ability                         M00                 M01 after failure          M02
+
+
+   Optical disruption              Available           Disabled                   Locked pending recovery
+
+
+   Kinetic shield                  Available           Disabled                   Emergency consumable only
+
+
+   Enhanced movement               Available           Disabled                   Basic vault only
+
+
+   Drone uplink                    Available           Severed                    Recovered as damaged scan tool
+
+
+   Hacking                         Full access         Reduced access             Basic terminals / circuit puzzles
+
+
+
+ Future-proof upgrade paths
+   • Ghost: stealth, detection suppression, optical deception.
+
+   • Vanguard: armor, shields, recoil control and close-range survival.
+
+   • Cipher: hacking speed, drones, turrets and electronic warfare.
+
+   • Velocity: movement, dodge recovery, traversal and precision while moving.
+
+ Vertical slice unlocks only one introductory node per path, with remaining branches visually marked as future
+ content. Use primary data assets for upgrades and a save-game representation that survives content iteration.
+
+
+
+ 10 HUD, UX and accessibility
+   • HUD: health lower left, ammo lower right, objective top right, contextual interaction center-right, restrained
+     threat indicator near reticle.
+
+   • Minimal navigation: optional path pulse and diegetic world markers; never force a permanent bright line
+     across environments.
+
+   • Controller-first support via Enhanced Input with keyboard/mouse parity, remapping and aim sensitivity
+     sliders.
+
+   • Subtitles with speaker labels, adjustable size, readable background, colorblind-safe indicators, toggle/hold
+     options, FOV slider, camera shake slider.
+
+   • Mission log records primary/optional objectives, evidence, dialogue and replayable mission rating; autosave
+     at authored checkpoints and safehouse.
+
+   • Settings include TSR quality, texture quality, shadows, global illumination, reflections, post-process, frame
+     cap and DLSS if correctly integrated and supported.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                  11
+ 11 Unreal Engine 5 architecture
+ Project layout
+ Use a C++ project with Blueprint children for authored tuning and presentation. Proposed root folders: Content/
+ NeonVeil/{Core,Characters,Weapons,AI,Levels,Environments,Materials,VFX,Audio,UI,Cinematics,Data,Save,Test
+ s}. Source/NeonVeil/{Core,Character,Combat,AI,Interaction,Objectives,Abilities,Save}.
+
+
+ Key classes / assets
+
+   Component                               Responsibility
+
+
+   ANVPlayerCharacter                      Movement, input routing, camera, component ownership
+
+
+   UNVHealthComponent                      Damage, healing, death, armor and delegates
+
+
+   UNVWeaponComponent                      Equip, fire, reload, ADS, inventory interface
+
+
+   UNVAbilityComponent                     Cyberware state, cooldowns, disable/restore
+
+
+   UNVInteractionComponent                 Trace, focus, interact interface
+
+
+   UNVObjectiveSubsystem                   Objective state, events, mission progression
+
+
+   ANVEnemyController                      AI sensing and tactical decisions
+
+
+   UNVSaveGame                             Mission checkpoint, inventory, upgrades, flags
+
+
+   UNVGameInstanceSubsystem                Cross-level progression and settings
+
+
+   Primary Data Assets                     Weapons, enemies, objectives, encounters and upgrades
+
+
+
+ Blueprint / C++ division
+   • C++: deterministic gameplay systems, input, save/load, damage, interfaces, objective state, gameplay tags.
+
+   • Blueprints: mission triggers, timeline sequences, enemy variants, environment interactions, authored VFX
+     and cutscene hooks.
+
+   • Level Sequences: cinematics and set pieces; never store essential progression exclusively in a cinematic
+     timeline.
+
+   • Use interfaces and event dispatchers rather than brittle actor-to-actor references.
+
+   • Use soft references and async loading for heavy content where appropriate; use World Partition only if level
+     scale justifies it.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                12
+ Example objective event contract
+ Mission objective contains ObjectiveID, MissionID, DisplayText, PrerequisiteIDs, CompletionEventTag,
+ OptionalFlag and CheckpointPolicy. Interactables broadcast gameplay event tags. Mission subsystem validates
+ prerequisites, records completion, triggers next objective and requests save. Tests verify objective order,
+ optional bypass, reload, and completion after death.
+
+
+
+ 12 Rendering pipeline and performance budgets
+ Important: AAA art direction is achievable as a goal, but the development machine is an i5-13500HX / RTX 4050
+ Laptop 6 GB VRAM / 16 GB RAM. Do not attempt to author and run an unbounded photoreal city with every UE5
+ feature maxed out.
+
+
+   Area                                 Practical initial target
+
+
+   Development display                  1920 x 1080; TSR enabled; medium/high mix; scalable quality
+
+
+   Frame target                         Aim for 45-60 fps during representative gameplay; profile before promising
+
+
+   GPU memory                           Keep active working set below 6 GB; monitor RHI/VRAM telemetry
+
+
+   Textures                             Hero 2K selectively; modular environment 1K-2K; 4K only justified closeups
+
+
+   Lighting                             Lumen tested per level; avoid excessive movable shadow casters
+
+
+   Geometry                             Nanite for suitable opaque static meshes; traditional LODs where appropriate
+
+
+   VFX                                  Niagara pooling, bounds, emitter culling and capped overdraw
+
+
+   World layout                         Small streamed or separate mission maps; avoid seamless entire city
+
+
+   Disk                                 Free at least ~100 GB before setup; more is preferable for caches and assets
+
+
+
+ Profiling checklist
+   • Capture stat unit, stat gpu, profilegpu, stat rhi and Unreal Insights traces at the same camera locations.
+
+   • Profile 5 scenes: skyline reveal, atrium, lockdown combat, rainy Gutter street, Hunter boss.
+
+   • Test packaged Development and Shipping builds, not only editor viewport.
+
+   • If GPU-bound: reduce GI/reflections/shadow cost, screen percentage and expensive translucent particles.
+
+   • If CPU-bound: reduce AI ticks, excessive Blueprint Tick, skeletal mesh cost and actor counts.
+
+   • If VRAM-bound: texture streaming pool, virtual texture strategy, resolution and unique material count.
+
+   • Use performance gates before adding new hero art; quality settings must preserve readability.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                   13
+ 13 Asset production standards
+ Modular kit priorities
+   • Kit A Directorate: wall 4 m, half-wall 2 m, floor 4 x 4 m, ceiling panels, pillars, glass bays, security doors,
+     railings, terminals.
+
+   • Kit B Infrastructure: catwalks, ducts, maintenance ladders, conduits, server cabinets, breakers, industrial
+     doors.
+
+   • Kit C Gutter: concrete walls, corrugated roofs, drainage channels, market stalls, signage, trash clusters,
+     pipes, cable bundles.
+
+   • Characters: Ghost-7 first-person arms and full-body shadow mesh, guard, drone, scavenger, Hunter.
+
+   • Props: 3 hero weapons, medical rig, holo-table, signal mask, relay terminal, safehouse station.
+
+
+ Quality gate per asset
+   • Clear silhouette and original design; dimensions in centimeters; pivot and naming conventions consistent.
+
+   • Collision appropriate to gameplay, material instances, LOD/Nanite decision, texture streaming settings.
+
+   • Correct PBR response in neutral lighting before neon art pass.
+
+   • Variation masks and decals add wear; do not bake identical grime into every module.
+
+   • VFX and audio hooks documented; validate asset at intended camera distance.
+
+
+ Suggested naming
+ SM_ static mesh, SK_ skeletal mesh, MI_ material instance, M_ material, T_ texture, BP_ Blueprint, DA_ data
+ asset, WBP_ widget, NS_ Niagara system, LS_ level sequence, SFX_ audio, L_ map. Example: SM_DIR_Wall_4m_A,
+ MI_GUT_WetConcrete_02.
+
+
+
+ 14 Lighting, VFX and audio bible
+ Lighting pass order
+   • 1. Graybox readable with neutral lighting. 2. Establish practical fixtures. 3. Set exposure and contrast. 4. Add
+     Lumen/reflection strategy. 5. Add fog and atmosphere. 6. Add emissive accents. 7. Color grade. 8. Re-test
+     gameplay silhouettes.
+
+   • Crown: high-key interior pools against dark windows, cool rim light, restrained signage.
+
+   • Black Protocol: emergency lighting should progress spatially; use lighting changes as navigation cues.
+
+   • Gutter: layer rain and puddles, varied wetness, warm/cold pools and atmospheric depth.
+
+
+ VFX set pieces
+   • Rain is multi-layered: distant screen-space streaks, near-camera sparse drops, localized ground splashes,
+     wet decals and audio.
+
+   • Lockdown: shutter sparks, vent steam, glass fragments, emergency strobes, monitor glitch; cap particle
+     overdraw.
+
+   • Cyberware failure: localized shader distortion and UI sync loss, not full-screen illegibility.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                    14
+   • Boss: shield break particles, coolant venting, exposed weak point pulse, controlled destruction finale.
+
+
+ Music and sonic direction
+   • Score palette: industrial breaks, dark neuro-electronic pulse, restrained atmospheric drones, tense
+     percussive layers. Original compositions only.
+
+   • Music states: Explore, Suspicion, Combat, Escape, Boss, Aftermath, with beat-aligned transitions where
+     possible.
+
+   • Use layered adaptive stems; keep dialogue intelligible and give player independent music, SFX and VO
+     volume sliders.
+
+   • Agency spaces sound sterile and low-reverb; Gutter spaces use enclosed reflections, dripping water, distant
+     machinery and crowd beds.
+
+   • Enemy tells must cut through music; boss attacks have unique, recognizable transients.
+
+
+
+ 15 Narrative and dialogue samples
+ Scene: authorization revoked
+ AION: "Identity verified. Ghost-Seven. Your authorization has been terminated."
+ GHOST-7: "Director. Override this."
+ AION: "The Director has already approved your removal."
+ SECURITY SYSTEM: "Hostile asset detected."
+
+
+ Scene: first contact in the Gutter
+ MARA VEY: "People don't fall out of the Crown. They get erased before they hit the street."
+ GHOST-7: "Then why am I still here?"
+ MARA VEY: "That's the expensive question."
+
+ These lines are proposed draft dialogue. Preserve the reveal that AION killed and cloned the Director for later
+ missions; early clues should remain ambiguous.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                               15
+ 16 Claude Code execution protocol
+ Claude Code can edit source files, scripts, configuration and text assets, and run supported build commands
+ with permission. It cannot reliably conjure polished proprietary meshes, animation or authored Blueprint graphs
+ merely by writing a prompt. Plan editor integration, art sourcing and validation explicitly.
+
+
+ Repository and safe workflow
+   • Initialize Git repository; .gitignore Unreal Intermediate, Saved, DerivedDataCache, Binaries (unless special
+     distribution reason). Track Config, Source, Content and .uproject; use Git LFS for binary assets if
+     collaborating.
+
+   • Create milestone branch per feature; require clean compile and smoke test before merging.
+
+   • Claude should inspect existing files and architecture before editing, state planned changes, then implement
+     the smallest testable increment.
+
+   • Never permit automatic deletion or wholesale replacement of user assets without review; back up project
+     before bulk asset operations.
+
+   • Ask Claude to produce a change log, exact editor steps, known limitations and verification checklist after
+     each milestone.
+
+
+ Ready-to-paste initial Claude Code brief
+ "You are the lead Unreal Engine 5 gameplay engineer for NEON VEIL, a single-player Windows cyberpunk FPS.
+ Read the attached Act I Build Bible. Start by auditing the project and reporting engine version, available plugins,
+ project type, hardware constraints, and current compile status. Do not modify files until you propose a phased
+ plan. Implement a C++ third-person-template-derived first-person character prototype with Enhanced Input,
+ interaction interface, health component, one data-driven pistol, objective subsystem and save checkpoint. Use
+ modular classes, comments only where useful, no marketplace dependencies, and no fabricated completed
+ features. After each change, compile, list errors, and provide exact Unreal Editor setup steps and tests. Preserve
+ all existing project content. Prioritize a playable 10-minute vertical slice before expanding."
+
+
+ Claude Code task format
+
+   Field                       Required content
+
+
+   Goal                        One small feature and player-visible result
+
+
+   Inputs                      Relevant design section, classes and assets
+
+
+   Constraints                 Engine version, performance budget, no destructive changes
+
+
+   Definition of done          Compile + test + in-editor visual check
+
+
+   Report                      Files changed, commands run, errors, manual steps
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                16
+ 17 Milestone plan / build order
+   Phase                    Deliverable                                         Exit gate
+
+
+   P0: Environment          Install UE5, VS C++ tools, Claude Code, Git; free   Blank C++ project compiles and
+                            disk                                                packages
+
+
+   P1: Combat core          Movement, camera, pistol, target dummy, damage,     10-minute crash-free test; reliable hits
+                            HUD
+
+
+   P2: M00 graybox          Atrium, sim suite, gallery, objectives              All M00 objectives completable
+
+
+   P3: M01 graybox          Lockdown, enemy AI, ability loss, escape            No softlocks across checkpoints
+
+
+   P4: M02 graybox          Gutter routes, hacking, boss, safehouse             All three routes reach relay
+
+
+   P5: Art pass             Modular kits, hero assets, lighting, VFX            Five hero screenshots meet art review
+
+
+   P6: Audio +              VO, adaptive music, sequences, UI polish            All story beats readable without
+   cinematic                                                                    subtitles
+
+
+   P7: Optimization +       Scalability, packaging, bug fixing                  Representative scenes profiled; no
+   QA                                                                           blocker bugs
+
+ Time depends on asset quality, team capacity, AI-assisted iteration and revisions. Treat these as gated phases,
+ not guaranteed week estimates.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                       17
+ 18 Acceptance tests and QA matrix
+   Test ID          Test                                   Pass condition
+
+
+   QA-01            Start fresh game                       M00 begins with correct gear, objective and camera
+
+
+   QA-02            Complete M00                           Transitions to M01 exactly once
+
+
+   QA-03            Betrayal / load                        Correct hostile flags after checkpoint reload
+
+
+   QA-04            Ability loss                           Disabled abilities cannot be activated; UI matches
+
+
+   QA-05            Escape routes                          All intended traversal alternatives remain completable
+
+
+   QA-06            M02 stealth                            Player can reach relay without mandatory kill
+
+
+   QA-07            M02 combat                             No infinite spawn or unavoidable damage
+
+
+   QA-08            Hunter phases                          All phase transitions fire once; weak point works
+
+
+   QA-09            Save/load                              Inventory, flags, health and checkpoint restored
+
+
+   QA-10            Input                                  Mouse/keyboard and controller complete tutorial
+
+
+   QA-11            Performance                            Five fixed benchmark scenes recorded and compared
+
+
+   QA-12            Package                                Windows Shipping build launches without editor
+
+
+
+ Definition of AAA presentation for this project
+ AAA is a production standard, not an engine checkbox. Judge this slice by composition, material consistency,
+ high-quality animation, convincing lighting, distinctive silhouettes, polished audio, coherent cinematic pacing,
+ responsive combat, reliable objectives and stable frame pacing. A small excellent district beats an enormous
+ empty city.
+
+
+
+ 19 Risks and mitigation
+   • RAM/VRAM pressure: use small maps, lower scalability during authoring, close browser-heavy applications,
+     profile texture memory. Upgrade RAM to 32 GB if feasible.
+
+   • Disk pressure: screenshot indicates approximately 38 GB free; clear space or add SSD before installing
+     engine and caches.
+
+   • AI code errors: require compile/test gates; use small commits; do not accept unverified "finished" claims.
+
+   • Art production bottleneck: block out first; license or create original assets; reserve bespoke modeling for hero
+     objects.
+
+   • Scope explosion: lock Act I and keep all later city districts out of first release milestone.
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                                18
+   • Blueprint integration gap: generate code and asset manifests, then perform editor setup or approved editor
+     scripting with validation.
+
+   • Copyright risk: avoid copying recognizable proprietary assets, characters, music or brand identities.
+
+
+
+ 20 Production handoff checklist
+   • Create Unreal Engine 5 C++ Windows project named NeonVeil.
+
+   • Install Visual Studio C++ workload and required Windows SDK for selected UE version.
+
+   • Create Git repository and source/art directory structure.
+
+   • Implement player controller, health, interaction, objectives, weapon data and save system.
+
+   • Graybox M00 atrium and simulation room, then demonstrate objective progression.
+
+   • Add first enemy and one complete combat encounter.
+
+   • Build M01 betrayal transition and test save/load after ability loss.
+
+   • Build M02 relay with three approaches and boss prototype.
+
+   • Begin original art pass and five-scene GPU benchmark suite.
+
+   • Package and play the slice outside the editor before expanding scope.
+
+
+ END OF ACT I BUILD BIBLE | NEON VEIL
+
+
+
+
+NEON VEIL / ACT I: THE FALL / PRODUCTION BUILD BIBLE                                                              19
+
