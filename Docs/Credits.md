@@ -7,13 +7,14 @@ This is the source for the in-game credits screen (not built yet). Add a line wh
 | Use | Track | Artist / seller | Pack | Source |
 |---|---|---|---|---|
 | M00 simulation suite: combat layer | "Background 6" | Kloudization | Cyber Punk Music v11 | Fab (fab.com) |
+| M01 Black Protocol escape (`MUS_M01_Escape_FabCyberPunk10`) | "Background 10" | Kloudization | Cyber Punk Music v11 | Fab (fab.com) |
 | M00 explore bed (`MUS_M00_CrownBed`) | Original placeholder | NEON VEIL team | — | Generated in-project |
 
 The **FREE Cyber Metal Music Pack** by Intersonic is in the project but not used yet. Credit each track here when it's wired in.
 
 In-game credit text:
 
-> Music: "Background 6" from *Cyber Punk Music v11* by Kloudization (via Fab).
+> Music: "Background 6" and "Background 10" from *Cyber Punk Music v11* by Kloudization (via Fab).
 
 ## Intro trailer (`NeonVeil_Intro_v1`)
 

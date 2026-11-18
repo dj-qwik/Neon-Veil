@@ -312,16 +312,16 @@ void ANVBlackProtocolDirector::StartLockdown()
 			SetMover(EvacTube, 1.f, 0.7f, false);
 		});
 		At(DirEvacAt, [this]() { DirectorEvac(); });
-		At(DirGoneAt, [this]() { DirectorGone(false); Say(AfterDirectorLines); });
+		At(DirGoneAt, [this]() { DirectorGone(false); Say(AfterDirectorLines); StartEscapeMusic(1.5f); });
 	}
 	FTimerHandle H1, H2, H3;
 	GetWorldTimerManager().SetTimer(H1, FTimerDelegate::CreateWeakLambda(this, [this]() { GlitchHUD(0.45f); }), 2.6f, false);
-	GetWorldTimerManager().SetTimer(H2, FTimerDelegate::CreateWeakLambda(this, [this]()
+	GetWorldTimerManager().SetTimer(H2, FTimerDelegate::CreateWeakLambda(this, [this, bDirectorBeat]()
 	{
 		ApplyLockdownWorld(false);
-		if (CombatMusic)
+		if (!bDirectorBeat)
 		{
-			UGameplayStatics::SpawnSound2D(this, CombatMusic, 0.6f);
+			StartEscapeMusic(1.f);
 		}
 	}), 3.0f, false);
 	GetWorldTimerManager().SetTimer(H3, FTimerDelegate::CreateWeakLambda(this, [this]()
@@ -337,6 +337,19 @@ void ANVBlackProtocolDirector::StartLockdown()
 		}
 	}), bDirectorBeat ? DronesAt : 4.5f, false);
 	GetWorldTimerManager().SetTimer(DesignateTimer, FTimerDelegate::CreateWeakLambda(this, [this]() { Designate(false); }), DesignationDelay, false);
+}
+
+void ANVBlackProtocolDirector::StartEscapeMusic(float FadeSeconds)
+{
+	if (!CombatMusic || (EscapeMusic && EscapeMusic->IsPlaying()))
+	{
+		return;
+	}
+	EscapeMusic = UGameplayStatics::SpawnSound2D(this, CombatMusic, CombatMusicVolume, 1.f, 0.f, nullptr, false, false);
+	if (EscapeMusic)
+	{
+		EscapeMusic->FadeIn(FadeSeconds, CombatMusicVolume);
+	}
 }
 
 void ANVBlackProtocolDirector::DirectorTurnTo(const FVector& Target, float Seconds)
@@ -503,6 +516,7 @@ void ANVBlackProtocolDirector::ApplyRestoredState()
 	}
 	UE_LOG(LogNeonVeil, Log, TEXT("M01: restoring world state from checkpoint"));
 	DirectorGone(true);
+	StartEscapeMusic(2.f);
 	if (!IsDone(TEXT("M01-O01")))
 	{
 		// died during the lockdown: the fight replays (no second revocation speech)

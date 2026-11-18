@@ -99,8 +99,13 @@ public:
 	TObjectPtr<USoundBase> GlitchSound;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Lockdown")
 	TObjectPtr<USoundBase> ShutterSound;
+	/** Escape music: starts once the Director has gone (or at the lockdown if there is no Director beat), and again
+	 *  after a checkpoint load inside M01. Should loop. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Lockdown")
 	TObjectPtr<USoundBase> CombatMusic;
+	/** Same level as the Crown Line ride music (NVTramRide MusicVolume). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Lockdown")
+	float CombatMusicVolume = 0.6f;
 
 	// ----- A: the Director signs the order (Bible §15 "authorization revoked")
 	/** The Director (MetaHuman BP) standing at the dark glass; turns to Ghost-7, signs at the console, leaves by evac tube. */
@@ -251,6 +256,9 @@ private:
 	bool IsM01Running() const;
 	bool IsDone(const TCHAR* ObjectiveID) const;
 
+	void StartEscapeMusic(float FadeSeconds);
+	UPROPERTY(Transient)
+	TObjectPtr<UAudioComponent> EscapeMusic;
 	void DirectorTurnTo(const FVector& Target, float Seconds);
 	void DirectorSign();
 	void DirectorEvac();
