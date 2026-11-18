@@ -102,6 +102,63 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Lockdown")
 	TObjectPtr<USoundBase> CombatMusic;
 
+	// ----- A: the Director signs the order (Bible §15 "authorization revoked")
+	/** The Director (MetaHuman BP) standing at the dark glass; turns to Ghost-7, signs at the console, leaves by evac tube. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	TObjectPtr<AActor> TheDirector;
+	/** His mirrored double behind the smoked glass; kept in step (mirrored across ReflectionPlaneX). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	TObjectPtr<AActor> DirectorReflection;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	float ReflectionPlaneX = 16400.f;
+	/** Where he signs (he turns to face it). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	TObjectPtr<AActor> DirectorConsole;
+	/** Console light: goes red when the order is signed. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	TObjectPtr<ALight> ConsoleLight;
+	/** Glass evac tube that drops around him (Offset brings it down from the ceiling). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	FNVMover EvacTube;
+	/** Floor disc under him; he is attached to it and it sinks (Offset down) to take him out. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	FNVMover EvacPlatform;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	TArray<FNVSubtitleLine> DirectorAppealLines;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	TArray<FNVSubtitleLine> DirectorApprovalLines;
+	/** After he has gone (Ghost-7 turns to AION). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	TArray<FNVSubtitleLine> AfterDirectorLines;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	FText SignedSender;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	FText SignedChannel;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	FText SignedBody;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	TObjectPtr<USoundBase> SignSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	TObjectPtr<USoundBase> EvacSound;
+	/** Beat times, seconds after the revocation starts. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	float DirTurnAt = 0.8f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	float DirAppealAt = 4.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	float DirSignTurnAt = 6.6f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	float DirSignAt = 7.8f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	float DirApprovalAt = 8.6f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	float DirEvacAt = 10.2f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	float DirGoneAt = 14.2f;
+	/** Drones launch this long after the revocation starts (after he has gone). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "A Director")
+	float DronesAt = 14.8f;
+
 	// ----- B: artery
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "B Artery")
 	TArray<TObjectPtr<ALight>> FlickerLights;
@@ -193,6 +250,17 @@ private:
 	static void SetMover(FNVMover& M, float Target, float Speed, bool bInstant);
 	bool IsM01Running() const;
 	bool IsDone(const TCHAR* ObjectiveID) const;
+
+	void DirectorTurnTo(const FVector& Target, float Seconds);
+	void DirectorSign();
+	void DirectorEvac();
+	void DirectorGone(bool bInstant);
+	void SyncReflection();
+	FRotator DirFrom = FRotator::ZeroRotator;
+	FRotator DirTo = FRotator::ZeroRotator;
+	float DirTurnT = -1.f;
+	float DirTurnLen = 1.f;
+	bool bDirectorGone = false;
 
 	bool bLockdownStarted = false;
 	bool bDesignated = false;

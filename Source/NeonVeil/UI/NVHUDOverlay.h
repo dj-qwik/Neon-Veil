@@ -32,6 +32,7 @@ public:
 	void ShowNotice(const FText& Text, float Duration, bool bWarning = false);
 	void ShowSubtitle(const FText& Speaker, const FText& Line, float Duration);
 	void ShowTitleCard(const FText& Title, const FText& Subtitle, float Duration);
+	void ShowOpeningTitle(const FText& Title, const FText& Subtitle, const FText& Tagline, float Duration);
 
 private:
 	ANVPlayerCharacter* Pawn() const;
@@ -71,6 +72,9 @@ private:
 
 	TSharedPtr<SBox> TitleHolder;
 	float TitleUntil = -1.f;
+
+	TSharedPtr<SBox> OpeningHolder;
+	TSharedPtr<class SNVOpeningTitle> Opening;
 
 	TSharedPtr<SBox> ObjectivesHolder;
 	FString ObjectiveSig;

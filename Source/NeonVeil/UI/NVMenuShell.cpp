@@ -1,4 +1,5 @@
 #include "UI/NVMenuShell.h"
+#include "UI/NVOptionsPage.h"
 #include "UI/NVUIWidgets.h"
 #include "UI/NVHUD.h"
 #include "Core/NVPlayerController.h"
@@ -808,6 +809,7 @@ TArray<FNVMenuPage>& NVUI::MenuPages()
 		Pages.Add({ TEXT("Upgrades"), LOCTEXT("TabUpg", "Upgrades"), &BuildUpgradesPage });
 		Pages.Add({ TEXT("Skills"), LOCTEXT("TabSkills", "Skills"), &BuildSkillsPage });
 		Pages.Add({ TEXT("Comms"), LOCTEXT("TabComms", "Comms"), &BuildCommsPage });
+		Pages.Add({ TEXT("Options"), LOCTEXT("TabOptions", "Options"), &NVUI::BuildOptionsPage });
 	}
 	return Pages;
 }

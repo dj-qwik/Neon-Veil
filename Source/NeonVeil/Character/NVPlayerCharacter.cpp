@@ -1,4 +1,5 @@
 #include "Character/NVPlayerCharacter.h"
+#include "Core/NVOptions.h"
 #include "Character/NVBodyAnimInstance.h"
 #include "Materials/MaterialInterface.h"
 #include "Animation/AnimSequenceBase.h"
@@ -163,6 +164,9 @@ void ANVPlayerCharacter::BeginPlay()
 	DefaultGroundFriction = GetCharacterMovement()->GroundFriction;
 	DefaultBrakingDecel = GetCharacterMovement()->BrakingDecelerationWalking;
 	CurrentEyeHeight = StandingEyeHeight;
+	// the player's saved options (sensitivity, invert, FOV, toggles) and audio levels
+	FNVOptions::Get().ApplyToPlayer(this);
+	FNVOptions::Get().ApplyAudio(GetWorld());
 	FirstPersonCamera->SetFieldOfView(BaseFOV);
 
 	Weapons->Initialize(FirstPersonCamera, WeaponMesh, WeaponStaticMesh);

@@ -86,6 +86,8 @@ void ANVBlackProtocolDirector::BeginPlay()
 	InitMovers(Shutters);
 	InitMovers(SurgicalArms);
 	InitMover(LiftGate);
+	InitMover(EvacTube);
+	InitMover(EvacPlatform);
 	if (LiftCab)
 	{
 		LiftStart = LiftCab->GetActorLocation();
@@ -282,6 +284,36 @@ void ANVBlackProtocolDirector::StartLockdown()
 	bLockdownStarted = true;
 	UE_LOG(LogNeonVeil, Log, TEXT("M01: Black Protocol lockdown"));
 	Say(RevocationLines);
+	const bool bDirectorBeat = TheDirector && !bDirectorGone;
+	if (bDirectorBeat)
+	{
+		auto At = [this](float T, TFunction<void()> Fn)
+		{
+			FTimerHandle H;
+			GetWorldTimerManager().SetTimer(H, FTimerDelegate::CreateWeakLambda(this, MoveTemp(Fn)), FMath::Max(0.01f, T), false);
+		};
+		At(DirTurnAt, [this]()
+		{
+			if (const APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+			{
+				DirectorTurnTo(P->GetActorLocation(), 1.4f);
+			}
+		});
+		At(DirAppealAt, [this]() { Say(DirectorAppealLines); });
+		At(DirSignTurnAt, [this]() { if (DirectorConsole) { DirectorTurnTo(DirectorConsole->GetActorLocation(), 0.9f); } });
+		At(DirSignAt, [this]() { DirectorSign(); });
+		At(DirApprovalAt, [this]()
+		{
+			Say(DirectorApprovalLines);
+			if (const APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
+			{
+				DirectorTurnTo(P->GetActorLocation(), 1.1f);
+			}
+			SetMover(EvacTube, 1.f, 0.7f, false);
+		});
+		At(DirEvacAt, [this]() { DirectorEvac(); });
+		At(DirGoneAt, [this]() { DirectorGone(false); Say(AfterDirectorLines); });
+	}
 	FTimerHandle H1, H2, H3;
 	GetWorldTimerManager().SetTimer(H1, FTimerDelegate::CreateWeakLambda(this, [this]() { GlitchHUD(0.45f); }), 2.6f, false);
 	GetWorldTimerManager().SetTimer(H2, FTimerDelegate::CreateWeakLambda(this, [this]()
@@ -303,8 +335,87 @@ void ANVBlackProtocolDirector::StartLockdown()
 				Delay += 1.2f;
 			}
 		}
-	}), 4.5f, false);
+	}), bDirectorBeat ? DronesAt : 4.5f, false);
 	GetWorldTimerManager().SetTimer(DesignateTimer, FTimerDelegate::CreateWeakLambda(this, [this]() { Designate(false); }), DesignationDelay, false);
+}
+
+void ANVBlackProtocolDirector::DirectorTurnTo(const FVector& Target, float Seconds)
+{
+	if (!TheDirector)
+	{
+		return;
+	}
+	DirFrom = TheDirector->GetActorRotation();
+	FVector D = Target - TheDirector->GetActorLocation();
+	D.Z = 0.f;
+	// BP_Director faces along its actor X (placed at yaw 0 looking into the glass)
+	DirTo = FRotator(0.f, D.Rotation().Yaw, 0.f);
+	DirTurnT = 0.f;
+	DirTurnLen = FMath::Max(0.1f, Seconds);
+}
+
+void ANVBlackProtocolDirector::DirectorSign()
+{
+	UE_LOG(LogNeonVeil, Log, TEXT("M01: the Director signs the decommission order"));
+	if (ConsoleLight && ConsoleLight->GetLightComponent())
+	{
+		ConsoleLight->GetLightComponent()->SetLightColor(AlarmColor);
+		ConsoleLight->GetLightComponent()->SetIntensity(ConsoleLight->GetLightComponent()->Intensity * 2.5f);
+	}
+	if (SignSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, SignSound, DirectorConsole ? DirectorConsole->GetActorLocation() : GetActorLocation());
+	}
+	if (ANVHUD* HUD = GetHUD(this))
+	{
+		if (!SignedBody.IsEmpty())
+		{
+			HUD->ShowMessage(SignedSender, SignedBody, SignedChannel, true);
+		}
+	}
+}
+
+void ANVBlackProtocolDirector::DirectorEvac()
+{
+	if (EvacPlatform.Actor && TheDirector)
+	{
+		TheDirector->AttachToActor(EvacPlatform.Actor, FAttachmentTransformRules::KeepWorldTransform);
+	}
+	SetMover(EvacPlatform, 1.f, 0.28f, false);
+	if (EvacSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, EvacSound, TheDirector ? TheDirector->GetActorLocation() : GetActorLocation());
+	}
+}
+
+void ANVBlackProtocolDirector::DirectorGone(bool bInstant)
+{
+	bDirectorGone = true;
+	DirTurnT = -1.f;
+	for (AActor* A : { TheDirector.Get(), DirectorReflection.Get() })
+	{
+		if (A)
+		{
+			A->SetActorHiddenInGame(true);
+			A->SetActorEnableCollision(false);
+			A->SetActorTickEnabled(false);
+		}
+	}
+	// the tube lifts back into the ceiling
+	SetMover(EvacTube, 0.f, 0.5f, bInstant);
+	SetMover(EvacPlatform, 1.f, 1.f, bInstant);
+}
+
+void ANVBlackProtocolDirector::SyncReflection()
+{
+	if (!TheDirector || !DirectorReflection || bDirectorGone)
+	{
+		return;
+	}
+	// mirror across the glass plane x = ReflectionPlaneX: x' = 2P - x, yaw' = -yaw (the double is scaled -1 in X)
+	const FVector L = TheDirector->GetActorLocation();
+	DirectorReflection->SetActorLocationAndRotation(FVector(2.f * ReflectionPlaneX - L.X, L.Y, L.Z),
+		FRotator(0.f, -TheDirector->GetActorRotation().Yaw, 0.f));
 }
 
 void ANVBlackProtocolDirector::Designate(bool bInstant)
@@ -391,6 +502,7 @@ void ANVBlackProtocolDirector::ApplyRestoredState()
 		return;
 	}
 	UE_LOG(LogNeonVeil, Log, TEXT("M01: restoring world state from checkpoint"));
+	DirectorGone(true);
 	if (!IsDone(TEXT("M01-O01")))
 	{
 		// died during the lockdown: the fight replays (no second revocation speech)
@@ -611,6 +723,22 @@ void ANVBlackProtocolDirector::Tick(float DeltaSeconds)
 	TickMovers(Shutters, DeltaSeconds);
 	TickMovers(SurgicalArms, DeltaSeconds);
 	TickMover(LiftGate, DeltaSeconds);
+	TickMover(EvacTube, DeltaSeconds);
+	TickMover(EvacPlatform, DeltaSeconds);
+	if (TheDirector && DirTurnT >= 0.f)
+	{
+		DirTurnT += DeltaSeconds;
+		const float A = FMath::SmoothStep(0.f, 1.f, FMath::Clamp(DirTurnT / DirTurnLen, 0.f, 1.f));
+		TheDirector->SetActorRotation(FMath::Lerp(DirFrom, DirTo, A));
+		if (DirTurnT >= DirTurnLen)
+		{
+			DirTurnT = -1.f;
+		}
+	}
+	if (bLockdownStarted)
+	{
+		SyncReflection();
+	}
 	const float Now = GetWorld()->GetTimeSeconds();
 
 	// B: intermittent power once the lockdown is on

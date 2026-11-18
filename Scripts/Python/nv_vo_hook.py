@@ -21,6 +21,8 @@ for l in lines:
     s = unreal.load_asset(DST + "/VO_" + l["id"])
     if s and unreal.EditorAssetLibrary.does_asset_exist("/Game/NeonVeil/Audio/Mix/SMX_NV_Voice"):
         s.set_editor_property("sound_submix_object", unreal.load_asset("/Game/NeonVeil/Audio/Mix/SMX_NV_Voice"))  # limiter bus
+        if unreal.EditorAssetLibrary.does_asset_exist("/Game/NeonVeil/Audio/Mix/SC_NV_Voice"):
+            s.set_editor_property("sound_class_object", unreal.load_asset("/Game/NeonVeil/Audio/Mix/SC_NV_Voice"))  # Dialogue volume
         unreal.EditorAssetLibrary.save_loaded_asset(s, only_if_is_dirty=False)
     if s:
         by_text[l["text"].strip()] = s
@@ -42,7 +44,7 @@ def fix(arr):
 total = 0
 EAS = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 for a in EAS.get_all_level_actors():
-    for prop in ("lines_on_complete", "lines", "lines_on_use", "lines_on_lights_on", "lines_on_liftoff", "revocation_lines", "designation_lines", "door_open_lines", "lift_lines", "reclamation_lines", "recovery_lines"):
+    for prop in ("lines_on_complete", "lines", "lines_on_use", "lines_on_lights_on", "lines_on_liftoff", "revocation_lines", "designation_lines", "door_open_lines", "lift_lines", "reclamation_lines", "recovery_lines", "director_appeal_lines", "director_approval_lines", "after_director_lines"):
         try:
             arr = a.get_editor_property(prop)
         except Exception:
@@ -79,7 +81,7 @@ for a in EAS.get_all_level_actors():
 log.append("lines voiced: %d of %d" % (total, len(lines)))
 check = 0
 for a in EAS.get_all_level_actors():
-    for prop in ("lines_on_complete", "lines", "lines_on_use", "lines_on_lights_on", "lines_on_liftoff", "revocation_lines", "designation_lines", "door_open_lines", "lift_lines", "reclamation_lines", "recovery_lines"):
+    for prop in ("lines_on_complete", "lines", "lines_on_use", "lines_on_lights_on", "lines_on_liftoff", "revocation_lines", "designation_lines", "door_open_lines", "lift_lines", "reclamation_lines", "recovery_lines", "director_appeal_lines", "director_approval_lines", "after_director_lines"):
         try:
             arr = a.get_editor_property(prop)
         except Exception:

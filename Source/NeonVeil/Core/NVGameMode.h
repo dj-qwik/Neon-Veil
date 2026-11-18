@@ -47,6 +47,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil")
 	FText EndCardSubtitle;
 
+	/** Stylised game title shown when this map starts fresh (not from a checkpoint). Empty = none. Prologue only. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil|Opening")
+	FText OpeningTitle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil|Opening")
+	FText OpeningSubtitle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil|Opening")
+	FText OpeningTagline;
+
+	/** Seconds after the map starts before the title begins, and how long it stays up. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil|Opening")
+	float OpeningDelay = 1.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NeonVeil|Opening")
+	float OpeningDuration = 8.f;
+
 protected:
 	UFUNCTION()
 	void HandleMissionCompleted(FName MissionID);
@@ -55,6 +72,8 @@ protected:
 	void BP_OnMissionCompleted(FName MissionID);
 
 	void ShowEndCard();
+	void ShowOpening();
+	FTimerHandle OpeningTimer;
 	void StartContinuation();
 	/** Mission in the chain (Mission, its ContinuesInto, ...) whose ID matches, or null. */
 	UNVMissionData* FindChainedMission(FName MissionID) const;

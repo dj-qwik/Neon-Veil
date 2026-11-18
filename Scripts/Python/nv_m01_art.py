@@ -349,6 +349,69 @@ if src:
         log("rain props", e)
     log("rain placed")
 
+# ---------------------------------------------------------------- B crawlway (Underground Sci-Fi, GeorgeShachnev, Fab)
+# interior x 15100..15280, y 1520..5600, z 0..150; entered through the cut in the artery's west wall at y 1520..1680
+U = "/Game/UndergroundSciFi/Meshes"
+PANELS = [M(f"{U}/SM_Cube_1m")]
+UFLOOR = M(f"{U}/SM_Bunker_Floor02_1m")
+WIRES = M(f"{U}/SM_Wires01")
+FAN = M(f"{U}/SM_Bunker_Fan")
+FANFRAME = M(f"{U}/SM_Bunker_FanFrame")
+LAMP = M(f"{U}/SM_Lamp01")
+BORDER = M(f"{U}/SM_FloorWall_Border")
+CX0, CX1, CY0, CY1, CZ1 = 15100.0, 15280.0, 1520.0, 5600.0, 150.0
+PANEL_FRONT = 1          # flip to -1 if the panels show their backs
+n = int((CY1 - CY0) // 100)
+dy = (CY1 - CY0) / n
+for i in range(n):
+    y0 = CY0 + i * dy
+    fit(f"BC_Floor_{i}", UFLOOR, (CX0, y0, -1), (CX1, y0 + dy, 1))
+    fit(f"BC_Ceil_{i}", CEILS[i % 2], (CX0, y0, CZ1 - 24), (CX1, y0 + dy, CZ1 + 4))
+    entrance = y0 < 1690          # keep the cut into the artery clear
+    if i % 3 == 0:
+        # Etherion wall panels (same family as the artery), three tiles wide, squashed to crawl height
+        w0, w1 = y0, min(CY1, y0 + 3 * dy)
+        fit(f"BC_PanelW_{i}", WALLS[(i // 3) % 2], (CX0, w0, 0), (CX0 + 12, w1, CZ1), 90.0 * WALL_FRONT)
+        if w0 > 1690:
+            fit(f"BC_PanelE_{i}", WALLS[(i // 3 + 1) % 2], (CX1 - 12, w0, 0), (CX1, w1, CZ1), -90.0 * WALL_FRONT)
+fit("BC_PanelS", WALLS[0], (CX0, CY0, 0), (CX1, CY0 + 12, CZ1), 180.0 if WALL_FRONT > 0 else 0.0)
+# floor trim both sides, cable looms along the top corners, a low pipe on the west side
+for i in range(int((CY1 - CY0) // 300)):
+    y0 = CY0 + i * 300
+    fit(f"BC_TrimW_{i}", BORDER, (CX0 + 6, y0, 0), (CX0 + 22, y0 + 300, 14), 90.0)
+    if y0 > 1690:
+        fit(f"BC_TrimE_{i}", BORDER, (CX1 - 22, y0, 0), (CX1 - 6, y0 + 300, 14), -90.0)
+    fit(f"BC_PipeW_{i}", PIPE60, (CX0 + 8, y0, 24), (CX0 + 38, y0 + 300, 54), 90.0)
+for i in range(int((CY1 - CY0) // 200)):
+    y0 = CY0 + i * 200
+    for k, x in enumerate((CX0 + 14, CX1 - 14)):
+        w = EAS.spawn_actor_from_class(unreal.StaticMeshActor, V(x, y0, CZ1 - 34), unreal.Rotator(roll=-90.0, pitch=0.0, yaw=0.0))
+        w.static_mesh_component.set_static_mesh(WIRES)
+        w.set_actor_scale3d(V(1.0, 1.0, 2.0))
+        w.static_mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        w.static_mesh_component.set_cast_shadow(False)
+        w.set_actor_label(f"BC_Wires_{k}_{i}")
+        w.set_folder_path(FOLDER)
+        w.tags = [unreal.Name(TAG)]
+        count[0] += 1
+# extraction fans set into the west wall, each with an amber light and a caged lamp above
+for k, y in enumerate((2600, 3800, 5000)):
+    fit(f"BC_FanFrame_{k}", FANFRAME, (CX0, y - 60, 15), (CX0 + 8, y + 60, 135), 90.0)
+    fit(f"BC_Fan_{k}", FAN, (CX0 + 1, y - 55, 20), (CX0 + 3, y + 55, 130), 90.0)
+    fit(f"BC_Lamp_{k}", LAMP, (15190 - 15, y + 300 - 15, CZ1 - 40), (15190 + 15, y + 300 + 15, CZ1 - 1))
+    pl = EAS.spawn_actor_from_class(unreal.PointLight, V(15190, y + 300, CZ1 - 45))
+    lc = pl.point_light_component
+    lc.set_intensity(260)
+    lc.set_attenuation_radius(420)
+    lc.set_light_color(unreal.LinearColor(1.0, 0.55, 0.18, 1))
+    lc.set_cast_shadows(False)
+    pl.set_actor_label(f"BC_LampLight_{k}")
+    pl.set_folder_path(FOLDER)
+    pl.tags = [unreal.Name(TAG)]
+for lab, a in ACT.items():
+    if lab.startswith(("B_Crawl_Ceil", "B_Crawl_W", "B_Crawl_S")) and isinstance(a, unreal.StaticMeshActor):
+        a.static_mesh_component.set_visibility(False)
+
 log("art actors:", count[0])
 LES.save_current_level()
 open(unreal.Paths.project_saved_dir() + "NV_m01_art.txt", "w", encoding="utf-8").write("\n".join(OUT))

@@ -39,7 +39,10 @@ Three lines on `D_HoloTable` (Review assignment), between the assignment line an
 
 ## M01 Black Protocol (set `M01`)
 
-24 lines on the M01 actors in L_M00_GlassCrown: the director's revocation, designation, door, lift, reclamation and
+26 lines on the M01 actors in L_M00_GlassCrown: the director's revocation, designation, door, lift, reclamation and
 recovery lines, plus trigger and interactable lines. AION = N.A.V.I., Ghost-7 = Vane, Ops = Eva (comms card).
 One take each, flow "NEON VEIL – M01 VO". `nv_setup_m01.py` rebuilds those actors, so run `nv_vo_hook.py M01`
-again after it (the hook now also covers the director's `*_lines` arrays).
+again after it (the hook now also covers the director's `*_lines` arrays). 2026-11-18: `M01_Ghost_13` ("Director.
+Override this.") and `M01_AION_12` ("The Director has already approved your removal.") for the Director's beat; they sit
+in `director_appeal_lines` / `director_approval_lines`, set by `nv_m01_director_arms.py` (run the hook after it too).
+New VO is put on the `SC_NV_Voice` sound class (Dialogue volume); `nv_audio_classes.py` assigns music and VO classes.

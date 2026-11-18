@@ -54,4 +54,9 @@ In-game credit text:
 - Engine: Unreal® Engine, © Epic Games, Inc.
 
 > Before release, check every listing's licence terms for required attribution wording. Some sellers specify exact text.
+- M01 medical reclamation restraint arms: "Black Honey - Robotic Arm" by Gerardo Justel (Fab, **Creative Commons
+  Attribution, CC-BY**: this credit is required in the shipped credits). Merged and textures reduced locally; kept in
+  Content/BlackHoneyArm (not redistributed).
+- M01 crawlway dressing (cable looms, extraction fans, floor plates, lamps) and the Director's evac tube: "Underground
+  Sci-Fi" by GeorgeShachnev (Fab).
 - Prologue sky car: "Cyberpunk Hovercar" by atiqa (Fab, Standard licence); converted locally (canopy split, rescaled), kept in Content/NeonVeil/Fab/SkyCar (not redistributed)

@@ -50,3 +50,13 @@ Over budget, D3D12 removes the device and the editor dies ("GPU Crashed or D3D D
   way until the art pass budgets for it.
 - The art pass (`nv_m01_art.py`, folder M01_Art, ~760 actors) lays kit meshes over the graybox with no collision
   and no shadows; graybox props it replaces are only hidden. Re-run it after every `nv_setup_m01.py` run.
+
+## M01 story beats, options and title (2026-11-18)
+- Order after `nv_setup_m01.py`: `nv_m01_art.py` (dressing, crawlway), `nv_m01_director_arms.py` (Director beat, name
+  tag, restraint arms, prologue title on BP_NVGameMode_Prologue), then `nv_vo_hook.py M01`.
+- The restraint arm comes from Downloads/black_honey_robotic_arm.glb: `nv_import_restraint_arm.py`, then
+  `Saved/nv_arm_assemble.py`-style merge to `/Game/BlackHoneyArm/SM_SM_NV_RestraintArm`, then `nv_arm_textures.py`.
+  Keep its textures at 1K: at 4K the editor went ~900 MB over its video-memory budget in M01.
+- Volume sliders need `nv_audio_classes.py` (SC_NV_Music, SC_NV_Voice); re-run it after importing music or VO.
+- In PIE, open the pause menu with P (Esc stops PIE in the editor).
+- Editing a Blueprint's class defaults from Python: compile it, set the CDO, then save with `only_if_is_dirty=False`.

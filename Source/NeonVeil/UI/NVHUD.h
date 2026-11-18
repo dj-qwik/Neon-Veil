@@ -63,6 +63,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
 	void ShowTitleCard(const FText& Title, const FText& Subtitle, float Duration = 5.f);
 
+	/** Full-screen stylised game title (prologue opening): glitch-in title, act line and place line. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|HUD")
+	void ShowOpeningTitle(const FText& Title, const FText& Subtitle, const FText& Tagline, float Duration = 8.f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
 	FLinearColor AccentColor = FLinearColor(0.35f, 0.9f, 1.f, 1.f); // controlled cyan
 
@@ -78,6 +82,10 @@ public:
 	/** Loudness of voiced subtitle / comms lines (settings hook). Music and effects are not affected. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD|Audio", meta = (ClampMin = "0", ClampMax = "4"))
 	float VoiceVolume = 2.2f;
+
+	/** Options: show dialogue subtitles (voice still plays; comms cards always show). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD")
+	bool bSubtitlesEnabled = true;
 
 	/** Global HUD text size multiplier (settings hook). Text is rendered at size, so it stays sharp. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "HUD", meta = (ClampMin = "0.75", ClampMax = "2.5"))
@@ -131,6 +139,7 @@ private:
 	void UpdateInputDevice();
 	void DrawAbilityOverlays(const ANVPlayerCharacter& Player);
 	void DrawMarks(const ANVPlayerCharacter& Player);
+	void DrawNameTags(const ANVPlayerCharacter& Player);
 	void DrawDetection();
 	void DrawFadeIn();
 	void UpdateSubtitleQueue();

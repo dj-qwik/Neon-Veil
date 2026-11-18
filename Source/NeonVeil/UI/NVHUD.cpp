@@ -1,4 +1,12 @@
 #include "UI/NVHUD.h"
+#include "World/NVNameTag.h"
+#include "NeonVeil.h"
+#include "UI/NVUIStyle.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Fonts/FontMeasure.h"
+#include "Rendering/SlateRenderer.h"
+#include "CanvasItem.h"
+#include "Core/NVOptions.h"
 #include "Character/NVPlayerCharacter.h"
 #include "Combat/NVHealthComponent.h"
 #include "Combat/NVWeaponComponent.h"
@@ -50,8 +58,9 @@ void ANVHUD::BeginPlay()
 	{
 		Obj->OnObjectiveCompleted.AddDynamic(this, &ANVHUD::HandleObjectiveCompleted);
 	}
-	// TextScale 1.4 is the canvas-era default; GHOST-OS sizes are designed at 1.0.
+	// TextScale 1.4 is the canvas-era default; GHOST-OS sizes are designed at 1.0. The player's options override it.
 	NVUI::SetTextScale(TextScale / 1.4f);
+	FNVOptions::Get().ApplyToHUD(this);
 	CreateOverlay();
 }
 
@@ -285,7 +294,7 @@ void ANVHUD::ShowNotice(const FText& Text, float Duration)
 void ANVHUD::ShowSubtitle(const FText& Speaker, const FText& Line, float Duration)
 {
 	SubtitleUntil = GetWorld()->GetTimeSeconds() + Duration;
-	if (Overlay.IsValid())
+	if (Overlay.IsValid() && bSubtitlesEnabled)
 	{
 		Overlay->ShowSubtitle(Speaker, Line, Duration);
 	}
@@ -293,6 +302,14 @@ void ANVHUD::ShowSubtitle(const FText& Speaker, const FText& Line, float Duratio
 void ANVHUD::QueueSubtitles(const TArray<FNVSubtitleLine>& Lines)
 {
 	SubtitleQueue.Append(Lines);
+}
+
+void ANVHUD::ShowOpeningTitle(const FText& Title, const FText& Subtitle, const FText& Tagline, float Duration)
+{
+	if (Overlay.IsValid())
+	{
+		Overlay->ShowOpeningTitle(Title, Subtitle, Tagline, Duration);
+	}
 }
 
 void ANVHUD::ShowTitleCard(const FText& Title, const FText& Subtitle, float Duration)
@@ -369,11 +386,82 @@ void ANVHUD::DrawHUD()
 				DrawReticle(*Player);
 			}
 			DrawMarks(*Player);
+			DrawNameTags(*Player);
 		}
 		DrawDetection();
 	}
 	DrawFadeIn();
 }
+void ANVHUD::DrawNameTags(const ANVPlayerCharacter& Player)
+{
+	const APlayerController* PC = GetOwningPlayerController();
+	if (!PC || !PC->PlayerCameraManager)
+	{
+		return;
+	}
+	const FVector Eye = PC->PlayerCameraManager->GetCameraLocation();
+	const FVector Fwd = PC->PlayerCameraManager->GetCameraRotation().Vector();
+	const float Dt = GetWorld()->GetDeltaSeconds();
+	const float K = Canvas->ClipY / 1080.f;
+	for (const TWeakObjectPtr<ANVNameTag>& W : ANVNameTag::All())
+	{
+		ANVNameTag* Tag = W.Get();
+		if (!Tag || Tag->IsHidden() || (Tag->GetAttachParentActor() && Tag->GetAttachParentActor()->IsHidden()))
+		{
+			continue;
+		}
+		const FVector Loc = Tag->GetActorLocation();
+		const FVector To = Loc - Eye;
+		const float Dist = To.Size();
+		bool bWant = Tag->bEnabled && Dist < Tag->MaxDistance
+			&& FVector::DotProduct(To.GetSafeNormal(), Fwd) > FMath::Cos(FMath::DegreesToRadians(Tag->LookAngle));
+		if (bWant)
+		{
+			FHitResult Hit;
+			FCollisionQueryParams Q(SCENE_QUERY_STAT(NVNameTag), false, &Player);
+			Q.AddIgnoredActor(Tag);
+			if (AActor* TagOwner = Tag->GetAttachParentActor())
+			{
+				// the character and everything it carries (outfit / hair child actors) must not hide its own tag
+				Q.AddIgnoredActor(TagOwner);
+				TArray<AActor*> Kids;
+				TagOwner->GetAllChildActors(Kids, true);
+				Q.AddIgnoredActors(Kids);
+				TArray<AActor*> Attached;
+				TagOwner->GetAttachedActors(Attached, true, true);
+				Q.AddIgnoredActors(Attached);
+			}
+			bWant = !GetWorld()->LineTraceSingleByChannel(Hit, Eye, Loc, ECC_Visibility, Q);
+		}
+		if (bWant && Tag->Visibility <= 0.f)
+		{
+			UE_LOG(LogNeonVeil, Log, TEXT("Name tag %s in view (%.0f cm)"), *Tag->DisplayName.ToString(), Dist);
+		}
+		Tag->Visibility = FMath::FInterpConstantTo(Tag->Visibility, bWant ? 1.f : 0.f, Dt, bWant ? 3.f : 2.f);
+		if (Tag->Visibility <= 0.01f)
+		{
+			continue;
+		}
+		const FVector S = Project(Loc, true);
+		if (S.Z <= 0.f)
+		{
+			continue;
+		}
+		const float A = Tag->Visibility;
+		const FString Name = Tag->DisplayName.ToString().ToUpper();
+		const FString RoleStr = Tag->RoleText.ToString().ToUpper();
+		// same text path as the rest of the canvas HUD (engine fonts), so it renders in every viewport
+		float NW = 0.f, NH = 0.f, RW = 0.f, RH = 0.f;
+		MeasureText(Name, LargeFont, 0.9f * K, NW, NH);
+		MeasureText(RoleStr, SmallFont, 0.8f * K, RW, RH);
+		const float X = S.X, Y = S.Y;
+		const float LineW = FMath::Max(NW, RW) + 24.f * K;
+		DrawRect(NVUI::WithAlpha(NVUI::Accent, 0.8f * A), X - LineW * 0.5f, Y - RH - 6.f * K, LineW, FMath::Max(1.f, 1.5f * K));
+		DrawTextShadowed(RoleStr, X - RW * 0.5f, Y - RH, NVUI::WithAlpha(NVUI::Accent, A), SmallFont, 0.8f * K);
+		DrawTextShadowed(Name, X - NW * 0.5f, Y - RH - 10.f * K - NH, NVUI::WithAlpha(NVUI::Text, A), LargeFont, 0.9f * K);
+	}
+}
+
 void ANVHUD::DrawFadeIn()
 {
 	const double Now = FPlatformTime::Seconds();

@@ -1,6 +1,7 @@
 #include "UI/NVHUDOverlay.h"
 #include "UI/NVHUD.h"
 #include "UI/NVMenuShell.h"
+#include "UI/NVOpeningTitle.h"
 #include "UI/NVUIWidgets.h"
 #include "Core/NVPlayerController.h"
 #include "Character/NVPlayerCharacter.h"
@@ -455,6 +456,11 @@ void SNVHUDOverlay::Construct(const FArguments& InArgs)
 		[
 			BuildThreat()
 		]
+		// opening title, full screen under the menu
+		+ SConstraintCanvas::Slot().Anchors(FAnchors(0.f, 0.f, 1.f, 1.f)).Offset(FMargin(0.f)).ZOrder(5)
+		[
+			SAssignNew(OpeningHolder, SBox).Visibility_Lambda([this]() { return VisIf(!bMenuShown && Opening.IsValid()); })
+		]
 		// menu shell, full screen
 		+ SConstraintCanvas::Slot().Anchors(FAnchors(0.f, 0.f, 1.f, 1.f)).Offset(FMargin(0.f)).ZOrder(10)
 		[
@@ -525,6 +531,11 @@ void SNVHUDOverlay::Tick(const FGeometry& AllottedGeometry, const double InCurre
 	{
 		NoticeHolder->SetContent(SNullWidget::NullWidget);
 		NoticeUntil = -1.f;
+	}
+	if (Opening.IsValid() && Opening->IsFinished())
+	{
+		OpeningHolder->SetContent(SNullWidget::NullWidget);
+		Opening.Reset();
 	}
 	if (TitleUntil >= 0.f && Clock > TitleUntil + 1.1f)
 	{
@@ -657,6 +668,11 @@ void SNVHUDOverlay::ShowTitleCard(const FText& Title, const FText& Subtitle, flo
 	TitleHolder->SetContent(
 		SNew(SNVTitleCard).Title(Title).Subtitle(Subtitle)
 		.Fade_Lambda([this, From, Until]() { return FMath::Clamp((Clock - From) / 0.4f, 0.f, 1.f) * FMath::Clamp((Until - Clock) / 1.f, 0.f, 1.f); }));
+}
+
+void SNVHUDOverlay::ShowOpeningTitle(const FText& Title, const FText& Subtitle, const FText& Tagline, float Duration)
+{
+	OpeningHolder->SetContent(SAssignNew(Opening, SNVOpeningTitle).Title(Title).Subtitle(Subtitle).Tagline(Tagline).Duration(Duration));
 }
 
 // ---------------------------------------------------------------- objectives

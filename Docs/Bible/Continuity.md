@@ -86,7 +86,15 @@ after Act I; every encounter allows two approaches.
   medical reclamation (drone uplink, optical disruption, kinetic shield and motor augmentation stripped; health
   left at 35), the waste conduit on six rounds, and the spillway. Every objective saves when it activates;
   death reloads the last checkpoint. The end card now points at M02.
-- Next: M01 art pass (kits, lighting, VFX); then M02 Below the Veil (the Gutter, Mara Vey, Hunter-01).
+- 2026-11-18: M01 art pass (`nv_m01_art.py`), the Director's beat (`nv_m01_director_arms.py`): at the revocation he
+  turns to Ghost-7, Ghost-7 says "Director. Override this.", he signs the decommission order at the biometric panel
+  (comms card from THE DIRECTOR, Directorate Citadel) and AION says "The Director has already approved your removal"
+  (bible §15); a holo containment tube rises around him and his lift pad takes him down through the floor before the
+  drones launch. No dialogue for him and no clone hint beyond the existing reflection desync. He wears a GHOST-OS name
+  tag: THE DIRECTOR / DIRECTORATE CITADEL // COMMAND AUTHORITY (still unnamed in canon). Medical reclamation uses
+  ceiling-hung robotic restraint arms. The prologue opens on a NEON VEIL title (Act I // The Fall, Veyra-9 · Veyra
+  Central). An options menu (controls, audio, display) is in the pause menu.
+- Next: M02 Below the Veil (the Gutter, Mara Vey, Hunter-01).
 
 ## 6. Open story decisions (need the owner's call; recommendation in brackets)
 

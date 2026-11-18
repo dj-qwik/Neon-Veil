@@ -110,6 +110,21 @@ void ANVGameMode::StartPlay()
 	{
 		SaveSys->FinishRestore();
 	}
+	if (!bRestoring && !OpeningTitle.IsEmpty())
+	{
+		GetWorldTimerManager().SetTimer(OpeningTimer, this, &ANVGameMode::ShowOpening, FMath::Max(0.05f, OpeningDelay), false);
+	}
+}
+
+void ANVGameMode::ShowOpening()
+{
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		if (ANVHUD* HUD = Cast<ANVHUD>(PC->GetHUD()))
+		{
+			HUD->ShowOpeningTitle(OpeningTitle, OpeningSubtitle, OpeningTagline, OpeningDuration);
+		}
+	}
 }
 
 UNVMissionData* ANVGameMode::FindChainedMission(FName MissionID) const

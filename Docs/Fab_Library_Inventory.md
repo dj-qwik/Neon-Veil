@@ -24,7 +24,8 @@ Status key:
 |---|---|---|
 | Soul: City | Epic | **M02 Below the Veil**: rainy undercity streets, neon signage, wet alleys. It's the best match for the Gutter routes. It's heavy, so check VRAM on the 4050 before using it. |
 | Cyberpunk Industries Vol.1 | Softkick | **M02** industrial undercity and relay/cooling units (M02-O03). The seller is leaving Fab, so download it locally soon. |
-| Underground Sci-Fi | GeorgeShachnev | **M01** transit shaft and service bypass (M01-O02/O03), and the M02 underpass. |
+| Underground Sci-Fi | GeorgeShachnev | **In use (2026-11-18)**: M01 crawlway (cable looms, fans, lamps, floor plates) and the Director's holo evac tube. Also fits the M01 transit shaft and the M02 underpass. |
+| Black Honey - Robotic Arm (claimed 2026-11-18, free, **CC-BY**) | Gerardo Justel | **In use**: the four ceiling-hung restraint arms in M01 medical reclamation. GLB imported to Content/BlackHoneyArm, 64 parts merged into SM_SM_NV_RestraintArm, its 4K textures capped at 1K (they cost ~900 MB of video memory). Credit required. |
 | Underground Tunnel (existing) | — | **M01** drainage spillway approach (M01 area F). |
 | SICKA Free Environment Pack | SICKA | Sci-fi interior kit for M01 maintenance and back-of-house areas. The bundled ancient kit isn't needed. |
 | Sci Fi Alien Facility / High Tech Base / Sci Fi Space Station Interior | YaMaKundra | **M01** lockdown corridors in the same tower. These are good for the hostile "same building, other side" spaces. |

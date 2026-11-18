@@ -1,26 +1,161 @@
 [
- {"id": "M01_AION_01", "speaker": "AION", "text": "Authorization revoked. Asset GHOST-7: decommission.", "dur": 3.6, "prompt": "[calm, clinical] Authorization revoked. Asset GHOST-Seven: decommission."},
- {"id": "M01_Ghost_01", "speaker": "Ghost-7", "text": "AION. Confirm that order.", "dur": 2.4},
- {"id": "M01_AION_02", "speaker": "AION", "text": "There is no one left to confirm it, Ghost-7. Please remain still.", "dur": 3.8},
- {"id": "M01_AION_03", "speaker": "AION", "text": "Threat designation updated. Asset Ghost-7 is hostile. All Directorate units: engage.", "dur": 4.6},
- {"id": "M01_Ops_01", "speaker": "Ops", "text": "Ghost, AION's flagged you as a hostile. I can't override it. I'm sorry.", "dur": 4.2},
- {"id": "M01_Ghost_02", "speaker": "Ghost-7", "text": "Emergency door's open. Move.", "dur": 2.4},
- {"id": "M01_Ghost_03", "speaker": "Ghost-7", "text": "Sentry at the far end. Maintenance terminal on the right. Crawlway on the left.", "dur": 4.4},
- {"id": "M01_Ghost_04", "speaker": "Ghost-7", "text": "Rerouted. Let it chew on them for a while.", "dur": 2.8},
- {"id": "M01_Ghost_05", "speaker": "Ghost-7", "text": "Behind it. Good.", "dur": 2.0},
- {"id": "M01_AION_04", "speaker": "AION", "text": "Service lift seven. Descending to medical reclamation.", "dur": 3.4},
- {"id": "M01_Ghost_06", "speaker": "Ghost-7", "text": "Medical. Of course it is.", "dur": 2.4},
- {"id": "M01_Ghost_07", "speaker": "Ghost-7", "text": "Bottom of the shaft. Still breathing.", "dur": 2.6},
- {"id": "M01_AION_05", "speaker": "AION", "text": "Medical reclamation. Hold still, Ghost-7. Directorate hardware is being recovered.", "dur": 3.5},
- {"id": "M01_AION_06", "speaker": "AION", "text": "Drone uplink: severed.", "dur": 3.2},
- {"id": "M01_AION_07", "speaker": "AION", "text": "Optical disruption: removed.", "dur": 3.2},
- {"id": "M01_AION_08", "speaker": "AION", "text": "Kinetic shield: removed.", "dur": 3.2},
- {"id": "M01_AION_09", "speaker": "AION", "text": "Motor augmentation: removed.", "dur": 3.0},
- {"id": "M01_Ghost_08", "speaker": "Ghost-7", "text": "Power fault. Lucky.", "dur": 2.4},
- {"id": "M01_AION_10", "speaker": "AION", "text": "Reclamation incomplete. It will not matter.", "dur": 3.0},
- {"id": "M01_Ghost_09", "speaker": "Ghost-7", "text": "They took my tag off me too.", "dur": 2.6},
- {"id": "M01_Ghost_10", "speaker": "Ghost-7", "text": "Ghost-7. Still says so. For now.", "dur": 2.8},
- {"id": "M01_Ghost_11", "speaker": "Ghost-7", "text": "Six rounds left. Stay out of sight.", "dur": 2.6},
- {"id": "M01_Ghost_12", "speaker": "Ghost-7", "text": "Rain. The lower city.", "dur": 2.4},
- {"id": "M01_AION_11", "speaker": "AION", "text": "You will be found, Ghost-7. Everyone is, eventually.", "dur": 3.6}
+ {
+  "id": "M01_AION_01",
+  "speaker": "AION",
+  "text": "Authorization revoked. Asset GHOST-7: decommission.",
+  "dur": 3.6,
+  "prompt": "[calm, clinical] Authorization revoked. Asset GHOST-Seven: decommission."
+ },
+ {
+  "id": "M01_Ghost_13",
+  "speaker": "Ghost-7",
+  "text": "Director. Override this.",
+  "dur": 2.0,
+  "prompt": "[urgent, low, disbelief] Director. Override this."
+ },
+ {
+  "id": "M01_AION_12",
+  "speaker": "AION",
+  "text": "The Director has already approved your removal.",
+  "dur": 3.2,
+  "prompt": "[calm, clinical] The Director has already approved your removal."
+ },
+ {
+  "id": "M01_Ghost_01",
+  "speaker": "Ghost-7",
+  "text": "AION. Confirm that order.",
+  "dur": 2.4
+ },
+ {
+  "id": "M01_AION_02",
+  "speaker": "AION",
+  "text": "There is no one left to confirm it, Ghost-7. Please remain still.",
+  "dur": 3.8
+ },
+ {
+  "id": "M01_AION_03",
+  "speaker": "AION",
+  "text": "Threat designation updated. Asset Ghost-7 is hostile. All Directorate units: engage.",
+  "dur": 4.6
+ },
+ {
+  "id": "M01_Ops_01",
+  "speaker": "Ops",
+  "text": "Ghost, AION's flagged you as a hostile. I can't override it. I'm sorry.",
+  "dur": 4.2
+ },
+ {
+  "id": "M01_Ghost_02",
+  "speaker": "Ghost-7",
+  "text": "Emergency door's open. Move.",
+  "dur": 2.4
+ },
+ {
+  "id": "M01_Ghost_03",
+  "speaker": "Ghost-7",
+  "text": "Sentry at the far end. Maintenance terminal on the right. Crawlway on the left.",
+  "dur": 4.4
+ },
+ {
+  "id": "M01_Ghost_04",
+  "speaker": "Ghost-7",
+  "text": "Rerouted. Let it chew on them for a while.",
+  "dur": 2.8
+ },
+ {
+  "id": "M01_Ghost_05",
+  "speaker": "Ghost-7",
+  "text": "Behind it. Good.",
+  "dur": 2.0
+ },
+ {
+  "id": "M01_AION_04",
+  "speaker": "AION",
+  "text": "Service lift seven. Descending to medical reclamation.",
+  "dur": 3.4
+ },
+ {
+  "id": "M01_Ghost_06",
+  "speaker": "Ghost-7",
+  "text": "Medical. Of course it is.",
+  "dur": 2.4
+ },
+ {
+  "id": "M01_Ghost_07",
+  "speaker": "Ghost-7",
+  "text": "Bottom of the shaft. Still breathing.",
+  "dur": 2.6
+ },
+ {
+  "id": "M01_AION_05",
+  "speaker": "AION",
+  "text": "Medical reclamation. Hold still, Ghost-7. Directorate hardware is being recovered.",
+  "dur": 3.5
+ },
+ {
+  "id": "M01_AION_06",
+  "speaker": "AION",
+  "text": "Drone uplink: severed.",
+  "dur": 3.2
+ },
+ {
+  "id": "M01_AION_07",
+  "speaker": "AION",
+  "text": "Optical disruption: removed.",
+  "dur": 3.2
+ },
+ {
+  "id": "M01_AION_08",
+  "speaker": "AION",
+  "text": "Kinetic shield: removed.",
+  "dur": 3.2
+ },
+ {
+  "id": "M01_AION_09",
+  "speaker": "AION",
+  "text": "Motor augmentation: removed.",
+  "dur": 3.0
+ },
+ {
+  "id": "M01_Ghost_08",
+  "speaker": "Ghost-7",
+  "text": "Power fault. Lucky.",
+  "dur": 2.4
+ },
+ {
+  "id": "M01_AION_10",
+  "speaker": "AION",
+  "text": "Reclamation incomplete. It will not matter.",
+  "dur": 3.0
+ },
+ {
+  "id": "M01_Ghost_09",
+  "speaker": "Ghost-7",
+  "text": "They took my tag off me too.",
+  "dur": 2.6
+ },
+ {
+  "id": "M01_Ghost_10",
+  "speaker": "Ghost-7",
+  "text": "Ghost-7. Still says so. For now.",
+  "dur": 2.8
+ },
+ {
+  "id": "M01_Ghost_11",
+  "speaker": "Ghost-7",
+  "text": "Six rounds left. Stay out of sight.",
+  "dur": 2.6
+ },
+ {
+  "id": "M01_Ghost_12",
+  "speaker": "Ghost-7",
+  "text": "Rain. The lower city.",
+  "dur": 2.4
+ },
+ {
+  "id": "M01_AION_11",
+  "speaker": "AION",
+  "text": "You will be found, Ghost-7. Everyone is, eventually.",
+  "dur": 3.6
+ }
 ]

@@ -16,6 +16,7 @@ const TArray<FText>& ANVPlayerController::GetPauseItems()
 {
 	static const TArray<FText> Items = {
 		NSLOCTEXT("NeonVeil", "PauseResume", "Resume"),
+		NSLOCTEXT("NeonVeil", "PauseOptions", "Options"),
 		NSLOCTEXT("NeonVeil", "PauseRestart", "Restart Mission"),
 		NSLOCTEXT("NeonVeil", "PauseQuit", "Quit to Desktop"),
 	};
@@ -146,6 +147,16 @@ void ANVPlayerController::Activate(int32 Index)
 		SetPauseMenuOpen(false);
 		break;
 	case 1:
+		// jump to the OPTIONS tab
+		for (int32 i = 0; i < NVUI::MenuPages().Num(); ++i)
+		{
+			if (NVUI::MenuPages()[i].Id == FName(TEXT("Options")))
+			{
+				SetMenuTab(i);
+			}
+		}
+		break;
+	case 2:
 		SetPauseMenuOpen(false);
 		UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));
 		break;
