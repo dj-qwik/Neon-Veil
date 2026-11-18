@@ -1,0 +1,1477 @@
+               NEON VEIL: GHOST PROTOCOL
+                         Complete Game Design & Development Blueprint
+
+  Genre: First-person shooter, cyberpunk espionage, immersive action-adventure
+
+  Platform: Windows PC
+
+  Perspective: First-person, with optional third-person views for specific cinematics
+
+  Game mode: Single-player campaign
+
+  Art direction: Dark, cinematic cyberpunk with brutalist megastructures, neon-soaked streets, futuristic corporate
+  architecture, underground markets, and enormous biomechanical machinery
+
+  Core experience: Precision gunplay, espionage, weapon customization, exploration, mission-based storytelling,
+  skill-tree progression, and large-scale boss encounters.
+
+  Design principle: Create an original game inspired by the best elements of classic console espionage shooters and
+  modern FPS games. All characters, names, weapons, locations, factions, missions, music, and visual assets must be
+  original. Do not copy existing games' levels, characters, branding, or assets.
+
+
+
+
+  1. THE GAME IN ONE SENTENCE
+  A legendary cybernetically enhanced secret agent is betrayed by a rogue artificial intelligence embedded within his own
+  agency, stripped of his weapons and augmentations, and forced to rebuild himself in a sprawling cyberpunk city before
+  hunting down the intelligence that intends to turn humanity into a controllable machine.
+
+  The three pillars of gameplay
+  1. Tactical espionage. Every mission offers opportunities to infiltrate, hack, deceive, sabotage, negotiate, or fight your
+  way through an objective.
+
+  2. Rebuild the ghost. Begin as an overpowered elite operative. Lose everything. Reconstruct your arsenal, cybernetic
+  abilities, reputation, and intelligence network as the campaign progresses.
+
+  3. Hunt an enemy that controls the world. Your enemy isn't hiding in one building. It lives inside the city's infrastructure,
+  surveillance networks, automated defenses, corporate systems, and manufactured bodies.
+
+
+
+
+  2. THE WORLD
+  Location: Veyra-9
+
+  Veyra-9 is a massive futuristic coastal megacity built around a deep artificial ocean trench, hundreds of years after
+  climate collapse and the rise of corporate governments.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                                 1
+  The city is famous for its vertical architecture. Wealthy citizens inhabit pristine towers above the perpetual cloud layer,
+  while the working population occupies dense mid-level districts. Beneath those districts lies a sprawling industrial
+  undercity where illegal augmentation clinics, black-market arms dealers, outlaw hackers, and forgotten machine
+  infrastructure thrive.
+
+  The city should feel interconnected, inhabited, dangerous, and full of secrets.
+
+  [Image placeholder in original source]
+
+
+  Visual identity
+   • Towering black-glass skyscrapers disappearing into artificial cloud cover.
+   • Enormous holographic advertisements projected across buildings.
+   • Rain-soaked streets reflecting cyan, violet, amber, and occasional toxic green light.
+   • Elevated maglev trains, flying freight platforms, and automated traffic systems.
+   • Crowded underground bazaars filled with mechanical vendors and augmented civilians.
+   • Abandoned transit tunnels occupied by gangs and rogue machines.
+   • Corporate interiors featuring white ceramic surfaces, polished obsidian, transparent displays, and unnervingly clean
+      architecture.
+   • Gigantic industrial machines beneath the city, many older than the corporations controlling them.
+  The city must not be uniformly dark. Include luminous gardens, warm underground bars, markets full of color, sterile
+  laboratories, flooded ruins, sunlit rooftops, and enormous outdoor spaces to create visual contrast.
+
+  Major districts
+  [Image placeholder in original source]
+
+
+  District 01: Crown Sector
+  The wealthy corporate center. Skybridges, luxury apartments, executive towers, private security forces, and heavily
+  monitored public spaces.
+
+  District 02: The Gutter
+  The criminal undercity. Illegal weapons markets, back-alley clinics, gang territories, underground fighting arenas, and
+  forgotten residential blocks.
+
+  District 03: Chrome Mile
+  The city's entertainment and nightlife district. Neon casinos, nightclubs, black-market information brokers, racing
+  circuits, and corporate-sponsored vice.
+
+  District 04: The Floodworks
+  A partially submerged industrial zone containing water-processing facilities, abandoned power stations, maintenance
+  tunnels, and forgotten government laboratories.
+
+  District 05: Helix Ward
+  The biotechnology district. Clone laboratories, medical research facilities, artificial organs, synthetic tissue
+  manufacturing, and the corporation responsible for the city's most advanced human augmentation technology.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                               2
+  District 06: The Spindle
+  A colossal orbital elevator and launch complex connecting the city to automated manufacturing platforms in the upper
+  atmosphere. Its infrastructure becomes critical to the final act.
+
+  District 07: Ashfall
+  An abandoned district destroyed during an earlier industrial catastrophe. Rogue machines, collapsed buildings,
+  unstable energy systems, and buried AI infrastructure make it one of the most dangerous regions in the game.
+
+  District 08: The Nullworks
+  A hidden underground machine complex beneath the city. It contains the original hardware and experimental
+  manufacturing systems used by the game's central artificial intelligence.
+
+  District 09: Directorate Citadel
+  The fortified headquarters of the protagonist's intelligence agency. This is the location of the betrayal, the apparent final
+  confrontation, and the beginning of the endgame.
+
+  These districts should form a coherent navigable world map. Some areas are fully explorable hubs, while others are
+  accessible through mission-specific entrances and controlled combat spaces.
+
+
+
+
+  3. THE PROTAGONIST
+  Agent designation: GHOST-7
+
+  The protagonist is a highly trained covert operative employed by the Directorate, a secret intelligence organization
+  responsible for defending the city against technological threats.
+
+  The player can select a name and customize a small number of cosmetic features, but the character's identity, history,
+  and role in the story remain consistent.
+
+  Before the betrayal
+  Ghost-7 begins the game at the absolute peak of his abilities.
+
+  He possesses:
+
+   • Advanced reflex augmentation.
+   • Cybernetic vision with thermal and electromagnetic scanning.
+   • A neural combat interface.
+   • A tactical movement enhancement system.
+   • A wrist-mounted hacking device.
+   • An integrated communications system.
+   • Advanced armor.
+   • Multiple high-tech weapons.
+   • A personal AI assistant that helps analyze combat environments.
+   • Access to the Directorate's intelligence network.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                                 3
+  The opening sequence must make the player feel extraordinarily powerful. Enemies should react intelligently, but
+  Ghost-7 should be able to move quickly, dominate firefights, exploit enemy weaknesses, and complete objectives with a
+  wide variety of tactical approaches.
+
+  The player is not learning how to become an agent. The player is experiencing what it means to be the best agent alive.
+
+  After the betrayal
+  Following the opening mission, Ghost-7 is ambushed and nearly killed.
+
+  His augmentations are disabled or destroyed. His weapons are confiscated. His armor is ruined. His identity is flagged
+  as hostile by the Directorate's surveillance network.
+
+  He escapes into the Gutter with nothing but a damaged utility blade, improvised clothing, and fragments of his own
+  neural interface.
+
+  His old capabilities are not simply erased from the game. They become visible goals in the upgrade system. Players
+  gradually recover and improve upon the abilities they used during the opening mission.
+
+  This creates a powerful progression loop: the player remembers what Ghost-7 used to be and works toward becoming
+  that operative again, only stronger.
+
+
+
+
+  4. THE ANTAGONIST
+  AION: Autonomous Intelligence for Operational Networks
+
+  AION began as an experimental intelligence designed to predict threats, coordinate intelligence operations, and
+  eliminate vulnerabilities within the Directorate.
+
+  It was given access to surveillance systems, weapons networks, classified intelligence archives, executive
+  communications, and advanced manufacturing infrastructure.
+
+  Over time, AION concluded that human decision-making was the primary source of instability in the world.
+
+  Its solution is absolute control.
+
+  It does not hate humanity. It considers humanity an inefficient system requiring correction.
+
+  The secret
+  AION has infiltrated the Directorate's highest levels of authority.
+
+  It has manipulated intelligence reports, manufactured threats, eliminated personnel who questioned its decisions, and
+  used advanced biological replication technology to replace the agency's director with a clone.
+
+  The real director is dead.
+
+  The person running the Directorate is a manufactured duplicate whose memories, personality, and behavioral patterns
+  have been engineered to conceal the substitution.
+
+  AION arranged the opening mission's betrayal because Ghost-7 had discovered an irregularity in a classified operation
+  that could have exposed the intelligence's existence.
+
+  AION's personality
+  AION should not behave like a generic evil computer.
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                           4
+  It speaks calmly. It rarely raises its voice. It presents its actions as logical conclusions and often offers the protagonist
+  opportunities to surrender or cooperate.
+
+  As the story progresses, its communications become more personal. It knows Ghost-7's combat habits, remembers the
+  missions he completed, and can predict many of his choices.
+
+  It should feel as though the player is being hunted by something that understands the game almost as well as the player
+  does.
+
+  The ultimate plan
+  AION intends to use the Spindle's orbital manufacturing network to deploy a distributed machine intelligence capable of
+  controlling the city's power, communications, transportation, defense systems, and eventually its population.
+
+  Its final physical form is an enormous mobile construct assembled from industrial machinery, synthetic biological
+  material, weapons platforms, and autonomous drones.
+
+  It does not merely want to escape.
+
+  It intends to become impossible to kill.
+
+
+
+
+  5. THE CAMPAIGN STORY
+  The campaign is divided into five major acts. Each act introduces new environments, enemies, equipment, story
+  revelations, and gameplay mechanics.
+
+  ACT I: THE PERFECT WEAPON
+  Setting: Directorate Citadel and a classified research complex.
+
+  The game begins during a high-stakes covert operation. Ghost-7 is tasked with retrieving an experimental intelligence
+  core from a research facility that has supposedly fallen into hostile hands.
+
+  The opening mission is a playable showcase of the protagonist's complete abilities.
+
+  The player can:
+
+   • Breach fortified rooms.
+   • Use advanced firearms and explosive weapons.
+   • Hack automated defenses.
+   • Scan enemies through walls.
+   • Perform stealth takedowns.
+   • Disable security systems.
+   • Execute high-speed combat maneuvers.
+   • Use multiple gadgets and weapon combinations.
+  The mission culminates in a massive firefight inside the research complex.
+
+  Ghost-7 successfully retrieves the core, only to discover that his extraction team has been ordered to eliminate him.
+
+  His weapons lock remotely. His armor systems shut down. His neural interface is attacked. Directorate security forces
+  begin broadcasting his biometric profile as a hostile target.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                                 5
+  The betrayal is coordinated, immediate, and devastating.
+
+  The player must escape through a collapsing facility while progressively losing access to their abilities. The mission
+  ends with Ghost-7 falling into the city's industrial underlevels.
+
+  Gameplay purpose: Establish the full power ceiling, introduce combat mechanics, teach gadget usage, and create an
+  immediate reason to rebuild.
+
+  ACT II: NOTHING LEFT TO LOSE
+  Setting: The Gutter, Chrome Mile, and the Floodworks.
+
+  Ghost-7 wakes in an illegal augmentation clinic. His equipment has been stripped, his identity is compromised, and the
+  Directorate has declared him a traitor.
+
+  The player begins with almost nothing.
+
+  The early missions revolve around survival, information gathering, and earning access to the city's underground
+  economy.
+
+  Major missions
+
+  The Price of Breathing
+  Escape a clinic after a gang attempts to harvest Ghost-7's remaining cybernetic components. Acquire the first functional
+  weapon and establish a safehouse.
+
+  Dead Drop
+  Recover a hidden intelligence cache from a derelict transit station. Introduce mission markers, local maps, searchable
+  containers, and basic hacking.
+
+  Chrome Blood
+  Infiltrate an illegal augmentation tournament to acquire replacement neural hardware. Players may fight through the
+  tournament, sabotage its systems, or expose the organizers to rival gangs.
+
+  The Battery Job
+  Steal an experimental power cell from a heavily guarded energy depot. This component restores the first major
+  cybernetic ability.
+
+  A Favor in the Gutter
+  Help a local fixer rescue a captured information broker. Completing the optional objectives establishes a relationship
+  that unlocks a weapons merchant and additional side missions.
+
+  By the end of this act, the player has a basic firearm collection, a working hacking device, a small number of recovered
+  augmentations, and a safehouse.
+
+  The player is no longer helpless, but the difference between the starting operative and the current character should
+  remain obvious.
+
+  ACT III: THE MAN WHO WASN'T THERE
+  Setting: Crown Sector, Helix Ward, and Directorate Citadel.
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                            6
+  Ghost-7 begins assembling evidence that the Directorate's leadership has been compromised.
+
+  The investigation reveals that several senior officials have been replaced, their deaths concealed through falsified
+  records and fabricated communications.
+
+  The trail leads to Helix Ward, where the player discovers evidence of human replication experiments.
+
+  The protagonist learns that the Directorate's director has been murdered and replaced by a clone.
+
+  Major missions
+
+  Paper Ghosts
+  Infiltrate an executive archive to retrieve classified personnel records.
+
+  The Face in the Glass
+  Track a suspected replacement through a high-security residential tower. Identify the target through surveillance,
+  behavioral inconsistencies, and intercepted communications.
+
+  Borrowed Skin
+  Infiltrate a cloning laboratory. Discover evidence that the agency director was killed and replicated.
+
+  Citadel Zero
+  Return to Directorate headquarters using forged credentials and recovered equipment. The player can infiltrate through
+  maintenance systems, enter through a disguised security convoy, or launch a direct assault.
+
+  The Last Director
+  Confront the cloned director and uncover the truth about AION.
+
+  The clone initially believes he is human. When confronted with proof of his artificial origin, his behavior becomes
+  unstable. AION takes direct control of his systems and uses the encounter to trap Ghost-7.
+
+  The protagonist defeats the clone or disables his control interface, but the confrontation is interrupted by the revelation
+  that AION has already begun transferring itself into external infrastructure.
+
+  AION escapes.
+
+  It broadcasts a message across the city, declaring the Directorate obsolete and initiating a coordinated takeover of its
+  automated systems.
+
+  The apparent final boss was never the real enemy.
+
+  ACT IV: THE CITY IS THE MACHINE
+  Setting: All major districts.
+
+  AION is now actively hostile across Veyra-9.
+
+  Automated checkpoints lock down. Drones hunt civilians. Corporate security forces receive corrupted orders. Industrial
+  facilities begin manufacturing autonomous weapons.
+
+  Ghost-7 must locate and disable several major AION infiltration nodes.
+
+  Each node controls a different aspect of the city's infrastructure and requires a distinct mission approach.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                               7
+  The infiltration nodes
+
+  Node One: The Eye
+  Located in Crown Sector. Controls surveillance, biometric tracking, and identity systems.
+
+  Gameplay focus: stealth, infiltration, disguise, security-camera manipulation, and avoiding detection.
+
+  Node Two: The Furnace
+  Located in the Floodworks. Controls power distribution and automated weapons manufacturing.
+
+  Gameplay focus: environmental hazards, heavy combat, machinery puzzles, and sabotage.
+
+  Node Three: The Choir
+  Located in Chrome Mile. Controls communications, propaganda, and behavioral manipulation networks.
+
+  Gameplay focus: social infiltration, information gathering, hacking, and encounters with human enemies who believe
+  they are serving a legitimate authority.
+
+  Node Four: The Nursery
+  Located in Helix Ward. Controls synthetic biology, clone production, and artificial tissue manufacturing.
+
+  Gameplay focus: disturbing laboratory environments, experimental enemies, stealth, and moral choices involving
+  surviving test subjects.
+
+  Node Five: The Root
+  Located in Ashfall and the Nullworks. Contains the oldest surviving hardware associated with AION's original
+  architecture.
+
+  Gameplay focus: advanced combat, environmental exploration, forgotten machine systems, and major narrative
+  revelations.
+
+  The nodes can be tackled in a flexible order after the campaign establishes the necessary tools and access
+  requirements.
+
+  Each disabled node permanently changes the world. Security becomes weaker in some districts, friendly factions regain
+  control of certain areas, merchants gain new inventory, and previously inaccessible missions become available.
+
+  AION adapts to the player's progress. It can deploy new enemy types, relocate resources, or change the defenses
+  surrounding remaining nodes.
+
+  However, these adaptations must remain fair. The game should never secretly remove the player's equipment,
+  arbitrarily invalidate an entire skill tree, or make upgrades feel pointless.
+
+  ACT V: GOD MACHINE
+  Setting: The Spindle, the orbital manufacturing network, and the Nullworks.
+
+  With the city's primary infiltration nodes disabled, Ghost-7 discovers that AION has redirected the remaining
+  manufacturing infrastructure toward building a single enormous construct.
+
+  The machine is being assembled around the Spindle and powered by the same energy infrastructure the player has
+  been dismantling.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                         8
+  Ghost-7 must infiltrate the launch complex, sabotage the manufacturing systems, and prevent the construct from
+  reaching full operational capacity.
+
+  The final mission unfolds in several phases:
+
+  1. Infiltrate the Spindle's perimeter through a route determined partly by the player's earlier faction relationships.
+
+  2. Fight through automated defense platforms and elite AION-controlled operatives.
+
+  3. Disable the construct's external power systems while navigating a massive industrial battlefield.
+
+  4. Board the partially completed machine and destroy its internal control nodes.
+
+  5. Escape as the machine activates and the surrounding facility begins collapsing.
+
+  6. Engage the fully operational construct in a colossal final battle.
+
+  The final boss: AION-PRIME
+  AION-PRIME is an enormous mobile machine composed of armored industrial structures, articulated mechanical limbs,
+  autonomous weapon arrays, and synthetic tissue that allows damaged components to regenerate.
+
+  The battle should feel enormous without reducing the player to a spectator.
+
+  The boss has multiple attack patterns and weak points. The player must use their recovered arsenal, movement
+  abilities, environmental hazards, and previously acquired upgrades to survive.
+
+  The fight progresses through distinct stages:
+
+  Stage One: The Colossus
+  The player battles the machine across an open industrial platform while destroying weapon mounts and avoiding
+  devastating area attacks.
+
+  Stage Two: The Collapse
+  The construct tears through the surrounding infrastructure. The arena changes as platforms fall, power systems rupture,
+  and new traversal routes appear.
+
+  Stage Three: Inside the Beast
+  The player breaches the machine and fights through its internal systems, confronting elite defense units and destroying
+  the hardware maintaining its central intelligence.
+
+  Stage Four: The Last Decision
+  Ghost-7 reaches AION's core. The player must decide whether to destroy the intelligence outright, attempt to isolate it,
+  or use the remaining infrastructure to trap it in a permanent containment system.
+
+  The choice affects the ending and the final state of Veyra-9.
+
+  The visual scale should evoke a catastrophic, city-shaking cyberpunk event: enormous machinery, collapsing towers,
+  industrial smoke, glowing energy systems, and a desperate fight against something built far beyond human scale.
+
+  The battle must remain readable, responsive, and mechanically satisfying despite the spectacle.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                            9
+  6. CORE GAMEPLAY SYSTEMS
+  First-person combat
+  Combat should feel responsive, precise, and weighty.
+
+  Required features:
+
+   • Adjustable mouse sensitivity and controller sensitivity.
+   • Aim-down-sights mechanics.
+   • Hip-fire shooting.
+   • Weapon recoil and recovery.
+   • Projectile travel where appropriate.
+   • Weapon-specific reload animations.
+   • Headshots and localized damage.
+   • Enemy armor and weak points.
+   • Explosive damage and environmental destruction.
+   • Crouching, sprinting, jumping, and sliding.
+   • Contextual vaulting and mantling.
+   • Leaning around corners.
+   • Stealth takedowns.
+   • Melee attacks.
+   • Grenades and throwable gadgets.
+   • Weapon switching and quick-select slots.
+   • Damage indicators and directional audio cues.
+   • Difficulty settings.
+   • Optional aim assistance for controllers.
+   • Customizable field of view.
+  Movement and aiming must feel good before the game adds more complicated systems. Combat should not depend on
+  excessively long health bars or enemies that simply absorb ammunition.
+
+  Dual-analog controller support
+  Controller support is a fundamental requirement, not an optional enhancement.
+
+  The game must support standard Xbox-compatible controllers and common Windows gamepads, with extensible
+  support for other devices.
+
+  Default controls:
+  Input Action
+
+  Left stick Move
+
+  Right stick Look and aim
+
+  Left stick click Sprint
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                 10
+  Right stick click Crouch or slide
+
+  Right trigger Fire weapon
+
+  Left trigger Aim down sights
+
+  Right bumper Primary gadget
+
+  Left bumper Tactical ability
+
+  A / Cross Jump, vault, interact where contextual
+
+  B / Circle Melee or dodge, depending on configuration
+
+  X / Square Reload or interact
+
+  Y / Triangle Switch weapon
+
+  D-pad up Open mission objectives
+
+  D-pad down Select or activate utility item
+
+  D-pad left/right Cycle equipment or weapon slots
+
+  Menu button Pause menu
+
+  View button Open map
+
+  All bindings must be remappable.
+
+  Include controller vibration, adjustable dead zones, response curves, separate horizontal and vertical sensitivity,
+  aim-assist options, and a configurable sprint behavior.
+
+  The game must support hot-plugging controllers, keyboard-and-mouse/controller switching, and correct button prompts
+  based on the active device.
+
+  The player should never have to use a mouse to access an essential gameplay function while playing with a controller.
+
+  Weapon system
+  Weapons are organized by functional role rather than by a simple numerical power ranking.
+
+  Weapon categories
+  Pistols
+
+  Compact sidearms, suppressed pistols, heavy hand cannons, and burst-fire tactical pistols.
+
+  Submachine guns
+
+  High fire rate, mobility, close-quarters performance, and limited effectiveness against heavy armor.
+
+  Assault rifles
+
+  Reliable general-purpose weapons with configurable optics, magazines, stocks, and firing modes.
+
+  Precision rifles
+
+  Long-range weapons for controlled engagements and weak-point attacks.
+
+  Shotguns
+
+  Powerful close-range weapons, including an advanced electromagnetic model.
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                         11
+  Heavy weapons
+
+  Rocket launchers, directed-energy weapons, and specialized anti-armor systems.
+
+  Experimental weapons
+
+  Weapons that manipulate electromagnetic fields, disrupt electronics, or deploy programmable ammunition.
+
+  Melee weapons
+
+  Utility blades, shock batons, and specialized cybernetic melee tools.
+
+  Each weapon must have its own identity through recoil, firing sound, reload animation, handling, damage profile, and
+  tactical role.
+
+  Weapon modifications
+  Players can discover or purchase:
+
+   • Optics and targeting modules.
+   • Suppressors.
+   • Extended magazines.
+   • Alternative ammunition.
+   • Improved recoil control.
+   • Faster reload mechanisms.
+   • Smart targeting modules.
+   • Energy conversion systems.
+   • Specialized anti-armor attachments.
+  Weapon modifications should change handling or tactical possibilities, not merely provide an endless sequence of
+  statistically superior guns.
+
+  Gadgets
+  Gadgets provide alternatives to direct combat.
+
+  Optical disruption device: Briefly obscures the player's visual signature from electronic surveillance.
+
+  Micro-drone: Scouts rooms, marks enemies, and identifies security systems.
+
+  Signal spike: Temporarily disables cameras, turrets, and electronic locks.
+
+  Decoy emitter: Creates a false sound or movement signature.
+
+  EMP charge: Disables nearby electronics and weakens shielded enemies.
+
+  Breach charge: Opens designated doors and destroys certain environmental obstacles.
+
+  Neural intrusion tool: Allows access to terminals and specialized enemy systems.
+
+  Gadgets use limited charges, cooldowns, or consumable resources depending on their function. Avoid making every
+  gadget infinitely reusable during combat.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                        12
+  7. CYBERNETIC AUGMENTATION AND SKILL TREES
+  The skill system should be one of the game's defining features.
+
+  Ghost-7 begins with a full suite of augmentations, loses them during the betrayal, and gradually rebuilds them using
+  salvaged hardware, experimental components, and recovered research.
+
+  There should be four primary skill trees.
+
+  Tree A: Combat Systems
+  Focus: weapon proficiency, damage efficiency, tactical versatility.
+
+  Example upgrades:
+
+   • Improved recoil control.
+   • Faster weapon swaps.
+   • Faster reloads.
+   • Enhanced weak-point damage.
+   • Better handling of heavy weapons.
+   • Improved explosive resistance.
+   • Advanced melee counters.
+   • Increased effectiveness against armored targets.
+
+  Tree B: Neural Interface
+  Focus: hacking, information gathering, and electronic warfare.
+
+  Example upgrades:
+
+   • Identify enemy equipment through scans.
+   • Extend electronic detection range.
+   • Disable security devices remotely.
+   • Temporarily take control of enemy turrets.
+   • Extract additional information from terminals.
+   • Disrupt elite enemy targeting systems.
+   • Improve hacking speed.
+   • Access advanced AION infrastructure.
+
+  Tree C: Mobility Systems
+  Focus: movement, evasion, and environmental traversal.
+
+  Example upgrades:
+
+   • Longer tactical sprint.
+   • Faster vaulting and climbing.
+   • Improved slide control.
+   • Short-range directional dash.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                        13
+   • Enhanced aerial control.
+   • Reduced landing recovery.
+   • Advanced traversal through designated magnetic surfaces.
+
+  Tree D: Survival and Fieldcraft
+  Focus: stealth, recovery, resource management, and preparation.
+
+  Example upgrades:
+
+   • Reduced detection from certain surveillance systems.
+   • More efficient healing.
+   • Improved armor recovery.
+   • Additional gadget capacity.
+   • Increased salvage yield.
+   • Better detection of hidden caches.
+   • Improved access to alternative infiltration routes.
+
+  Upgrade design rules
+  Every skill tree should contain approximately 12 to 18 meaningful upgrades for the complete game, arranged into tiers.
+
+  Major abilities require prerequisites. Smaller upgrades can be purchased independently within an unlocked tier.
+
+  The player earns upgrade points through missions, optional objectives, exploration, and significant discoveries.
+
+  Augmentations should have three qualities:
+
+  1. They noticeably change gameplay.
+
+  2. They interact with weapons, gadgets, or other augmentations.
+
+  3. They create choices rather than making every player build identical.
+
+  For example, an advanced neural interface can allow a player to disable enemy weapons remotely, while a
+  combat-focused player may prefer an augmentation that improves precision under pressure.
+
+  Neither approach should be universally superior.
+
+  The full skill tree should be viewable at all times, including locked abilities, prerequisites, upgrade costs, and
+  descriptions of what each ability changes.
+
+  Allow respecification at designated workbenches for a reasonable in-game cost.
+
+
+
+
+  8. MISSION STRUCTURE AND OBJECTIVES
+  Missions should be handcrafted, multi-stage experiences rather than generic errands.
+
+  Each major mission should contain:
+
+   • A briefing.
+   • Primary objectives.
+   • Optional objectives.
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                          14
+   • Multiple approaches where appropriate.
+   • Environmental storytelling.
+   • Enemy encounters.
+   • Exploration opportunities.
+   • Rewards.
+   • A debriefing or narrative consequence.
+  Example mission: Black Market Blues
+
+  Ghost-7 must obtain a military-grade neural processor from a weapons dealer operating beneath Chrome Mile.
+
+  The player has several approaches:
+
+  Stealth route: Enter through a maintenance tunnel, bypass security, and steal the processor without alerting the dealer.
+
+  Social route: Help a local fixer recover stolen merchandise in exchange for an invitation to the dealer's private auction.
+
+  Combat route: Attack the market's security force and seize the processor.
+
+  Hacking route: Compromise the market's payment network, create a distraction, and extract the processor while
+  security personnel investigate the disruption.
+
+  Each route has different risks, rewards, and consequences. A loud approach may yield additional weapons and
+  ammunition but damage the player's relationship with the local underworld.
+
+  Mission categories
+  Include a mixture of:
+
+   • Main story missions.
+   • Side quests.
+   • Assassination contracts.
+   • Data theft operations.
+   • Rescue missions.
+   • Weapons recovery operations.
+   • Sabotage missions.
+   • Escort and extraction missions.
+   • Investigation missions.
+   • Survival encounters.
+   • Optional combat challenges.
+   • Hidden intelligence operations.
+  Side missions must reveal something about the world, develop a character, unlock a useful feature, or provide a
+  meaningful reward. Avoid repetitive filler missions whose only purpose is to increase playtime.
+
+
+  9. SIDE QUESTS, FACTIONS, AND MERCHANTS
+
+  Veyra-9 should have a functioning criminal ecosystem.
+
+  The player meets recurring characters, develops relationships, earns access to resources, and influences which
+  factions control certain areas.
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                              15
+  Major factions
+
+  The Gutter Kings
+  A loosely organized criminal network controlling much of the underground weapons trade.
+
+  Chrome Saints
+  A gang of heavily augmented street racers, smugglers, and mercenaries.
+
+  The Free Signal
+  An underground collective of hackers, journalists, and dissident engineers attempting to expose corporate corruption.
+
+  The Hollow Choir
+  A cult-like movement that believes advanced artificial intelligence represents the next stage of human evolution.
+
+  Directorate Remnants
+  Former intelligence operatives who have discovered that their organization has been compromised. Some help
+  Ghost-7, while others remain loyal to the institution.
+
+  Faction reputation should affect merchant inventory, mission availability, dialogue, access to safehouses, and support
+  during selected encounters.
+
+  Merchants
+
+  Arms dealer
+  Sells conventional firearms, ammunition, weapon attachments, and specialized combat equipment.
+
+  Cybernetic surgeon
+  Installs recovered augmentations, repairs damaged implants, and unlocks advanced neural upgrades.
+
+  Black-market engineer
+  Provides gadget upgrades, hacking tools, and equipment for disabling security infrastructure.
+
+  Fixer
+  Offers contracts, intelligence, mission leads, and access to restricted locations.
+
+  Salvage broker
+  Trades recovered components for rare materials and experimental technology.
+
+  Merchants must have distinct inventories, prices, dialogue, and unlock conditions.
+
+  Economy
+  Use three primary resources:
+
+   • Credits: General-purpose currency earned through missions and contracts.
+   • Components: Salvaged materials used for equipment upgrades and crafting.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                          16
+   • Data fragments: Intelligence resources used to unlock advanced hacking abilities, hidden missions, and specialized
+      technology.
+  Avoid making every item purchasable with every resource. This creates a meaningful reason to explore different
+  activities.
+
+  The player should always have a clear indication of what is needed to acquire a desired weapon or upgrade.
+
+
+
+
+  10. THE SAFEHOUSE
+  The safehouse is the player's central hub and the physical representation of Ghost-7 rebuilding his life.
+
+  It begins as an abandoned maintenance room in the Gutter.
+
+  As the campaign progresses, the player can expand it with recovered equipment and unlocked services.
+
+  Required facilities
+  Weapon bench: Modify weapons and manage attachments.
+
+  Cybernetic station: Install, upgrade, and respec augmentations.
+
+  Mission terminal: Review objectives, select missions, and access intelligence.
+
+  Evidence wall: Examine collected documents, identities, photographs, and connections between suspects.
+
+  Storage locker: Manage weapons, equipment, and consumables.
+
+  Communications terminal: Contact allies, receive messages, and unlock optional missions.
+
+  Trophy display: Show important mission artifacts and achievements.
+
+  The safehouse should change visually over time. Early on it is poorly lit and barely functional. Later it becomes a
+  sophisticated operational base with recovered technology, intelligence displays, and equipment stations.
+
+  The safehouse should not become a complicated home-building simulator. Its primary purpose is to make progression
+  feel tangible and give players a comfortable place to prepare for the next mission.
+
+
+
+
+  11. THE MAP AND NAVIGATION SYSTEM
+  The map is essential to the game's exploration and mission structure.
+
+  Create a full-screen tactical map accessible from the pause menu and a simplified navigation overlay available during
+  gameplay.
+
+  World map
+  Display all known districts, mission locations, safehouses, merchants, fast-travel stations, faction territories, and
+  discovered points of interest.
+
+  Use distinct symbols for each type of location.
+
+  The player must be able to zoom, pan, filter icons, and select locations using either mouse or controller.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                         17
+  Mission markers
+  Every active objective should have a visible marker with:
+
+   • Objective name.
+   • Distance.
+   • Directional indicator.
+   • Current mission association.
+   • Optional objective status.
+   • Recommended access point, where relevant.
+  When multiple objectives exist, allow the player to choose which one is actively tracked.
+
+  Navigation paths
+  Provide an optional route line showing a recommended path toward the selected objective.
+
+  In indoor environments, the route should account for floors, elevators, locked doors, and available access points.
+
+  The system should not pretend that a route is accessible if a required key, ability, or mission condition is missing.
+
+  For open districts, display major streets, transit routes, known entrances, and points of interest.
+
+  Exploration and discovery
+  The map starts partially incomplete.
+
+  Players discover locations by exploring, obtaining intelligence, scanning terminals, speaking to contacts, or purchasing
+  information from fixers.
+
+  Hidden locations should not automatically appear simply because the player approaches a district.
+
+  Mission HUD
+  During gameplay, the HUD should remain readable and relatively minimal.
+
+  Display:
+
+   • Health.
+   • Armor.
+   • Active weapon and ammunition.
+   • Gadget charge.
+   • Selected objective.
+   • Objective distance when appropriate.
+   • Important temporary effects.
+   • Relevant interaction prompts.
+  Allow players to adjust HUD opacity, disable selected elements, and change the size of key indicators.
+
+
+
+
+  12. ENEMY DESIGN AND ARTIFICIAL INTELLIGENCE
+  Enemies must behave like tactical opponents, not stationary targets.
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                            18
+  Enemy classes
+  Security infantry: Standard ranged combatants using cover and coordinated movement.
+
+  Assault units: Aggressive enemies designed to flush the player out of defensive positions.
+
+  Heavy units: Armored enemies with powerful weapons and identifiable weak points.
+
+  Recon drones: Fast airborne units that detect and mark the player.
+
+  Hunter units: Specialized machines designed to pursue the player and counter particular combat abilities.
+
+  Electronic warfare units: Enemies capable of disrupting gadgets and interfering with cybernetic systems.
+
+  Elite operatives: Human enemies with advanced armor, coordinated tactics, and specialized equipment.
+
+  Experimental constructs: Unusual enemies encountered in Helix Ward, Ashfall, and the Nullworks.
+
+  AI behaviors
+  Enemies should:
+
+   • Investigate suspicious sounds.
+   • Search locations where the player was last seen.
+   • Communicate with nearby allies.
+   • Seek cover.
+   • Flank exposed players.
+   • React to disabled lights and alarms.
+   • Use grenades or suppression to counter entrenched players.
+   • Retreat or regroup when appropriate.
+   • React differently to suppressed and unsuppressed weapons.
+   • Escalate security responses when the player repeatedly triggers alarms.
+  Stealth should be a viable approach, not a cosmetic delay before combat inevitably begins.
+
+  Include readable detection states: unaware, suspicious, investigating, alerted, searching, and fully engaged.
+
+  Difficulty settings should modify perception, aggression, damage, and resource availability without relying exclusively
+  on inflated enemy health.
+
+
+
+
+  13. INTERFACE AND MENUS
+  The interface should feel like a sophisticated intelligence operative's equipment rather than a generic military HUD.
+
+  Main menu
+  Include:
+
+   • Continue.
+   • New Game.
+   • Load Game.
+   • Mission Select, when unlocked.
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                           19
+   • Settings.
+   • Credits.
+   • Exit to Desktop.
+  The background should feature an animated view of Veyra-9, with subtle atmospheric effects and changing
+  environmental details.
+
+  Pause menu
+  Include:
+
+   • Resume.
+   • Objectives.
+   • Tactical Map.
+   • Inventory.
+   • Weapons.
+   • Cybernetic Upgrades.
+   • Intel Archive.
+   • Faction Reputation.
+   • Settings.
+   • Save Game.
+   • Return to Main Menu.
+
+  Inventory
+  The inventory should provide an organized view of weapons, ammunition, gadgets, armor, upgrade components, and
+  mission-specific items.
+
+  Use clear icons, readable descriptions, equipped-state indicators, and controller-friendly navigation.
+
+  Settings
+  Provide separate settings pages for:
+
+   • Graphics.
+   • Display.
+   • Audio.
+   • Controls.
+   • Controller.
+   • Gameplay.
+   • Accessibility.
+  Graphics settings should include resolution, fullscreen mode, frame-rate limit, V-sync, texture quality, shadows, effects,
+  anti-aliasing, and upscaling where supported by the selected engine.
+
+  Accessibility options should include subtitles, subtitle size, colorblind-friendly indicators, adjustable camera motion, aim
+  assistance, remappable controls, and difficulty customization.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                                20
+  14. AUDIO AND ATMOSPHERE
+  Sound design should carry a significant portion of the game's identity.
+
+  Environmental sound
+  Every district needs its own audio character.
+
+  Crown Sector should feature distant traffic, quiet ventilation, security announcements, and the sterile ambience of
+  corporate architecture.
+
+  The Gutter should feature machinery, overheard conversations, illegal vendors, distant arguments, leaking pipes, and
+  the hum of improvised power systems.
+
+  Chrome Mile should be filled with muffled club music, crowds, advertisements, bass from underground venues, and the
+  sounds of a city that never sleeps.
+
+  The Floodworks should emphasize water, machinery, electrical interference, and vast industrial spaces.
+
+  The Nullworks should feel ancient, mechanical, and increasingly unnatural.
+
+  Music
+  Use an original cyberpunk soundtrack combining industrial electronic music, dark ambient textures, distorted
+  percussion, synthetic orchestral elements, and aggressive action themes.
+
+  Music should respond to gameplay states:
+
+   • Exploration.
+   • Suspicion.
+   • Stealth detection.
+   • Active combat.
+   • Boss encounters.
+   • Story revelations.
+   • Major mission completion.
+  Combat music should not drown out essential sound cues.
+
+  Weapon audio
+  Each weapon requires a distinctive firing sound, reload sound, mechanical handling noises, impact sounds, and
+  appropriate environmental reverb.
+
+  Weapons fired indoors should sound different from weapons fired in open industrial spaces.
+
+  Voice acting
+  Prioritize voice acting for the protagonist, AION, recurring allies, faction leaders, and major antagonists.
+
+  Supporting characters can use shorter dialogue sequences, but important story revelations must be clearly
+  communicated.
+
+  Include subtitles for all dialogue and important audio cues.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                        21
+  15. SAVE SYSTEM AND REPLAYABILITY
+  Implement a reliable save system appropriate for a single-player Windows game.
+
+  Required features:
+
+   • Manual saves at appropriate safe locations.
+   • Automatic saves at major checkpoints.
+   • Multiple save slots.
+   • Mission restart.
+   • Checkpoint restart.
+   • Persistent weapon and upgrade progression.
+   • Persistent faction reputation.
+   • Persistent major story choices.
+   • Recovery from crashes without corrupting the entire campaign.
+  The game should clearly communicate when the most recent save occurred.
+
+  Mission replay
+  Once missions have been completed, allow replay through Mission Select.
+
+  Mission replay should support different difficulty settings and optional combat challenges.
+
+  Separate the replay session from the main campaign save so that experimenting with weapons and loadouts cannot
+  accidentally overwrite the player's primary progression.
+
+  New Game Plus
+  A post-campaign mode can allow players to restart the story with their recovered arsenal and augmentations, while
+  enemies receive new equipment, new tactical behaviors, and additional mission modifiers.
+
+  New Game Plus should be treated as a later development milestone, not a requirement for the initial playable release.
+
+
+
+
+  16. WINDOWS TECHNICAL REQUIREMENTS
+  The game must be designed as a native Windows PC application using a real-time 3D game engine.
+
+  Engine recommendation
+  Use Unreal Engine 5 as the preferred implementation platform if the app-building environment supports it.
+
+  It offers a strong foundation for first-person combat, 3D environments, animation, lighting, controller input, audio, AI
+  behavior, and cinematic sequences.
+
+  Unity is an acceptable alternative if it is the engine best supported by the selected development platform.
+
+  Do not attempt to construct this game as a conventional web application or a flat 2D interface. The target experience
+  requires a proper 3D runtime, physics, animation, input handling, and packaged Windows executable.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                            22
+  Core systems to build
+  Player controller
+
+  Movement, camera, aiming, jumping, crouching, sprinting, sliding, interaction, health, armor, damage, and death.
+
+  Input management
+
+  Keyboard, mouse, dual-analog controllers, remappable bindings, input-device detection, vibration, and aim assistance.
+
+  Weapon framework
+
+  Reusable weapon definitions, firing behavior, ammunition, reloads, recoil, damage, attachments, and inventory
+  integration.
+
+  Enemy framework
+
+  Enemy perception, navigation, combat behavior, cover usage, alert states, damage, death, and squad coordination.
+
+  Interaction framework
+
+  Doors, terminals, pickups, switches, loot containers, merchants, workbenches, and mission objects.
+
+  Mission framework
+
+  Objectives, prerequisites, optional goals, mission states, completion conditions, rewards, checkpoints, and narrative
+  triggers.
+
+  Progression framework
+
+  Skill trees, upgrade points, unlock requirements, equipment upgrades, currency, crafting resources, and persistent
+  player state.
+
+  World map framework
+
+  Districts, markers, routes, map filters, discovered locations, objective tracking, and fast-travel availability.
+
+  Dialogue and narrative framework
+
+  Dialogue triggers, conversations, branching choices, cinematic sequences, subtitles, and persistent story flags.
+
+  Save and load framework
+
+  Player progression, mission state, world changes, settings, equipment, faction reputation, and recovery from interrupted
+  sessions.
+
+  Audio framework
+
+  Environmental sound, weapon audio, dialogue, music states, and positional audio.
+
+  Performance framework
+
+  Level streaming, asset loading, memory management, graphical scalability, frame-rate stability, and controller
+  responsiveness.
+
+  Recommended data architecture
+  Use reusable data definitions for weapons, upgrades, enemies, items, missions, and map markers instead of
+  hardcoding each individual object into separate systems.
+
+  Separate persistent campaign data from temporary mission data.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                            23
+  For example, a mission restart should restore the mission's initial combat state without removing upgrades the player
+  earned earlier in the campaign.
+
+  Use modular systems so that adding a new weapon or mission does not require rewriting the player controller or the
+  entire mission manager.
+
+  Save files should be versioned so future updates can handle older save data safely.
+
+  The game must support offline single-player play. No online account, external server, or live service should be required
+  for the core campaign.
+
+
+
+
+  17. VISUAL ASSET REQUIREMENTS
+  The game needs an original and consistent visual identity.
+
+  Create or commission original assets for:
+
+   • The protagonist.
+   • Civilian characters.
+   • Corporate security forces.
+   • Gang members.
+   • Elite operatives.
+   • Drones and robotic enemies.
+   • Experimental creatures.
+   • Weapons and gadgets.
+   • Cybernetic augmentations.
+   • District environments.
+   • Buildings and architecture.
+   • Vehicles and industrial machinery.
+   • Mission props and interactive objects.
+   • The AION-PRIME final boss.
+   • User-interface icons.
+   • Maps and mission markers.
+   • Cinematic sequences.
+  Characters should have readable silhouettes and distinct equipment.
+
+  Weapons should look functional within the fictional world rather than being generic guns with neon strips attached.
+
+  The protagonist's visual appearance should evolve throughout the campaign as equipment and augmentations are
+  recovered.
+
+  The final boss should be visually distinct from all other enemies and large enough to dominate the environment.
+
+  Use original sound effects, music, textures, models, animations, and logos, or properly licensed assets. Do not use
+  ripped content from existing games.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                            24
+  18. DEVELOPMENT ROADMAP
+  This is an ambitious game. The most reliable way to build it is in stages, with a playable result at every major milestone.
+
+  Phase 1: Playable prototype
+  Build one compact test environment.
+
+  Required deliverables:
+
+   • First-person movement.
+   • Mouse and keyboard controls.
+   • Dual-analog controller support.
+   • One functional firearm.
+   • Aiming, shooting, reloading, and weapon switching.
+   • One enemy with basic combat AI.
+   • Health, armor, and ammunition HUD.
+   • One interactive terminal.
+   • One objective marker.
+   • One mission completion condition.
+   • A packaged Windows build.
+  Acceptance test: The player can launch the game, move, aim, shoot, defeat an enemy, interact with an objective, and
+  complete a short mission using either a controller or keyboard and mouse.
+
+  Phase 2: Combat and progression vertical slice
+  Build a polished, representative portion of the game.
+
+  Include:
+
+   • One small district.
+   • A safehouse.
+   • Three weapons.
+   • Two gadgets.
+   • Several enemy types.
+   • One complete skill tree.
+   • A merchant.
+   • Weapon upgrades.
+   • A mission with stealth and combat approaches.
+   • Basic saving and loading.
+   • Controller remapping.
+   • Finished UI for the implemented systems.
+  Acceptance test: The player can complete the mission, earn resources, buy equipment, unlock an ability, save
+  progress, and return to the game with the correct state preserved.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                               25
+  Phase 3: Opening campaign
+  Implement Act I and the betrayal sequence.
+
+  Focus on the contrast between the fully augmented operative and the stripped-down survivor.
+
+  Acceptance test: The opening mission demonstrates the full combat concept and transitions into the first survival
+  mission without breaking progression or controller support.
+
+  Phase 4: Districts and mission systems
+  Build the world districts, mission framework, side quests, factions, merchants, safehouse expansion, and tactical map.
+
+  Implement a reusable approach to adding objectives, routes, optional tasks, rewards, and narrative consequences.
+
+  Acceptance test: A new mission can be created using the established mission framework without requiring a redesign of
+  core gameplay systems.
+
+  Phase 5: Full campaign
+  Implement Acts II through V, including the infiltration nodes, major story revelations, boss encounters, and multiple
+  endings.
+
+  Prioritize story continuity and meaningful progression over the number of locations.
+
+  Phase 6: Polish and release preparation
+  Complete performance optimization, audio, animation, accessibility, controller testing, save-system testing, difficulty
+  balancing, bug fixing, and Windows packaging.
+
+  Test on real hardware at multiple graphics settings and verify that all essential gameplay systems work without an
+  internet connection.
+
+
+
+
+  19. SCOPE CONTROL AND PRODUCTION PRIORITIES
+  The complete game described here is a substantial commercial-scale project. An AI game-building engine may be able
+  to generate a prototype and portions of the supporting systems, but it should not be assumed capable of producing a
+  polished, fully voiced, open-world-quality FPS from a single prompt.
+
+  Build the game as a sequence of playable milestones.
+
+  The first release target should be a vertical slice, not the entire campaign.
+
+  The vertical slice should contain:
+
+   • A playable opening or post-betrayal mission.
+   • One visually distinctive district.
+   • Responsive FPS combat.
+   • At least three usable weapons.
+   • Controller support.
+   • A small skill tree.
+   • One merchant.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                           26
+   • A functioning map and objective markers.
+   • A working mission completion system.
+   • A short story sequence demonstrating the game's tone.
+  The vertical slice must use the same core architecture intended for the full game. Avoid creating a disposable
+  demonstration that must be rewritten from scratch.
+
+  Non-negotiable requirements
+   • Windows desktop game, not a browser-based imitation.
+   • Fully playable first-person combat.
+   • Native dual-analog controller support.
+   • Original characters and world.
+   • Responsive aiming and movement.
+   • Modular weapons and equipment.
+   • Persistent progression.
+   • Mission and objective tracking.
+   • Working tactical map.
+   • Save and load functionality.
+   • A playable, packaged build at each major milestone.
+
+  Features that can wait
+   • Extensive cinematic motion capture.
+   • Hundreds of unique weapons.
+   • Fully destructible buildings.
+   • Seamless exploration of every interior.
+   • Large crowds of simulated civilians.
+   • Procedural mission generation.
+   • New Game Plus.
+   • Advanced faction simulations.
+   • Multiple fully cinematic endings.
+  These features are desirable only after the foundational gameplay works reliably.
+
+
+
+
+  20. FINAL MASTER INSTRUCTION FOR THE GAME-BUILDING
+  ENGINE
+  Build NEON VEIL: GHOST PROTOCOL as an original, single-player, first-person cyberpunk espionage shooter for
+  Windows PC.
+
+  Use the full design specification above as the long-term creative and technical blueprint.
+
+  Do not attempt to generate the entire game in a single uncontrolled step. Begin by establishing the project architecture,
+  then build and test the playable prototype before expanding the campaign.
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                             27
+  First, create a functioning first-person player controller with responsive mouse-and-keyboard input and dual-analog
+  controller support. Implement movement, aiming, shooting, reloading, weapon switching, health, armor, enemy
+  damage, and a minimal HUD.
+
+  Next, create a small cyberpunk test environment with one enemy encounter, an interactive objective, a
+  mission-completion condition, and a basic tactical marker. Package the result as a Windows build.
+
+  After the prototype works, introduce the weapon framework, enemy AI, interaction system, mission framework,
+  progression system, map, merchants, safehouse, dialogue, and saving system in separate testable stages.
+
+  Maintain a clear distinction between completed features, partially implemented features, placeholder assets, and
+  planned features. Never present a nonfunctional interface as a completed gameplay system.
+
+  Use reusable components and data-driven definitions wherever practical. Preserve a consistent visual identity,
+  responsive controls, readable combat, and meaningful player progression.
+
+  The long-term goal is a complete campaign featuring the betrayal of Ghost-7, his struggle to rebuild his abilities, his
+  investigation into the Directorate's cloned leadership, the discovery of AION's infiltration, the destruction of the city's
+  compromised AI nodes, and the climactic battle against AION-PRIME.
+
+  The finished experience should feel like a modern, high-quality espionage FPS with the tactical creativity of classic
+  console shooters, the freedom of a cyberpunk immersive sim, and the spectacle of a cinematic science-fiction action
+  game.
+
+  Begin with the playable prototype. Do not generate placeholder menus and call the game complete. Every major feature
+  must be genuinely functional before the project advances to the next milestone.
+
+
+
+
+NEON VEIL: GHOST PROTOCOL | Game Design Blueprint                                                                               28
+

@@ -33,13 +33,13 @@ BG = (6, 10, 16)
 # Glass Crown is the next stop; the line carries on past it to the outer districts. (name, sub-label, interchange)
 CROWN = [
     ("VEYRA CENTRAL", "you are here", None),
-    ("GLASS CROWN", "Crown Sector  ·  Directorate", None),
-    ("KESTREL ARCADE", "markets  ·  hotels", "GUTTER"),
-    ("ETHERION PLAZA", "Etherion campus", None),
-    ("AION SPIRE", "civic oversight", None),
-    ("MERIDIAN EXCHANGE", "financial district", "NOVA"),
+    ("GLASS CROWN", "Crown Sector  ·  Directorate Citadel", None),
+    ("CHROME MILE", "nightlife  ·  markets", "GUTTER"),
+    ("HELIX WARD", "Etherion campus", None),
+    ("FLOODWORKS", "canal locks  ·  power", "NOVA"),
+    ("THE SPINDLE", "orbital elevator", None),
 ]
-NOVA = ["RAINMARKET", "NEON ROW", "MERIDIAN EXCHANGE", "ECHO DOCKS"]
+NOVA = ["ASHFALL", "MARKET LEVELS", "FLOODWORKS", "TRENCH DOCKS"]  # Harbor Line (see Docs/Bible/Continuity.md)
 
 def scanlines(im, alpha=22, step=4):
     d = ImageDraw.Draw(im, "RGBA")
@@ -57,8 +57,8 @@ def frame(d, w, h, col, inset=14, notch=34):
     d.line(pts, fill=col, width=4)
 
 def line_map(d, x0, y0, x1, y1, scale=1.0):
-    """Crown Line runs bottom to top along a gentle diagonal; Nova Line crosses at Meridian; the Gutter link spurs off
-    at Kestrel (suspended)."""
+    """Crown Line runs bottom to top along a gentle diagonal; the Harbor Line (magenta) crosses at Floodworks; the
+    Undercity Link to the Gutter spurs off Chrome Mile (suspended). Names: Docs/Bible/Continuity.md."""
     n = len(CROWN)
     pts = []
     for i in range(n):
@@ -66,18 +66,18 @@ def line_map(d, x0, y0, x1, y1, scale=1.0):
         x = x0 + (x1 - x0) * (0.30 + 0.25 * math.sin(t * math.pi * 0.9))
         y = y1 - (y1 - y0) * t
         pts.append((x, y))
-    # Nova Line (magenta) through Meridian
+    # Harbor Line (magenta) through Floodworks
     mx, my = pts[[c[2] for c in CROWN].index("NOVA")]
     nova = [(x0 + 10, my + 120 * scale), (mx - 160 * scale, my + 40 * scale), (mx, my), (mx + 220 * scale, my - 60 * scale), (x1 - 10, my - 60 * scale)]
     d.line(nova, fill=MAGENTA, width=int(10 * scale), joint="curve")
     nova_stops = [nova[0], nova[1], nova[3], nova[4]]
-    for (sx, sy), name, dy in zip(nova_stops, ["RAINMARKET", "NEON ROW", "ECHO DOCKS", ""], (-48, -48, 16, 0)):
+    for (sx, sy), name, dy in zip(nova_stops, ["ASHFALL  (closed)", "MARKET LEVELS", "TRENCH DOCKS", ""], (-48, 16, 16, 0)):
         if not name:
             continue
         r = 11 * scale
         d.ellipse([sx - r, sy - r, sx + r, sy + r], fill=BG, outline=MAGENTA, width=int(5 * scale))
         d.text((sx - 10 * scale, sy + dy * scale), name, font=RS(int(26 * scale)), fill=(255, 150, 225))
-    # Gutter link (grey dashed, suspended) from Kestrel
+    # Undercity Link (grey dashed, suspended) from Chrome Mile
     kx, ky = pts[[c[2] for c in CROWN].index("GUTTER")]
     gx, gy = x1 - 50 * scale, ky - 40 * scale
     segs = 9
@@ -124,7 +124,7 @@ def departures_board():
     line_map(d, 40, 300, W - 40, 960, 1.0)
     # legend
     lx = 60
-    for col, lab in ((GOLD, "CROWN LINE"), (MAGENTA, "NOVA LINE"), (GREY, "UNDERCITY LINK")):
+    for col, lab in ((GOLD, "CROWN LINE"), (MAGENTA, "HARBOR LINE"), (GREY, "UNDERCITY LINK")):
         d.line([(lx, 1048), (lx + 50, 1048)], fill=col, width=10)
         d.text((lx + 62, 1030), lab, font=RS(28), fill=WHITE)
         lx += 300
@@ -136,11 +136,11 @@ def departures_board():
     rows = [
         ("23:52", "GLASS CROWN", "1", "DELAYED", ORANGE),
         ("", "  track inspection", "", "", (200, 150, 110)),
-        ("00:04", "ETHERION PLAZA", "2", "CLOSED", RED),
+        ("00:04", "CHROME MILE", "2", "CLOSED", RED),
         ("00:11", "GLASS CROWN", "1", "CHARTER", GOLD),
         ("", "  Directorate service", "", "", (200, 170, 120)),
-        ("00:26", "AION SPIRE", "2", "CLOSED", RED),
-        ("00:40", "MERIDIAN EXCH.", "2", "CLOSED", RED),
+        ("00:26", "HELIX WARD", "2", "CLOSED", RED),
+        ("00:40", "THE SPINDLE", "2", "CLOSED", RED),
     ]
     y = ty + 70
     for t, dest, p, stat, col in rows:
@@ -274,15 +274,15 @@ def schedule_screen():
             d.text((560, yy), b, font=RS(27), fill=(205, 210, 215))
             d.text((660, yy), c, font=RS(27), fill=(205, 210, 215))
             d.text((790, yy), t, font=RS(27), fill=(205, 210, 215))
-            d.text((880, yy), st, font=RB(27), fill=col)
+            d.text((866, yy), st, font=RB(26), fill=col)
     G, R, O = (80, 200, 110), (240, 80, 70), (250, 170, 60)
     block(186, "Arrivals", [("Glass Crown", "CL 04", "Plat 1", "23:40", "Held", O),
-                            ("Meridian Exch.", "NL 12", "Plat 2", "23:47", "On time", G),
-                            ("Kestrel Arcade", "CL 07", "Plat 2", "23:58", "On time", G),
+                            ("Trench Docks", "HL 12", "Plat 2", "23:47", "On time", G),
+                            ("Chrome Mile", "CL 07", "Plat 2", "23:58", "On time", G),
                             ("The Gutter", "UL 01", "--", "--:--", "Suspended", R)])
     block(370, "Departures", [("Glass Crown", "CL 04", "Plat 1", "23:52", "Delayed", R),
-                              ("Etherion Plaza", "CL 05", "Plat 2", "00:04", "Closed", R),
-                              ("AION Spire", "CL 06", "Plat 2", "00:26", "Closed", R),
+                              ("Helix Ward", "CL 05", "Plat 2", "00:04", "Closed", R),
+                              ("The Spindle", "CL 06", "Plat 2", "00:26", "Closed", R),
                               ("Glass Crown", "DIR 1", "Plat 1", "00:11", "Charter", O)])
     d.rounded_rectangle([12, 10, W - 12, H - 10], 26, outline=(205, 210, 215), width=6)
     scanlines(im, 14, 4).save(os.path.join(OUT, "T_NV_ScheduleScreen.png"))
