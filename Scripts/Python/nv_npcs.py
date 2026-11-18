@@ -3,6 +3,7 @@ Each NPC is an ANVGuardCharacter (same patrol/glance AI as the guards, non-hosti
 16 assembled MetaHumans from the MetaHumanCrowdContent plugin as its look (base Manny animates hidden underneath and the
 MetaHuman follows via leader pose). A couple wear the P05 helmet as couriers. Nav bounds cover every route.
 Idempotent: folder P_NPC / tag NVNPC. Report: Saved/NV_npcs.txt"""
+import math
 import random
 import unreal
 EAS = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -22,7 +23,8 @@ for a in list(EAS.get_all_level_actors()):
 ROOT = "/MetaHumanCrowdContent/Characters/Assembled"
 LOOKS = []
 # only the body shapes the crowd wardrobe is fitted to (med height): tall/short bodies poke through the garments
-for shape in ("AverageFemale", "AverageMale", "HeavysetFemale", "HeavysetMale"):
+# Heavyset bodies read as the whole city being overweight when half the crowd uses them: average builds only.
+for shape in ("AverageFemale", "AverageMale"):
     for h in ("01", "02"):
         cls = unreal.load_object(None, f"{ROOT}/{shape}_Head{h}/BP_{shape}_Head{h}.BP_{shape}_Head{h}_C")
         if cls:
@@ -68,6 +70,65 @@ NPCS = [
     ("NPC_Pf_2", (3600, -2250, 40.0), [(3600, -2250), (2200, -2300)], (6.0, 12.0), 100.0, False),
     ("NPC_Pf_3", (1500, -2900, 40.0), [(1500, -2900), (2700, -2950)], (4.0, 8.0), 105.0, True),
 ]
+# Seated citizens waiting for their train: (label, bench actor, position along the bench 0..1, pose start time)
+SITTERS = [("NPC_Sit_Pf1", "BP_Bench_B2", 0.30, 0.0),
+           ("NPC_Sit_Pf2", "BP_Bench_B9", 0.70, 1.7),
+           ("NPC_Sit_Cn1", "BP_Bench_B17", 0.35, 0.9)]
+SIT_ANIM = unreal.load_asset("/Game/NeonVeil/Animations/Citizens/AS_NV_SitBench")
+W = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+
+def _trace(a, b, ignore=()):
+    h = unreal.SystemLibrary.line_trace_single(W, a, b, unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, True, list(ignore),
+                                               unreal.DrawDebugTrace.NONE, True)
+    if not h:
+        return None
+    t = h.to_tuple()
+    return t[5], t[9]
+
+def seat_spot(bench_label, frac):
+    """Find a seat on a bench by tracing: the seat surfaces are the hits 35..60 cm above the floor; the backrest is
+    the side a horizontal trace at back height hits first. Returns (x, y, floor z, yaw facing away from the back)."""
+    bench = None
+    for a in EAS.get_all_level_actors():
+        if a.get_actor_label() == bench_label:
+            bench = a
+    if not bench:
+        log("no bench", bench_label); return None
+    o, e = bench.get_actor_bounds(False)
+    benches = [a for a in EAS.get_all_level_actors() if "Bench" in a.get_class().get_name() or "Bench" in a.get_actor_label()]
+    fl = _trace(V(o.x, o.y, o.z + e.z + 50), V(o.x, o.y, o.z - e.z - 300), benches)
+    floor = bench.get_actor_location().z          # the kit benches are authored with their origin on the floor
+    pts = []
+    step = 8.0
+    nx, ny = int(2 * e.x / step), int(2 * e.y / step)
+    for i in range(nx + 1):
+        for j in range(ny + 1):
+            x, y = o.x - e.x + i * step, o.y - e.y + j * step
+            h = _trace(V(x, y, floor + 140), V(x, y, floor + 5))
+            if h and h[1] == bench and 35.0 <= h[0].z - floor <= 62.0:
+                pts.append((x, y, h[0].z))
+    if not pts:
+        log("no seat surface on", bench_label); return None
+    long_x = e.x > e.y
+    key = (lambda p: p[0]) if long_x else (lambda p: p[1])
+    lo, hi = min(key(p) for p in pts), max(key(p) for p in pts)
+    want = lo + (hi - lo) * frac
+    row = [p for p in pts if abs(key(p) - want) < 10.0]
+    cx = sum(p[0] for p in row) / len(row); cy = sum(p[1] for p in row) / len(row); sz = sum(p[2] for p in row) / len(row)
+    # backrest side: shorter clear distance at back height
+    best = None
+    for d in ((0, 1), (0, -1)) if long_x else ((1, 0), (-1, 0)):
+        h = _trace(V(cx, cy, sz + 40), V(cx + d[0] * 120, cy + d[1] * 120, sz + 40))
+        dist = (h[0] - V(cx, cy, sz + 40)).length() if h else 999.0
+        if best is None or dist < best[0]:
+            best = (dist, d)
+    back = best[1]
+    yaw = math.degrees(math.atan2(-back[1], -back[0]))
+    # hips sit a little toward the backrest from the middle of the seat pad
+    x, y = cx + back[0] * 6.0, cy + back[1] * 6.0
+    log("seat", bench_label, "at", round(x), round(y), "seat h", round(sz - floor), "floor", round(floor), "yaw", round(yaw))
+    return x, y, floor, yaw
+
 # Wardrobe from the crowd pack: fitted per sex and build (nrw = regular, ovw = heavyset); darker pieces favoured.
 O = "/MetaHumanCrowdContent/Outfits"
 # loose, full-cover pieces only: tight or cropped ones (yoga pants, slim jeans, tucked tee, custom tee) let the
@@ -84,8 +145,9 @@ AR = unreal.AssetRegistryHelpers.get_asset_registry()
 HAIR = "/MetaHumanCharacter/Optional/Grooms/GroomAssets/Hair"
 HAIR_F = ["Hair_M_BobStraight", "Hair_S_LowPonytail", "Hair_L_Straight", "Hair_M_BobCurly", "Hair_S_Pixie",
           "Hair_M_TwistedBraids", "Hair_S_UpdoBuns", "Hair_M_Layered", "Hair_L_StraightBangs", "Hair_S_BobLayered"]
-HAIR_M = ["Hair_S_BuzzCut", "Hair_S_Casual", "Hair_S_SlickBack", "Hair_S_AfroFade", "Hair_S_CurlyFade",
-          "Hair_S_SideSweptFringe", "Hair_S_Messy", "Hair_S_BrushCut", "Hair_S_Clean", "Hair_S_RecedeMessy"]
+# (no buzz / brush / clean cuts: as static cards they collapse to a coloured patch on a bald scalp)
+HAIR_M = ["Hair_S_Casual", "Hair_S_SlickBack", "Hair_S_AfroFade", "Hair_S_CurlyFade", "Hair_S_SideSweptFringe",
+          "Hair_S_Messy", "Hair_S_RecedeMessy", "Hair_S_Casual", "Hair_S_SideSweptFringe", "Hair_S_Messy"]
 _HEAD_CS = {}
 def groom_head_offset(name):
     """Hair cards are authored around the groom's own reference head (the binding's source mesh: a female or male
@@ -179,8 +241,9 @@ def outfit_for(look_cls):
     gs = [g for g in (garment(f, sex, build) for f in picks) if g]
     return gs, [material_for(g, sex, build) for g in gs]
 
-for i, (label, (x, y, z), route, waits, speed, courier) in enumerate(NPCS):
-    yaw = {"NPC_Sec_1": 180.0, "NPC_Cn_2": 0.0}.get(label, 0.0)
+def make_npc(i, label, x, y, z, route, waits, speed, courier, yaw=None, sit=None):
+    if yaw is None:
+        yaw = {"NPC_Sec_1": 180.0, "NPC_Cn_2": 0.0}.get(label, 0.0)
     g = EAS.spawn_actor_from_class(unreal.NVGuardCharacter, V(x, y, z + 100), unreal.Rotator(roll=0, pitch=0, yaw=yaw))
     g.set_actor_label(label); g.set_folder_path(FOLDER); g.tags = [TAG]
     look = LOOKS[i % len(LOOKS)] if LOOKS else None
@@ -232,9 +295,28 @@ for i, (label, (x, y, z), route, waits, speed, courier) in enumerate(NPCS):
         g.get_editor_property("health").set_editor_property("immune_damage_types", IMMUNE)
     except Exception as e:
         log("immune fail", label, e)
-    g.set_actor_location(g.get_actor_location(), False, False)
+    if sit is not None:
+        g.set_editor_property("hold_pose_anim", SIT_ANIM)
+        g.set_editor_property("hold_pose_start_time", sit)
+        g.set_editor_property("glance_radius", 0.0)
+        g.set_editor_property("patrol_points", [V(0, 0, 0)])
+        g.set_actor_location(V(x, y, z + 94.0), False, True)      # feet on the floor (capsule half height 92)
+        g.set_actor_rotation(unreal.Rotator(roll=0, pitch=0, yaw=yaw), True)
+    else:
+        g.set_actor_location(g.get_actor_location(), False, False)
     log(label, "hair", hair.get_name() if hair else None)
     log(label, "look", look.get_name() if look else None, "garments", [x.get_name() for x in garments], [m.get_name() if m else None for m in gmats], "helmet" if parts else "")
+
+
+for i, (label, (x, y, z), route, waits, speed, courier) in enumerate(NPCS):
+    make_npc(i, label, x, y, z, route, waits, speed, courier)
+for k, (label, bench, frac, t0) in enumerate(SITTERS):
+    spot = seat_spot(bench, frac) if SIT_ANIM else None
+    if not spot:
+        log("sitter skipped", label, "anim" if not SIT_ANIM else "seat")
+        continue
+    sx, sy, fz, syaw = spot
+    make_npc(len(NPCS) + k, label, sx, sy, fz, [(sx, sy)], (5.0, 9.0), 100.0, False, syaw, t0)
 
 NAV = [("NPC_Nav_Street", (7046, -11400, ZS + 200), (3900, 9400, 600)),
        ("NPC_Nav_Lobby", (7046, -5724, ZS + 200), (2500, 1700, 600)),

@@ -4,6 +4,7 @@
 #include "Combat/NVHealthComponent.h"
 
 #include "Animation/AnimInstance.h"
+#include "Animation/AnimSequenceBase.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/ChildActorComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -86,7 +87,15 @@ void ANVGuardCharacter::OnConstruction(const FTransform& Transform)
 	{
 		GetMesh()->SetSkeletalMesh(BodyMeshAsset);
 	}
-	if (BodyAnimClass)
+	if (HoldPoseAnim)
+	{
+		// preview the held pose in the editor too (placement on benches is judged by eye)
+		GetMesh()->OverrideAnimationData(HoldPoseAnim, true, true, HoldPoseStartTime, HoldPosePlayRate);
+#if WITH_EDITOR
+		GetMesh()->SetUpdateAnimationInEditor(true);
+#endif
+	}
+	else if (BodyAnimClass)
 	{
 		GetMesh()->SetAnimInstanceClass(BodyAnimClass);
 	}
@@ -254,6 +263,19 @@ void ANVGuardCharacter::BeginPlay()
 	Super::BeginPlay();
 	BindAppearance();
 	UCharacterMovementComponent* Move = GetCharacterMovement();
+	if (HoldPoseAnim)
+	{
+		// seated / posed citizen: play the pose, never move or turn
+		GlanceRadius = 0.f;
+		PatrolPoints.Reset();
+		WorldPatrol.Reset();
+		Move->DisableMovement();
+		Move->bOrientRotationToMovement = false;
+		GetMesh()->PlayAnimation(HoldPoseAnim, true);
+		GetMesh()->SetPlayRate(HoldPosePlayRate);
+		GetMesh()->SetPosition(HoldPoseStartTime, false);
+		return;
+	}
 	Move->MaxWalkSpeed = WalkSpeed;
 	Move->GetNavMovementProperties()->bUseAccelerationForPaths = true;
 	Move->MaxAcceleration = 380.f;

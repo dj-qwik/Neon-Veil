@@ -7,6 +7,7 @@
 class UNVHealthComponent;
 class USkeletalMesh;
 class UAnimInstance;
+class UAnimSequenceBase;
 class UStaticMesh;
 class UStaticMeshComponent;
 class USkeletalMeshComponent;
@@ -52,6 +53,22 @@ public:
 	/** M00: never engages. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard")
 	bool bNonHostile = true;
+
+	/**
+	 * Optional looping pose that replaces locomotion (e.g. a citizen seated on a bench waiting for a train). The citizen
+	 * stays where it is placed: no patrol, no glance turns, no movement. Garments and face follow as usual.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
+	TObjectPtr<UAnimSequenceBase> HoldPoseAnim;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body", meta = (ClampMin = "0.05"))
+	float HoldPosePlayRate = 1.f;
+
+	/** Start time into HoldPoseAnim (seconds), so several sitters don't breathe in sync. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body", meta = (ClampMin = "0"))
+	float HoldPoseStartTime = 0.f;
+
+	bool IsHoldingPose() const { return HoldPoseAnim != nullptr; }
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Guard|Body")
 	TObjectPtr<USkeletalMesh> BodyMeshAsset;

@@ -73,7 +73,7 @@ def imp_tex(name):
         AT.import_asset_tasks([t])
     tex = load(path)
     if tex:
-        tex.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_UI)
+        tex.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_WORLD)
         tex.set_editor_property("srgb", True)
         EAL.save_loaded_asset(tex)
     return tex
@@ -124,12 +124,47 @@ def mi(name, parent, tex=None, tex_param="Tex", scalars=None):
 
 M_SIGN = sign_master()
 TX = {n: imp_tex(n) for n in ("T_NV_CrownLineBoard", "T_NV_CrownLineMap", "T_NV_HubInfo", "T_NV_AIONNotice",
-                                "T_NV_MonkeyBiz_Screen", "T_NV_MonkeyBiz_Ad")}
+                                "T_NV_MonkeyBiz_Screen", "T_NV_MonkeyBiz_Ad", "T_NV_ScheduleScreen",
+                                "T_NV_BreakerFace", "T_NV_BreakerFace_E", "T_NV_HazardFloor")}
 MI_BOARD = mi("MI_NV_Sign_CrownLineBoard", M_SIGN, TX["T_NV_CrownLineBoard"], scalars={"Glow": 1.6, "FlickerAmt": 0.02})
 MI_MAP = mi("MI_NV_Sign_CrownLineMap", M_SIGN, TX["T_NV_CrownLineMap"], scalars={"Glow": 1.3})
 MI_INFO = mi("MI_NV_Sign_HubInfo", M_SIGN, TX["T_NV_HubInfo"], scalars={"Glow": 1.5})
 MI_AION = mi("MI_NV_Sign_AIONNotice", M_SIGN, TX["T_NV_AIONNotice"], scalars={"Glow": 1.5, "FlickerAmt": 0.06})
 MI_MONKEY = mi("MI_NV_Sign_MonkeyBizScreen", M_SIGN, TX["T_NV_MonkeyBiz_Screen"], scalars={"Glow": 1.8, "FlickerAmt": 0.12, "FlickerSpeed": 31.0})
+MI_SCHED = mi("MI_NV_Sign_ScheduleScreen", M_SIGN, TX["T_NV_ScheduleScreen"], scalars={"Glow": 1.4, "FlickerAmt": 0.03})
+
+def panel_master():
+    """Lit panel material: base colour texture, emissive mask texture x Glow, flat roughness / metallic."""
+    path = f"{MAT_DIR}/M_NV_PanelLit"
+    if EAL.does_asset_exist(path):
+        return load(path)
+    m = AT.create_asset("M_NV_PanelLit", MAT_DIR, unreal.Material, unreal.MaterialFactoryNew())
+    white = load("/Engine/EngineResources/WhiteSquareTexture")
+    black = load("/Engine/EngineResources/Black")
+    def node(cls, x, y):
+        return MEL.create_material_expression(m, cls, x, y)
+    def tex(name, d, x, y):
+        n = node(unreal.MaterialExpressionTextureSampleParameter2D, x, y)
+        n.set_editor_property("parameter_name", name); n.set_editor_property("texture", d); return n
+    def sca(name, val, x, y):
+        n = node(unreal.MaterialExpressionScalarParameter, x, y)
+        n.set_editor_property("parameter_name", name); n.set_editor_property("default_value", val); return n
+    MEL.connect_material_property(tex("Tex", white, -700, -300), "RGB", unreal.MaterialProperty.MP_BASE_COLOR)
+    MEL.connect_material_property(sca("Roughness", 0.5, -400, 0), "", unreal.MaterialProperty.MP_ROUGHNESS)
+    MEL.connect_material_property(sca("Metallic", 0.4, -400, 100), "", unreal.MaterialProperty.MP_METALLIC)
+    e = node(unreal.MaterialExpressionMultiply, -400, 250)
+    MEL.connect_material_expressions(tex("EmisTex", black, -700, 200), "RGB", e, "A")
+    MEL.connect_material_expressions(sca("Glow", 4.0, -700, 420), "", e, "B")
+    MEL.connect_material_property(e, "", unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    MEL.recompile_material(m)
+    EAL.save_loaded_asset(m)
+    return m
+M_PANEL = panel_master()
+MI_BREAKER = mi("MI_NV_BreakerFace", M_PANEL, TX["T_NV_BreakerFace"], scalars={"Glow": 8.0, "Roughness": 0.45, "Metallic": 0.55})
+if MI_BREAKER and TX["T_NV_BreakerFace_E"]:
+    MEL.set_material_instance_texture_parameter_value(MI_BREAKER, "EmisTex", TX["T_NV_BreakerFace_E"])
+    MEL.update_material_instance(MI_BREAKER); EAL.save_loaded_asset(MI_BREAKER)
+MI_HAZFLOOR = mi("MI_NV_HazardFloor", M_PANEL, TX["T_NV_HazardFloor"], scalars={"Glow": 0.0, "Roughness": 0.75, "Metallic": 0.0})
 SCREEN_PARENT = load("/Game/ModularScifiInterior/Materials/Screens/MI_Screen_Parent")
 MI_MONKEY_AD = mi("MI_NV_Screen_MonkeyBizAd", SCREEN_PARENT, TX["T_NV_MonkeyBiz_Ad"], tex_param="Screen") if SCREEN_PARENT else None
 
@@ -373,13 +408,7 @@ for i, (x, y) in enumerate(((WX + 90, -6420), (EX - 90, -6420), (WX + 90, NY - 9
 # (kept clear of the lobby citizens' routes: x 6300 / 7850-7950 lanes, y -5420 and -6100..-6200 crossings)
 prop("Lobby_Bin_W", "/Game/SciFiTramStation/Meshes/SM_RubbishCan", 6190, -6420, LZ, 0)
 prop("Lobby_Bin_E", "/Game/SciFiTramStation/Meshes/SM_RubbishCan", 7720, -6420, LZ, 180)
-# colour: big ad screens on the side walls, glow frame around the lift doors
-AD_W = mat_of("Blade_W0") or GL_CYAN
-AD_E = mat_of("Facade_W0") or GL_MAG
-box("Lobby_Ad_W", (WX + 3, -5450, -11800), (4, 340, 190), AD_W)
-box("Lobby_Ad_W_Frame", (WX + 1.5, -5450, -11800), (2, 356, 206), DARK)
-box("Lobby_Ad_E", (EX - 3, -5450, -11800), (4, 340, 190), AD_E)
-box("Lobby_Ad_E_Frame", (EX - 1.5, -5450, -11800), (2, 356, 206), DARK)
+# glow frame around the lift doors
 for side, x in (("L", DOOR_X - 178), ("R", DOOR_X + 178)):
     box(f"LiftDoor_Strip_{side}", (x, NY - 3, -11850), (6, 6, 300), GL_CYAN)
 box("LiftDoor_Lintel", (DOOR_X, NY - 3, -11697), (362, 6, 6), GL_CYAN)
@@ -397,6 +426,147 @@ for nm, yaw, yy, s, col in (("F", -90, -5655.5, "CROWN LINE  ·  LIFT AHEAD", (0
     text(f"Lobby_HangSign_Text{nm}", s, (DOOR_X, yy, -11690), yaw, 30, col)
 for side, x in (("W", DOOR_X - 150), ("E", DOOR_X + 150)):
     box(f"Lobby_HangRod_{side}", (x, -5650, -11640), (2, 2, 44), DARK)
+
+# ------------------------------------------------------------------ 7. every 'Terminal B' holoscreen: English Veyra content
+# The tram kit's holoscreens carry its own (Kyiv metro) map and an airport-style schedule. Each one gets an overlay
+# on every open face: portrait SM_Holoscreen_A -> Crown Line board, landscape C / E -> Veyra schedule.
+for lab, x in (("Lobby_Holo_W", 5896.0), ("Lobby_Holo_E", 8196.0)):      # out in front of the red wall's bars
+    a = find(lab)
+    if a:
+        l = a.get_actor_location()
+        a.set_actor_location(V(x, l.y, l.z), False, False)
+def holo_faces(a):
+    o, e = a.get_actor_bounds(False)
+    thin_x = e.x < e.y
+    half = e.x if thin_x else e.y
+    faces = []
+    for sgn in (1, -1):
+        n = V(sgn, 0, 0) if thin_x else V(0, sgn, 0)
+        h = trace(o + n * (half + 2.0), o + n * 300.0, [a])
+        clear = (h[0] - o).length() - half if h else 300.0
+        if clear < 45.0:
+            continue
+        hit = trace(o + n * (half + 20.0), o - n * half, [])
+        glass = hit[0] if hit and hit[2] == a else o + n * half
+        faces.append((n, glass, clear))
+    return o, e, thin_x, faces
+n_ov = 0
+for a in list(EAS.get_all_level_actors()):
+    if not isinstance(a, (unreal.StaticMeshActor, unreal.NVInteractableActor)) or TAG in [str(t) for t in a.tags]:
+        continue
+    comp = a.get_component_by_class(unreal.StaticMeshComponent)
+    sm = comp.static_mesh if comp else None
+    if not sm or sm.get_name() not in ("SM_Holoscreen_A", "SM_Holoscreen_C", "SM_Holoscreen_E"):
+        continue
+    if a.get_actor_label() == "I_DepartureBoard":
+        continue                                     # has its own overlay (section 3)
+    o, e, thin_x, faces = holo_faces(a)
+    wide = 2 * (e.y if thin_x else e.x)
+    for k, (n, glass, clear) in enumerate(faces):
+        if sm.get_name() == "SM_Holoscreen_A":
+            w = wide * 0.86; h = w / 0.582
+            c = V(o.x, o.y, o.z + 4) + n * ((e.x if thin_x else e.y))
+            screen(f"{a.get_actor_label()}_Overlay{k}", MI_BOARD, c, n, w, h, off=1.0)
+        else:
+            # cover the whole glass (the kit's 'TERMINAL B' header included)
+            # the kit's hologram is a translucent layer in front of the panel: sit just proud of the bounds face
+            h = 2 * e.z * 0.86; w = min(h * 1.855, wide * 0.93)
+            c = V(o.x, o.y, o.z) + n * (e.x if thin_x else e.y)
+            screen(f"{a.get_actor_label()}_Overlay{k}", MI_SCHED, c, n, w, h, off=1.0)
+        n_ov += 1
+    log("holoscreen", a.get_actor_label(), sm.get_name(), "faces", [(round(f[2]), f[0]) for f in faces])
+log("holoscreen overlays", n_ov)
+
+# ------------------------------------------------------------------ 8. lift-cab logo rides with the cab
+ov = find("Cab_Screen_MonkeyBiz")
+ACTORS = list(EAS.get_all_level_actors())
+ov = None
+for a in ACTORS:
+    if a.get_actor_label() == "Cab_Screen_MonkeyBiz":
+        ov = a
+cab = find("Cab_Screen")
+if ov and cab:
+    ov.static_mesh_component.set_mobility(unreal.ComponentMobility.MOVABLE)
+    ov.attach_to_actor(cab, "", unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD, unreal.AttachmentRule.KEEP_WORLD, False)
+    log("cab logo attached to", cab.get_actor_label())
+
+# ------------------------------------------------------------------ 9. Station Ops sign clear of the door frame
+ops = find("S_OpsCorridor")
+if ops:
+    ops.set_actor_location(V(6740, 2522, 712), False, False)
+    ops.text_render.set_editor_property("world_size", 22.0)
+    box("S_OpsCorridor_Plate", (6740, 2526, 712), (300, 3, 34), DARK)
+
+# ------------------------------------------------------------------ 10. crew room: last crate off the terminal
+a9 = find("SM_Crate_A9")
+if a9:
+    a9.set_actor_location(V(7010, 4930, 400), False, False)
+
+# ------------------------------------------------------------------ 11. Platform One traction breaker (TPS-04)
+br = find("I_PowerPanel")
+if br:
+    T = br.get_actor_transform()
+    def W_(x, y, z):
+        return T.transform_location(V(x, y, z))
+    fwd = br.get_actor_forward_vector()
+    # painted face (fuses, lamps and the lever stay real and sit proud of it)
+    screen("Breaker_Face", MI_BREAKER, W_(19.3, 0, 140), fwd, 64, 88, off=0.0)
+    for cname in ("FacePlate", "Hazard"):
+        for c in br.get_components_by_class(unreal.StaticMeshComponent):
+            if c.get_name() == cname:
+                c.set_editor_property("visible", False)
+    cyl = load("/Engine/BasicShapes/Cylinder")
+    for c in br.get_components_by_class(unreal.StaticMeshComponent):
+        if c.get_name() == "LeverArm":
+            c.set_static_mesh(cyl)
+        elif c.get_name() == "LeverGrip":
+            c.set_static_mesh(cyl)
+            c.set_editor_property("relative_rotation", unreal.Rotator(roll=90, pitch=0, yaw=0))
+            c.set_editor_property("relative_scale3d", V(0.065, 0.065, 0.16))
+    STEEL = load("/Game/NeonVeil/Materials/Prologue/MI_NV_Breaker_Steel") or DARK
+    yaw = br.get_actor_rotation().yaw
+    def part(label, lx, ly, lz, sx, sy, sz, mat=None, mesh=None):
+        a = EAS.spawn_actor_from_object(mesh or CUBE, W_(lx, ly, lz), R(y=yaw))
+        a.set_actor_scale3d(V(sx / 100.0, sy / 100.0, sz / 100.0))
+        a.static_mesh_component.set_material(0, mat or STEEL)
+        a.static_mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        return tagit(a, label)
+    part("Breaker_Hood", 13, 0, 192, 28, 82, 6)
+    part("Breaker_Hood_Lip", 26, 0, 189, 3, 82, 3, GL_CYAN)
+    part("Breaker_Plinth", 11, 0, 89, 24, 78, 6)
+    for side, ly in (("L", -37.5), ("R", 37.5)):
+        part(f"Breaker_Rail_{side}", 16, ly, 140, 8, 5, 100)
+        part(f"Breaker_Bolt_{side}T", 20.5, ly, 176, 1.5, 3, 3, DARK)
+        part(f"Breaker_Bolt_{side}B", 20.5, ly, 104, 1.5, 3, 3, DARK)
+    # conduits up to the ceiling and a junction box
+    top = trace(W_(10, 0, 200), W_(10, 0, 900))
+    ceil_z = top[0].z if top else 400.0
+    jb_z = min(ceil_z - 40.0, 260.0)
+    part("Breaker_Junction", 10, 0, jb_z, 18, 40, 30)
+    part("Breaker_Junction_Lamp", 19.5, 12, jb_z + 6, 1.5, 4, 4, GL_CYAN)
+    for k, ly in enumerate((-24, -12, 12, 24)):
+        z0, z1 = 195.0, ceil_z if k % 2 else jb_z - 15.0
+        if k % 2:
+            z0 = jb_z + 15.0
+        part(f"Breaker_Conduit{k}", 8, ly, (z0 + z1) / 2.0, 7, 7, max(z1 - z0, 5.0), DARK, cyl)
+    # hazard mat on the floor in front of it
+    mat_c = W_(70, 0, 0.6)
+    fm = EAS.spawn_actor_from_object(PLANE, mat_c, R(y=yaw + 90))
+    fm.set_actor_scale3d(V(0.9, 0.45, 1.0))
+    fm.static_mesh_component.set_material(0, MI_HAZFLOOR)
+    fm.static_mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    tagit(fm, "Breaker_FloorMat")
+    # a cool work light washing the face
+    lt = EAS.spawn_actor_from_class(unreal.SpotLight, W_(70, 0, 250), R(p=-58, y=yaw + 180))
+    lc = lt.get_component_by_class(unreal.SpotLightComponent)
+    lc.set_editor_property("intensity", 260.0)
+    lc.set_editor_property("attenuation_radius", 450.0)
+    lc.set_editor_property("outer_cone_angle", 34.0)
+    lc.set_editor_property("inner_cone_angle", 18.0)
+    lc.set_editor_property("light_color", unreal.Color(255, 236, 214, 255))
+    lc.set_editor_property("cast_shadows", True)
+    tagit(lt, "Breaker_WorkLight")
+    log("breaker rebuilt; ceiling", ceil_z)
 
 LES.save_current_level()
 open(unreal.Paths.project_saved_dir() + "NV_prologue_dress.txt", "w").write("\n".join(OUT))

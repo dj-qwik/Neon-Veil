@@ -252,11 +252,147 @@ def logo_ad(logo_path):
     im = logo.resize((W, H), Image.LANCZOS)
     im.save(os.path.join(OUT, "T_NV_MonkeyBiz_Ad.png"))
 
+def schedule_screen():
+    """Landscape 'Terminal B' style schedule for the SM_Holoscreen_C wall screens, in English with Veyra stops."""
+    W, H = 1024, 552
+    im = Image.new("RGB", (W, H), (22, 26, 32))
+    d = ImageDraw.Draw(im)
+    d.rectangle([24, 22, W - 24, 112], fill=(196, 52, 46))
+    d.text((48, 26), "CROWN LINE", font=RB(80), fill=(236, 236, 236))
+    for i in range(4):
+        x = W - 230 + i * 48
+        d.polygon([(x, 30), (x + 26, 30), (x + 56, 67), (x + 26, 104), (x, 104), (x + 30, 67)], fill=(70, 30, 30) if i < 2 else (240, 120, 110))
+    d.text((56, 128), "Veyra Central  ·  Schedule  >>>", font=RS(34), fill=(200, 205, 210))
+    d.line([(56, 172), (W - 56, 172)], fill=(70, 78, 86), width=2)
+    def block(y, title, rows):
+        d.rounded_rectangle([56, y + 6, 104, y + 150], 22, fill=(236, 150, 40))
+        d.text((122, y), title, font=RB(40), fill=(230, 232, 235))
+        for k, (a, b, c, t, st, col) in enumerate(rows):
+            yy = y + 6 + k * 34
+            d.text((330, yy), a, font=RS(27), fill=(205, 210, 215))
+            d.text((560, yy), b, font=RS(27), fill=(205, 210, 215))
+            d.text((660, yy), c, font=RS(27), fill=(205, 210, 215))
+            d.text((790, yy), t, font=RS(27), fill=(205, 210, 215))
+            d.text((880, yy), st, font=RB(27), fill=col)
+    G, R, O = (80, 200, 110), (240, 80, 70), (250, 170, 60)
+    block(186, "Arrivals", [("Glass Crown", "CL 04", "Plat 1", "23:40", "Held", O),
+                            ("Meridian Exch.", "NL 12", "Plat 2", "23:47", "On time", G),
+                            ("Kestrel Arcade", "CL 07", "Plat 2", "23:58", "On time", G),
+                            ("The Gutter", "UL 01", "--", "--:--", "Suspended", R)])
+    block(370, "Departures", [("Glass Crown", "CL 04", "Plat 1", "23:52", "Delayed", R),
+                              ("Etherion Plaza", "CL 05", "Plat 2", "00:04", "Closed", R),
+                              ("AION Spire", "CL 06", "Plat 2", "00:26", "Closed", R),
+                              ("Glass Crown", "DIR 1", "Plat 1", "00:11", "Charter", O)])
+    d.rounded_rectangle([12, 10, W - 12, H - 10], 26, outline=(205, 210, 215), width=6)
+    scanlines(im, 14, 4).save(os.path.join(OUT, "T_NV_ScheduleScreen.png"))
+
+def breaker_face():
+    """Face of the Platform One traction-power breaker (TPS-04): base colour + emissive mask.
+    Layout matches ANVBreakerPanel: plate 64 x 88 cm; viewer's right is the actor's -Y. Fuse windows at y -25..25
+    (z 166), lamps at y -22 / -10 (z 128), lever pivot y 16 (z 130), hazard strip z 103."""
+    W, H = 1024, 1408
+    rnd = random.Random(4)
+    im = Image.new("RGB", (W, H))
+    px = im.load()
+    for y in range(H):
+        for x in range(W):
+            n = rnd.randint(-6, 6)
+            v = 58 + int(10 * math.sin(y * 0.9)) // 5 + n
+            px[x, y] = (v, v + 3, v + 7)
+    em = Image.new("RGB", (W, H), (0, 0, 0))
+    d = ImageDraw.Draw(im); de = ImageDraw.Draw(em)
+    U = lambda yy: int((32 - yy) / 64 * W)              # actor y (cm) -> pixel x
+    Vv = lambda zz: int((184 - zz) / 88 * H)            # actor z (cm) -> pixel y
+    def bevel(box, r=10, dark=(22, 24, 28), lite=(110, 116, 124), fill=None):
+        x0, y0, x1, y1 = box
+        if fill:
+            d.rounded_rectangle(box, r, fill=fill)
+        d.rounded_rectangle([x0, y0, x1, y1], r, outline=dark, width=6)
+        d.line([(x0 + r, y0 + 3), (x1 - r, y0 + 3)], fill=lite, width=3)
+        d.line([(x0 + 3, y0 + r), (x0 + 3, y1 - r)], fill=lite, width=3)
+    # panel border and seams
+    bevel([10, 10, W - 10, H - 10], 26)
+    for yy in (Vv(150),):
+        d.line([(24, yy), (W - 24, yy)], fill=(28, 30, 34), width=5)
+        d.line([(24, yy + 5), (W - 24, yy + 5)], fill=(96, 100, 108), width=2)
+    for (bx, by) in ((44, 44), (W - 44, 44), (44, H - 44), (W - 44, H - 44), (W // 2, 44), (W // 2, H - 44)):
+        d.ellipse([bx - 15, by - 15, bx + 15, by + 15], fill=(40, 42, 46), outline=(130, 136, 144), width=3)
+        d.line([(bx - 8, by), (bx + 8, by)], fill=(20, 20, 22), width=4)
+    # title plate
+    bevel([70, 40, W - 70, 150], 12, fill=(24, 26, 30))
+    d.text((96, 44), "TPS-04  TRACTION POWER", font=RB(52), fill=(232, 220, 190))
+    d.text((96, 104), "PLATFORM 1  ·  1500 V DC  ·  CROWN LINE", font=RS(30), fill=(160, 170, 180))
+    # fuse windows (the glowing fuse blocks sit in these)
+    for i, yy in enumerate((-25, -15, -5, 5, 15, 25)):
+        cx, cy = U(yy), Vv(166)
+        bevel([cx - 60, cy - 122, cx + 60, cy + 122], 12, fill=(14, 16, 18))
+        d.text((cx - 22, cy + 128), "F%d" % (i + 1), font=MONO(32), fill=(200, 205, 210))
+    # lever slot (left of centre)
+    lx, lz = U(16), Vv(130)
+    bevel([lx - 70, lz - 230, lx + 70, lz + 150], 18, fill=(18, 19, 22))
+    d.text((lx - 34, lz - 300), "ON", font=RB(44), fill=(90, 230, 120))
+    d.text((lx - 46, lz + 166), "OFF", font=RB(44), fill=(240, 90, 70))
+    d.text((lx - 110, lz + 226), "MAIN ISOLATOR", font=RS(28), fill=(170, 175, 182))
+    # lamp bezels
+    for yy, lab, col in ((-22, "FAULT", (240, 80, 60)), (-10, "LIVE", (90, 230, 120))):
+        cx, cy = U(yy), Vv(128)
+        d.ellipse([cx - 70, cy - 70, cx + 70, cy + 70], fill=(20, 21, 24), outline=(140, 146, 154), width=6)
+        text_c(d, (cx, cy + 82), lab, RB(30), col)
+    # digital readout + gauge strip
+    rx0, ry0 = U(-4) - 40, Vv(150) + 30
+    bevel([rx0, ry0, rx0 + 420, ry0 + 110], 10, fill=(6, 12, 10))
+    for k in range(5):
+        x = rx0 + 26 + k * 52
+        de.rectangle([x, ry0 + 22, x + 36, ry0 + 88], fill=(30, 120, 60))
+        d.rectangle([x, ry0 + 22, x + 36, ry0 + 88], outline=(30, 60, 40), width=2)
+    d.text((rx0 + 290, ry0 + 34), "V DC", font=MONO(30), fill=(120, 200, 140))
+    de.text((rx0 + 290, ry0 + 34), "V DC", font=MONO(30), fill=(60, 140, 80))
+    # danger strip above the hazard band
+    tx, ty = 110, 1182
+    d.polygon([(tx, ty - 44), (tx + 50, ty + 40), (tx - 50, ty + 40)], fill=(240, 190, 30), outline=(20, 20, 20))
+    d.polygon([(tx + 5, ty - 22), (tx - 13, ty + 8), (tx + 1, ty + 8), (tx - 7, ty + 32), (tx + 14, ty - 2), (tx + 1, ty - 2)], fill=(20, 20, 20))
+    d.text((tx + 72, ty - 46), "DANGER  ·  HIGH VOLTAGE", font=RB(44), fill=(240, 190, 30))
+    d.text((tx + 72, ty + 4), "Isolate before opening. Authorised crew only.", font=RS(28), fill=(210, 212, 215))
+    # hazard band (bottom)
+    hy0, hy1 = Vv(107), Vv(99)
+    for k in range(-10, 40):
+        x = k * 70
+        d.polygon([(x, hy1), (x + 35, hy1), (x + 35 + (hy1 - hy0), hy0), (x + (hy1 - hy0), hy0)], fill=(230, 180, 20))
+    d.rectangle([0, hy0, W, hy0 + 4], fill=(20, 20, 20)); d.rectangle([0, hy1 - 4, W, hy1], fill=(20, 20, 20))
+    d.text((70, H - 42), "SAITKO CORP  ·  VEYRA TRANSIT AUTHORITY  ·  S/N 0447-TPS", font=MONO(26), fill=(150, 155, 160))
+    # small status LEDs along the top right
+    for k in range(4):
+        x = W - 120 - k * 46
+        col = (40, 200, 255) if k % 2 == 0 else (255, 150, 30)
+        de.ellipse([x - 9, 86, x + 9, 104], fill=col)
+        d.ellipse([x - 9, 86, x + 9, 104], fill=tuple(c // 2 for c in col))
+    im.save(os.path.join(OUT, "T_NV_BreakerFace.png"))
+    em.save(os.path.join(OUT, "T_NV_BreakerFace_E.png"))
+
+def hazard_floor():
+    W, H = 1024, 256
+    im = Image.new("RGB", (W, H), (20, 20, 20))
+    d = ImageDraw.Draw(im)
+    for k in range(-4, 20):
+        x = k * 96
+        d.polygon([(x, H), (x + 48, H), (x + 48 + H, 0), (x + H, 0)], fill=(220, 170, 20))
+    rnd = random.Random(9)
+    px = im.load()
+    for _ in range(26000):
+        x, y = rnd.randrange(W), rnd.randrange(H)
+        r, g, b = px[x, y]
+        k = rnd.uniform(0.55, 0.9)
+        px[x, y] = (int(r * k), int(g * k), int(b * k))
+    im.save(os.path.join(OUT, "T_NV_HazardFloor.png"))
+
 if __name__ == "__main__":
     departures_board()
     line_map_poster()
     info_panel()
     aion_notice()
+    schedule_screen()
+    breaker_face()
+    hazard_floor()
     if len(sys.argv) > 1:
         logo_screen(sys.argv[1])
         logo_ad(sys.argv[1])
