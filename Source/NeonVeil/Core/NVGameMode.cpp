@@ -96,7 +96,8 @@ void ANVGameMode::StartPlay()
 		{
 			if (ANVPlayerCharacter* P = Cast<ANVPlayerCharacter>(PC->GetPawn()))
 			{
-				P->GetHealth()->SetHealthDirect(Pending->Health);
+				// every checkpoint load (a death reload included) starts at full health; the save keeps its value for reference
+				P->GetHealth()->SetHealthDirect(P->GetHealth()->GetMaxHealth());
 				P->GetAbilities()->RestoreDisabledTags(Pending->DisabledAbilities);
 				if (Pending->WeaponSlots.Num() > 0)
 				{

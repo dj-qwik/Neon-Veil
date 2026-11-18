@@ -1,4 +1,5 @@
 #include "Combat/NVHealthComponent.h"
+#include "Engine/World.h"
 
 UNVHealthComponent::UNVHealthComponent()
 {
@@ -13,6 +14,20 @@ void UNVHealthComponent::BeginPlay()
 	bDead = false;
 }
 
+void UNVHealthComponent::GrantInvulnerability(float Seconds)
+{
+	if (const UWorld* World = GetWorld())
+	{
+		InvulnerableUntil = FMath::Max(InvulnerableUntil, World->GetTimeSeconds() + FMath::Max(0.f, Seconds));
+	}
+}
+
+bool UNVHealthComponent::IsInvulnerable() const
+{
+	const UWorld* World = GetWorld();
+	return World && World->GetTimeSeconds() < InvulnerableUntil;
+}
+
 void UNVHealthComponent::RestoreShield()
 {
 	Shield = MaxShield;
@@ -21,7 +36,7 @@ void UNVHealthComponent::RestoreShield()
 
 float UNVHealthComponent::ApplyDamage(float Amount, AActor* DamageInstigator, FGameplayTag DamageType, bool bWeakPointHit)
 {
-	if (bDead || Amount <= 0.f || (DamageType.IsValid() && ImmuneDamageTypes.HasTag(DamageType)))
+	if (bDead || Amount <= 0.f || IsInvulnerable() || (DamageType.IsValid() && ImmuneDamageTypes.HasTag(DamageType)))
 	{
 		return 0.f;
 	}

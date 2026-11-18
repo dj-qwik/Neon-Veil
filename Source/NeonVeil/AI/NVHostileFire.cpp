@@ -88,6 +88,14 @@ bool UNVHostileFire::Fire(AActor* Target, const FVector& AimPoint)
 	{
 		return false;
 	}
+	// respawn protection: hold fire on a target that can't be hurt yet instead of burying it in tracers
+	if (Target)
+	{
+		if (const UNVHealthComponent* TH = Target->FindComponentByClass<UNVHealthComponent>(); TH && TH->IsInvulnerable())
+		{
+			return false;
+		}
+	}
 	const FVector Start = GetComponentLocation();
 	const FVector Dir = FMath::VRandCone((AimPoint - Start).GetSafeNormal(), FMath::DegreesToRadians(SpreadDeg));
 	const FVector End = Start + Dir * Range;

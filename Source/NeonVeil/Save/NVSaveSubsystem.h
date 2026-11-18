@@ -47,6 +47,9 @@ public:
 
 	static const FString SlotName;
 
+	/** After a checkpoint load the player takes no damage and hostiles hold fire for this long. */
+	float RespawnProtectionSeconds = 5.f;
+
 private:
 	UFUNCTION()
 	void HandleCheckpointRequested(FName ReasonObjectiveID);

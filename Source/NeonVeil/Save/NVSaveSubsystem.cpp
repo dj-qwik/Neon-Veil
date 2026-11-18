@@ -117,6 +117,14 @@ void UNVSaveSubsystem::FinishRestore()
 	{
 		UE_LOG(LogNeonVeil, Log, TEXT("Checkpoint %s restored in %.2f s (load request to control)"),
 			*PendingRestore->CheckpointID.ToString(), FPlatformTime::Seconds() - LoadRequestTime);
+		// respawn protection: enemies restored near the checkpoint can't kill him again before he can move
+		const UWorld* World = GetGameInstance() ? GetGameInstance()->GetWorld() : nullptr;
+		const APlayerController* PC = World ? World->GetFirstPlayerController() : nullptr;
+		if (UNVHealthComponent* H = PC && PC->GetPawn() ? PC->GetPawn()->FindComponentByClass<UNVHealthComponent>() : nullptr)
+		{
+			H->GrantInvulnerability(RespawnProtectionSeconds);
+			UE_LOG(LogNeonVeil, Log, TEXT("Respawn protection for %.1f s"), RespawnProtectionSeconds);
+		}
 	}
 	PendingRestore = nullptr;
 }

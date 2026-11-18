@@ -49,6 +49,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "NeonVeil|Health")
 	bool IsDead() const { return bDead; }
 
+	/** Ignore all damage for the next Seconds (respawn protection). Hostile fire also holds off an invulnerable target. */
+	UFUNCTION(BlueprintCallable, Category = "NeonVeil|Health")
+	void GrantInvulnerability(float Seconds);
+
+	UFUNCTION(BlueprintPure, Category = "NeonVeil|Health")
+	bool IsInvulnerable() const;
+
 	UPROPERTY(BlueprintAssignable, Category = "NeonVeil|Health")
 	FNVOnHealthChanged OnHealthChanged;
 
@@ -116,4 +123,5 @@ private:
 
 	bool bDead = false;
 	float BlockedDamage = 0.f;
+	double InvulnerableUntil = -1.0;
 };

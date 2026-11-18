@@ -28,6 +28,23 @@
 #include "Engine/World.h"
 #include "TimerManager.h"
 
+namespace
+{
+	/** The health of the actor that was hit, or of the actor it belongs to (a guard's appearance child actor). */
+	UNVHealthComponent* NVFindHealth(AActor* A)
+	{
+		for (int32 Depth = 0; A && Depth < 4; ++Depth)
+		{
+			if (UNVHealthComponent* H = A->FindComponentByClass<UNVHealthComponent>())
+			{
+				return H;
+			}
+			A = A->GetParentActor() ? A->GetParentActor() : A->GetAttachParentActor();
+		}
+		return nullptr;
+	}
+}
+
 static const FName NVWeakPointComponentTag(TEXT("WeakPoint"));
 
 UNVWeaponComponent::UNVWeaponComponent()
@@ -344,7 +361,33 @@ void UNVWeaponComponent::FireShot()
 		FCollisionQueryParams Params(SCENE_QUERY_STAT(NVWeaponTrace), true, GetOwner());
 		Params.bReturnPhysicalMaterial = true;
 		FHitResult Hit;
-		const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params);
+		bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params);
+		bool bHeadshot = false;
+		// Characters' capsules and meshes ignore the Visibility channel (so AI sight and cover traces see past them),
+		// which let rounds pass straight through guards and troopers. Check for a pawn in front of the world hit.
+		{
+			FHitResult PawnHit;
+			const FVector PawnEnd = bHit ? Hit.ImpactPoint : End;
+			if (GetWorld()->LineTraceSingleByObjectType(PawnHit, Start, PawnEnd, FCollisionObjectQueryParams(ECC_Pawn), Params)
+				&& PawnHit.GetActor() && NVFindHealth(PawnHit.GetActor()))
+			{
+				if (const ACharacter* Char = Cast<ACharacter>(PawnHit.GetActor()))
+				{
+					// the capsule caught the round: find the bone it would strike for headshots
+					FHitResult BoneHit;
+					FCollisionQueryParams BoneParams(SCENE_QUERY_STAT(NVWeaponBone), true);
+					if (Char->GetMesh() && Char->GetMesh()->LineTraceComponent(BoneHit, Start, Start + Dir * Data->Range, BoneParams))
+					{
+						const FString Bone = BoneHit.BoneName.ToString().ToLower();
+						bHeadshot = Bone.Contains(TEXT("head")) || Bone.Contains(TEXT("neck"));
+						PawnHit.ImpactPoint = BoneHit.ImpactPoint;
+						PawnHit.ImpactNormal = BoneHit.ImpactNormal;
+					}
+				}
+				Hit = PawnHit;
+				bHit = true;
+			}
+		}
 
 		if (bDrawDebugTraces)
 		{
@@ -354,10 +397,10 @@ void UNVWeaponComponent::FireShot()
 		if (bHit)
 		{
 			AActor* HitActor = Hit.GetActor();
-			const bool bWeak = Hit.GetComponent() && Hit.GetComponent()->ComponentHasTag(NVWeakPointComponentTag);
+			const bool bWeak = bHeadshot || (Hit.GetComponent() && Hit.GetComponent()->ComponentHasTag(NVWeakPointComponentTag));
 			if (HitActor)
 			{
-				if (UNVHealthComponent* Health = HitActor->FindComponentByClass<UNVHealthComponent>())
+				if (UNVHealthComponent* Health = NVFindHealth(HitActor))
 				{
 					const float Dmg = Data->Damage * (bWeak ? Data->WeakPointBonus : 1.f);
 					const float Applied = Health->ApplyDamage(Dmg, GetOwner(), Data->DamageType, bWeak);
@@ -381,7 +424,7 @@ void UNVWeaponComponent::FireShot()
 			}
 		}
 
-		if (!bHit || !Hit.GetActor() || !Hit.GetActor()->FindComponentByClass<UNVHealthComponent>())
+		if (!bHit || !Hit.GetActor() || !NVFindHealth(Hit.GetActor()))
 		{
 			UE_LOG(LogNeonVeil, Verbose, TEXT("Shot hit %s"), bHit ? *GetNameSafe(Hit.GetActor()) : TEXT("nothing"));
 		}
