@@ -215,7 +215,7 @@ def screen(label, mat, center, normal, w, h, flip=False, off=3.0):
     a.set_actor_scale3d(V((-w if flip else w) / 100.0, h / 100.0, 1.0))
     c = a.static_mesh_component
     c.set_material(0, mat)
-    c.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    c.set_collision_profile_name("NoCollision")   # set_collision_enabled alone did not persist: BlockAll planes ate use-traces
     c.set_editor_property("cast_shadow", False)
     log("screen", label, "at", center, "rot", best, "fwd", a.get_actor_forward_vector())
     return tagit(a, label)
@@ -226,7 +226,7 @@ def box(label, center, size, mat, coll=False):
     c = a.static_mesh_component
     c.set_material(0, mat)
     if not coll:
-        c.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        c.set_collision_profile_name("NoCollision")
     c.set_editor_property("cast_shadow", False)
     return tagit(a, label)
 
@@ -529,7 +529,7 @@ if br:
         a = EAS.spawn_actor_from_object(mesh or CUBE, W_(lx, ly, lz), R(y=yaw))
         a.set_actor_scale3d(V(sx / 100.0, sy / 100.0, sz / 100.0))
         a.static_mesh_component.set_material(0, mat or STEEL)
-        a.static_mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        a.static_mesh_component.set_collision_profile_name("NoCollision")
         return tagit(a, label)
     part("Breaker_Hood", 13, 0, 192, 28, 82, 6)
     part("Breaker_Hood_Lip", 26, 0, 189, 3, 82, 3, GL_CYAN)
@@ -554,7 +554,7 @@ if br:
     fm = EAS.spawn_actor_from_object(PLANE, mat_c, R(y=yaw + 90))
     fm.set_actor_scale3d(V(0.9, 0.45, 1.0))
     fm.static_mesh_component.set_material(0, MI_HAZFLOOR)
-    fm.static_mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    fm.static_mesh_component.set_collision_profile_name("NoCollision")
     tagit(fm, "Breaker_FloorMat")
     # a cool work light washing the face
     lt = EAS.spawn_actor_from_class(unreal.SpotLight, W_(70, 0, 250), R(p=-58, y=yaw + 180))
