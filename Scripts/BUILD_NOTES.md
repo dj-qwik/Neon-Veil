@@ -44,7 +44,8 @@ Over budget, D3D12 removes the device and the editor dies ("GPU Crashed or D3D D
 - Don't teleport from the prologue tram straight into M01: the tram/city section stays resident. Run
   `nv_pie_m01.py` twice: the first pass completes M00-O01..O03 and reloads the gallery checkpoint, the second
   plays M01. A third pass after its deliberate death checks the checkpoint restore and finishes the mission.
-- Set `r.Streaming.PoolSize 1200` in the editor console before PIE when testing here.
+- Keep the texture pool at the project default (`r.Streaming.PoolSize 1000`) when testing here. After the M01 art
+  pass, 1200 put the editor 45 MB over its video-memory budget on the tram; at 1000 the pool only drops mips.
 - Hostile fire and drone deaths spawn no GPU Niagara per shot; M01 graybox meshes cast no shadows. Keep it that
   way until the art pass budgets for it.
 - The art pass (`nv_m01_art.py`, folder M01_Art, ~760 actors) lays kit meshes over the graybox with no collision

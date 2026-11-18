@@ -51,6 +51,12 @@ MEDMACHINE = M(f"{CL}/Props/SM_RoomMedicalMachine_Machine")
 MEDCONTROL = M(f"{CL}/Props/SM_RoomMedicalMachine_Control")
 CLLIGHT = M(f"{CL}/Props/SM_Room_CelingLight01")
 WORKTABLE = M(f"{CL}/Props/SM_RoomWorkTable_Table")
+MAPMACHINE = M(f"{CL}/Props/SM_RoomMapMachine_Machine")
+MAPCONTROL = M(f"{CL}/Props/SM_RoomMapMachine_Control")
+OFFICETABLE = M(f"{CL}/Props/SM_Room_OfficeTable")
+CTRLMONITOR = M(f"{CL}/Props/SM_RoomWorkTable_ControlMonitor01")
+POWERCOL = M(f"{CL}/Props/SM_RoomWorkTable_MiddlePower")
+WALLDECOR = M(f"{CL}/Modular/SM_RoomWall_Decor_5")
 SL = "/Game/SciFI_Lite_Assets/StaticMeshes"
 PIPE80 = M(f"{SL}/SM_Pipe_Straight_3m_01")
 PIPE60 = M(f"{SL}/SM_Pipe_Straight_3m_02")
@@ -243,6 +249,13 @@ for k, (label, y0, y1) in enumerate((("C_Ledge_P1", 6620, 7040), ("C_Ledge_P2", 
     if bb and FENCE:
         (lx, ly, lz), (hx, hy, hz) = bb
         fit(f"C_Rail_{k}", FENCE, (hx - 280, hy - 14, hz), (hx, hy + 14, hz + 110), 0.0)
+# ledges: Etherion deck plates over the hazard-orange graybox (collision stays on the hidden box)
+for label in ("C_Ledge_P1", "C_Ledge_P2", "C_Ledge_P3"):
+    bb = aabb(label)
+    if bb:
+        hide_visual(label)
+        (lx, ly, lz), (hx, hy, hz) = bb
+        fit(f"{label}_Deck", FLOORS[0], (lx, ly, lz), (hx, hy, hz))
 for k, z in enumerate((-600, -1700, -2600, -3500, -4300)):
     fit(f"C_WorkLamp_{k}", BEACON, (16330 - 51, 7375, z - 18), (16330 + 51, 7381, z + 18), 180.0)
 
@@ -263,6 +276,26 @@ if bb and WORKTABLE:
     fit("D_TagTable", WORKTABLE, (lx - 30, ly - 20, -4500), (hx + 30, hy + 20, hz), 0.0)
 for i, (x, y) in enumerate(((16650, 7000), (17600, 6600), (17600, 7400), (18400, 7000), (17200, 7000))):
     fit(f"D_CeilLight_{i}", CLLIGHT, (x - 31, y - 31, -3912 - 12), (x + 31, y + 31, -3912))
+
+# clutter: a holo-map station, a records desk, monitors at the tag table, power columns, wall panels, accent light
+fit("D_MapMachine", MAPMACHINE, (16850, 6250, -4500), (17162, 6562, -4417))
+fit("D_MapControl", MAPCONTROL, (17180, 6260, -4500), (17244, 6352, -4400), 90.0)
+fit("D_RecordsDesk", OFFICETABLE, (18500, 6150, -4500), (18766, 6559, -4385))
+fit("D_TagMonitor", CTRLMONITOR, (17270, 7080, -4500), (17333, 7204, -4373))
+for i, (x, y) in enumerate(((16960, 7840), (18740, 7840), (18740, 6160), (16960, 6160))):
+    fit(f"D_PowerCol_{i}", POWERCOL, (x - 26, y - 26, -4500), (x + 26, y + 26, -4360))
+for i, (y0, y1) in enumerate(((6300, 6500), (6600, 6800), (7200, 7400), (7500, 7700))):
+    fit(f"D_WallDecor_{i}", WALLDECOR, (18740, y0, -4500), (18780, y1, -4100), 180.0)
+for i, (x, y) in enumerate(((17000, 7840), (18000, 6160))):
+    pl = EAS.spawn_actor_from_class(unreal.PointLight, V(x, y, -4200))
+    lc = pl.point_light_component
+    lc.set_intensity(1000)
+    lc.set_attenuation_radius(700)
+    lc.set_light_color(unreal.LinearColor(0.1, 0.85, 1.0, 1))
+    lc.set_cast_shadows(False)
+    pl.set_actor_label(f"D_Accent_{i}")
+    pl.set_folder_path(FOLDER)
+    pl.tags = [unreal.Name(TAG)]
 
 # ---------------------------------------------------------------- E conduit
 for j in range(4):
