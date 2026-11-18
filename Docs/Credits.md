@@ -34,7 +34,7 @@ In-game credit text:
 
 | Use | Asset | Source |
 |---|---|---|
-| Shot-out light (glass, spark pop, dying buzz) | `SFX_NV_LightShatter` | ElevenLabs Sound Effects (flow "Untitled", generated 2026-11-18) |
+| Shot-out light (glass, spark pop, dying buzz) | `SFX_NV_LightShatter` | ElevenLabs Sound Effects (generated 2026-11-18) |
 | Shot-out light sparks / glass | `NS_Spark_Burst`, `NS_Impact_Glass` | Epic Niagara examples (local, not redistributed) |
 
 ## Voice
