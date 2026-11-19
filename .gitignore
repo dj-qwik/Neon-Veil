@@ -71,3 +71,6 @@ Scripts/Trailer/dl_*.json
 
 # bible PDFs are kept locally (LFS upload is unavailable from the cloud session); text copies are tracked
 Docs/Bible/*.pdf
+
+# junction to the Fab MetaHuman Crowd plugin (see Scripts/BUILD_NOTES.md)
+Plugins/MetaHumanCrowdContent

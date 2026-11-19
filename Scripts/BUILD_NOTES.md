@@ -60,3 +60,17 @@ Over budget, D3D12 removes the device and the editor dies ("GPU Crashed or D3D D
 - Volume sliders need `nv_audio_classes.py` (SC_NV_Music, SC_NV_Voice); re-run it after importing music or VO.
 - In PIE, open the pause menu with P (Esc stops PIE in the editor).
 - Editing a Blueprint's class defaults from Python: compile it, set the CDO, then save with `only_if_is_dirty=False`.
+
+## Playtest builds and the crowd plugin (Nov 2026)
+
+- `Plugins/MetaHumanCrowdContent` is a directory junction to the engine's
+  `Engine/Plugins/Marketplace/MetaHumanCrowdSample_5.8` (made by `Saved/nv_link_crowd.py`: `mklink /J`, no copy).
+  UnrealBuildTool/AutomationTool can't see the plugin in the Marketplace folder but do see it as a project plugin,
+  so packaging works with the full uproject. Gitignored (Fab content). This may also remove the need for the
+  build/full uproject swap above; untested.
+- Live Coding is off for this project (`Saved/Config/WindowsEditor/EditorPerProjectUserSettings.ini`,
+  `[/Script/LiveCoding.LiveCodingSettings] bEnabled=False`): with it on, UBT refuses to build while any editor is open.
+- `Scripts/NV_PackagePlaytest.bat`: Win64 Shipping, Prologue + Glass Crown, compressed, archived to
+  `Saved/Playtest/Windows` with `Docs/Playtest_README.txt`, zipped to `Saved/Playtest/NeonVeil_Playtest_v0.1.0.zip`.
+  Logs: `Saved/Logs/NV_PackagePlaytest.log`, UAT/UBT logs in `Saved/Logs/UAT`. The game starts at the Prologue
+  (`GameDefaultMap`), which travels to the Glass Crown.
